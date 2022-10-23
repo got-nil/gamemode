@@ -62,21 +62,23 @@ function GNIL.Utils.GetCleanFilename(filename, extension, includeRealmPrefix)
     return filename
 end
 
--- Load all realm prefixed files within a directory, non-recursive.
-function GNIL.Utils.IncludeDirectory(directory, ignoredFiles, fromLua, includePath)
+-- Convert a gamemode path to an absolute LUA path.
+function GNIL.Utils.ResolveGamemodePath(path)
+    return GNIL.GamemodeFolderName .. "/gamemode/" .. path
+end
 
-    -- I fucking hate this. I absolutely hate that file find uses direct paths
-    -- whereas include requires relative paths only for gamemodes. Thats so fucking dumb.
-    local full_path = (fromLua and "" or GNIL.GamemodeFolderName .. "/gamemode/") .. directory
+-- Load all realm prefixed files within a directory, non-recursive
+-- Absolute LUA paths are required, when working in gamemode ensure
+-- the path is locally resolved (see above)
+function GNIL.Utils.IncludeDirectory(path, ignoredFiles)
+    GNIL.log("Including directory '" .. path .. "'", "debug")
 
-    GNIL.log("Including directory '" .. full_path .. "' ('" .. directory .. "')", "debug")
-
-    for _, f in ipairs(file.Find(full_path .. "/*.lua", "LUA")) do
+    for _, f in ipairs(file.Find(path .. "/*.lua", "LUA")) do
         if ignoredFiles != nil and table.HasValue(ignoredFiles, f) then continue end
 
         local realm = GNIL.Utils.GetFilepathRealmPrefix(f)
         if realm == nil then continue end
 
-        GNIL.Utils.Include((includePath != nil and includePath or directory)  .. "/" .. f, realm)
+        GNIL.Utils.Include(path  .. "/" .. f, realm)
     end
 end

@@ -25,4 +25,4 @@ end
 -- Include all other files within the core directory. We also exclude
 -- the requiredSharedUtilities from being re-loaded as they are included
 -- seperately above.
-GNIL.Utils.IncludeDirectory("core", requiredSharedUtilities)
+GNIL.Utils.IncludeDirectory(GNIL.Utils.ResolveGamemodePath("core"), requiredSharedUtilities)
