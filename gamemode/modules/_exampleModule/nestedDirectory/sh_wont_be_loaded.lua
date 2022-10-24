@@ -1,0 +1,7 @@
+/*
+
+    Unless this directory is loaded by the init file it will not be included
+    in the automatic module load. This is within a nested directory that is
+    not included within the autoload search.
+
+*/
