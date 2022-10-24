@@ -26,3 +26,8 @@ end
 -- the requiredSharedUtilities from being re-loaded as they are included
 -- seperately above.
 GNIL.Utils.IncludeDirectory(GNIL.Utils.ResolveGamemodePath("core"), requiredSharedUtilities)
+
+-- Once all basic utilities have set up etc, we should load all modules.
+for _, v in ipairs(GNIL.Modules.GetAll(false)) do
+    v:Load()
+end
