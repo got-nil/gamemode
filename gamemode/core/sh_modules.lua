@@ -1,8 +1,22 @@
-GNIL.Modules = {
+GNIL.Modules = GNIL.Modules or {
     ["_loaded"] = {}
 }
 
 local cachedModules = {}
+
+-- A helper function for the shared gamemode file to use when loading
+-- all modules at once. It constantly checks to ensure that the module
+-- isnt loaded incase of dependency loading.
+function GNIL.Modules.LoadAll()
+    GNIL.log("Loading all modules", "debug")
+    for name, _ in pairs(GNIL.Modules.GetAll(true)) do
+        if GNIL.Modules.IsLoaded(name) then
+            GNIL.log("Module '" .. name .. "' is already loaded, ignoring autoload.", "debug")
+            continue
+        end
+        GNIL.Modules.Load(name)
+    end
+end
 
 function GNIL.Modules.GetAll(associative)
     local modules = {}
@@ -16,6 +30,9 @@ end
 
 function GNIL.Modules.IsLoaded(name) return GNIL.Modules._loaded[name] == true end
 
+-- Load a module by its name.
+--  name: The directory name of the module.
+--  _dependency_chain: Internally used to prevent dependency recursion.
 function GNIL.Modules.Load(name, _dependency_chain)
     if GNIL.Modules.IsLoaded(name) then GNIL.log("Refusing to load module '" .. name .. "' as it is already loaded.", "debug") return false end
     if not GNIL.Modules.Exists(name) then GNIL.log("Refusing to load module '" .. name .. "' as it does not exist.", "warning") return false end
@@ -39,7 +56,11 @@ function GNIL.Modules.Load(name, _dependency_chain)
     -- Once the init file has been found, we should load it individually.
     -- To do so, we must setup the basic module const for the init file to use.
     local moduleInstance = GNIL.Modules.Get(name)
+
+    local lastModule = _G["MODULE"] or nil
     _G["MODULE"] = moduleInstance
+
+    -- Actually include the init file.
     GNIL.Utils.Include(GNIL.Utils.ResolveGamemodePath("modules/" .. name .. "/" .. initFile), initFile == "init.lua" and "sv_" or nil)
 
     -- Once the init file has been loaded, if there are dependencies defined we
@@ -65,8 +86,32 @@ function GNIL.Modules.Load(name, _dependency_chain)
 
     -- Include the rest of the module directory without any of the init files.
     moduleInstance:OnLoad() -- Call the load function/hook.
-    GNIL.Utils.IncludeDirectory(GNIL.Utils.ResolveGamemodePath("modules/" .. name), {"init.lua", "sv_init.lua", "sh_init.lua", "cl_init.lua"})
+
+    -- Get all of the directories that should be used when including all of the module.
+    -- If there are defined autoload directories then convert them all to absolute paths
+    -- to be included also.
+    local directories = {GNIL.Utils.ResolveGamemodePath("modules/" .. name)}
+    if #moduleInstance.autoload_directories > 0 then
+        local absolute_autoloads = {}
+        for _, relative in ipairs(moduleInstance.autoload_directories) do
+            table.insert(directories, GNIL.Utils.ResolveGamemodePath("modules/" .. name .. "/" .. relative))
+        end
+
+        directories = table.Merge(directories, absolute_autoloads)
+    end
+
+    -- Load all of the directories that were gathered above. Ensure that
+    -- the module init file is not included on the base directory as it will
+    -- always be first.
+    local blocked_init_files = {"init.lua", "sv_init.lua", "sh_init.lua", "cl_init.lua"}
+    for i, directory_path in ipairs(directories) do
+        GNIL.Utils.IncludeDirectory(directory_path, i == 1 and blocked_init_files or nil) -- Dont include base init file.
+    end
     GNIL.Modules._loaded[name] = true
+
+    -- Once finished, restore the MODULE const to the previous, or nil.
+    -- Allows other modules to load modules without losing their const.
+    _G["MODULE"] = lastModule
 
     return true
 end

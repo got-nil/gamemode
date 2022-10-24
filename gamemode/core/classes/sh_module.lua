@@ -10,6 +10,15 @@ function Module:Initialize(name)
 
     self.dependencies = nil
     self.hooks = {}
+    self.autoload_directories = {}
+end
+
+-- Add a relative directory path to be autoloaded when the rest of
+-- the module is loaded by the utility. Delayed directory include.
+function Module:AddAutoloadDirectory(directory)
+    if not table.HasValue(self.autoload_directories, directory) then
+        table.insert(self.autoload_directories, directory)
+    end
 end
 
 -- Simply call the modules utility with the current module name

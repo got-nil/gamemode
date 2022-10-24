@@ -28,6 +28,4 @@ end
 GNIL.Utils.IncludeDirectory(GNIL.Utils.ResolveGamemodePath("core"), requiredSharedUtilities)
 
 -- Once all basic utilities have set up etc, we should load all modules.
-for _, v in ipairs(GNIL.Modules.GetAll(false)) do
-    v:Load()
-end
+GNIL.Modules.LoadAll()
