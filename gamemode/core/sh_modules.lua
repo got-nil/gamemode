@@ -136,24 +136,32 @@ end
 
 -- Check if a module exists. Will attempt to used cached existance check unless
 -- the ignore_cache argument is true. Efficiency is a bitch.
-
 GNIL.Modules["_cached_existances"] = {}
 function GNIL.Modules.Exists(name, ignore_cache)
     
+    -- If we're not ignoring the cache, and there is a cached existance value for
+    -- the module name then we should use that instead of re-checking.
+    if not ignore_cache and GNIL.Modules["_cached_existances"][name] then
+        return GNIL.Modules["_cached_existances"][name]
+    end
 
     -- https://github.com/Facepunch/garrysmod-issues/issues/1038
     -- On the client, this will return false since files added with AddCSLua doesn't
     -- satisfy IsDir as the file specifically was sent to the client. Because of this,
     -- if its a client we take a weird approach to validation.
+    local rtrn = nil
     if SERVER then
-        return file.IsDir(GNIL.GamemodeBasePath .. "/modules/" .. name, "LUA")
+        rtrn = file.IsDir(GNIL.GamemodeBasePath .. "/modules/" .. name, "LUA")
     else
         local _, directories = file.Find(GNIL.GamemodeBasePath .. "/modules/*", "LUA")
         for _, v in ipairs(directories) do
-            if v == name then return true end
+            if v == name then rtrn = true break end
         end
-        return false
+        if rtrn == nil then rtrn = false end
     end
+
+    GNIL.Modules["_cached_existances"][name] = rtrn
+    return rtrn
 end
 
 -- Get a module instance from cache, or create a new one. This ensures that
