@@ -12,7 +12,7 @@ local logcolours = {
 function GNIL.Logging.Log(log, logtype, prefix)
     MsgC(
         (logcolours[logtype == nil and "default" or logtype] != nil and logcolours[logtype] or logcolours["default"]),
-        "[GSI]" .. (prefix == nil and "" or ("[" .. prefix .. "]")) .."[" .. (logtype == nil and "INFO" or string.upper(logtype)) .. "] "
+        "[GSI][" .. (SERVER and "SV" or "CL") ..  "]" .. (prefix == nil and "" or ("[" .. prefix .. "]")) .."[" .. (logtype == nil and "INFO" or string.upper(logtype)) .. "] "
     )
     
     -- If the provided input is a table, and the pretty_table thirdparty
