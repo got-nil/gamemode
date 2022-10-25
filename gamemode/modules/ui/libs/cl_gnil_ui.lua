@@ -1,8 +1,64 @@
+local setmetatable = setmetatable
+local GNIL = GNIL
+local Material = Material
+local math_Clamp = math.Clamp
+local ScrH = ScrH
+local string_sub = string.sub
+local Color = Color
+local print = print
+local tostring = tostring
+local surface_CreateFont = surface.CreateFont
+local math_cos = math.cos
+local math_rad = math.rad
+local math_sin = math.sin
+local surface_SetDrawColor = surface.SetDrawColor
+local draw_NoTexture = draw.NoTexture
+local surface_DrawPoly = surface.DrawPoly
+local table_insert = table.insert
+local file_CreateDir = file.CreateDir
+local file_Exists = file.Exists
+local http_Fetch = http.Fetch
+local file_Write = file.Write
+local surface_SetMaterial = surface.SetMaterial
+local surface_DrawTexturedRectRotated = surface.DrawTexturedRectRotated
+local drawProgressWheel = drawProgressWheel
+local surface_DrawTexturedRect = surface.DrawTexturedRect
+local Lerp = Lerp
+local FrameTime = FrameTime
+local ColorAlpha = ColorAlpha
+local draw_RoundedBox = draw.RoundedBox
+local surface_DrawRect = surface.DrawRect
+local math_Round = math.Round
+local draw_RoundedBoxEx = draw.RoundedBoxEx
+local surface_DrawOutlinedRect = surface.DrawOutlinedRect
+local draw_SimpleText = draw.SimpleText
+local surface_SetFont = surface.SetFont
+local surface_GetTextSize = surface.GetTextSize
+local ScrW = ScrW
+local render_UpdateScreenEffectTexture = render.UpdateScreenEffectTexture
+local vgui_Create = vgui.Create
+local render_ClearStencil = render.ClearStencil
+local render_SetStencilEnable = render.SetStencilEnable
+local render_SetStencilWriteMask = render.SetStencilWriteMask
+local render_SetStencilTestMask = render.SetStencilTestMask
+local render_SetStencilFailOperation = render.SetStencilFailOperation
+local render_SetStencilPassOperation = render.SetStencilPassOperation
+local render_SetStencilZFailOperation = render.SetStencilZFailOperation
+local render_SetStencilCompareFunction = render.SetStencilCompareFunction
+local render_SetStencilReferenceValue = render.SetStencilReferenceValue
+local math_min = math.min
+local gui_OpenURL = gui.OpenURL
+local net_Start = net.Start
+local net_SendToServer = net.SendToServer
+local IsValid = IsValid
+local FindMetaTable = FindMetaTable
+local pairs = pairs
 --[[
                  EDIT THIS FILE AT ALL WITHOUT ME SAYING SO YOU WILL BE REMOVED FROM DEV
                                      Exept Morg and Raptor
 ]]
 GNIL.Ui = GNIL.Ui or {}
+
 setmetatable(GNIL.Ui, {
     ["__call"] = function(...) return GNIL.Ui.Create(...) end
 })
@@ -47,15 +103,13 @@ local gradLeft = Material("vgui/gradient-l")
 local gradUp = Material("vgui/gradient-u")
 local gradRight = Material("vgui/gradient-r")
 local gradDown = Material("vgui/gradient-d")
+GNIL.Ui.Scale = function(value) return value * math_Clamp(ScrH() / 1080, 0.7, 1) end
 
-GNIL.Ui.Scale = function(value)
-    return value * math.Clamp(ScrH() / 1080, 0.7, 1)
-end
 GNIL.Ui.FormatText = function(name, len)
     len = len or 19
 
     if #name > len then
-        name = string.sub(name, 1, len) .. "..."
+        name = string_sub(name, 1, len) .. "..."
     end
 
     return name
@@ -109,7 +163,7 @@ GNIL.Ui.ensureFontExists = function(alias, size, scale)
         scale_or_not = size + 9
     end
 
-    surface.CreateFont(alias .. "." .. size, {
+    surface_CreateFont(alias .. "." .. size, {
         font = GNIL.Ui.fontAliases[alias],
         size = scale_or_not,
         extended = true,
@@ -127,13 +181,13 @@ GNIL.Ui.DrawCircle = function(x, y, r, col)
 
     for i = 1, 360 do
         circle[i] = {}
-        circle[i].x = x + math.cos(math.rad(i * 360) / 360) * r
-        circle[i].y = y + math.sin(math.rad(i * 360) / 360) * r
+        circle[i].x = x + math_cos(math_rad(i * 360) / 360) * r
+        circle[i].y = y + math_sin(math_rad(i * 360) / 360) * r
     end
 
-    surface.SetDrawColor(col)
-    draw.NoTexture()
-    surface.DrawPoly(circle)
+    surface_SetDrawColor(col)
+    draw_NoTexture()
+    surface_DrawPoly(circle)
 end
 
 --Arc are like a percent of a circle for example a player counter
@@ -142,45 +196,45 @@ GNIL.Ui.DrawArc = function(x, y, ang, p, rad, color, seg)
     ang = (-ang) + 180
     local circle = {}
 
-    table.insert(circle, {
+    table_insert(circle, {
         x = x,
         y = y
     })
 
     for i = 0, seg do
-        local a = math.rad((i / seg) * -p + ang)
+        local a = math_rad((i / seg) * -p + ang)
 
-        table.insert(circle, {
-            x = x + math.sin(a) * rad,
-            y = y + math.cos(a) * rad
+        table_insert(circle, {
+            x = x + math_sin(a) * rad,
+            y = y + math_cos(a) * rad
         })
     end
 
-    surface.SetDrawColor(color)
-    draw.NoTexture()
-    surface.DrawPoly(circle)
+    surface_SetDrawColor(color)
+    draw_NoTexture()
+    surface_DrawPoly(circle)
 end
 
 local materials = {}
-file.CreateDir("gnil-mats")
+file_CreateDir("gnil-mats")
 
 GNIL.Ui.GetImgur = function(id, callback, useproxy, matSettings)
     if materials[id] then return callback(materials[id]) end
 
-    if file.Exists("gnil-mats/" .. id .. ".png", "DATA") then
+    if file_Exists("gnil-mats/" .. id .. ".png", "DATA") then
         materials[id] = Material("../data/gnil-mats/" .. id .. ".png", matSettings or "noclamp smooth mips")
 
         return callback(materials[id])
     end
 
-    http.Fetch(useproxy and "https://proxy.duckduckgo.com/iu/?u=https://i.imgur.com" or "https://i.imgur.com/" .. id .. ".png", function(body, len, headers, code)
+    http_Fetch(useproxy and "https://proxy.duckduckgo.com/iu/?u=https://i.imgur.com" or "https://i.imgur.com/" .. id .. ".png", function(body, len, headers, code)
         if len > 2097152 then
             materials[id] = Material("nil")
 
             return callback(materials[id])
         end
 
-        file.Write("gnil-mats/" .. id .. ".png", body)
+        file_Write("gnil-mats/" .. id .. ".png", body)
         materials[id] = Material("../data/gnil-mats/" .. id .. ".png", matSettings or "noclamp smooth mips")
 
         return callback(materials[id])
@@ -201,9 +255,9 @@ do
 
     GNIL.Ui.DrawProgressWheel = function(x, y, w, h, col)
         local progSize = min(w, h)
-        surface.SetMaterial(progressMat)
-        surface.SetDrawColor(col.r, col.g, col.b, col.a)
-        surface.DrawTexturedRectRotated(x + w * .5, y + h * .5, progSize, progSize, -curTime() * 100)
+        surface_SetMaterial(progressMat)
+        surface_SetDrawColor(col.r, col.g, col.b, col.a)
+        surface_DrawTexturedRectRotated(x + w * .5, y + h * .5, progSize, progSize, -curTime() * 100)
     end
 
     drawProgressWheel = GNIL.Ui.DrawProgressWheel
@@ -231,9 +285,9 @@ GNIL.Ui.DrawImgur = function(x, y, w, h, imgurId, col)
         return
     end
 
-    surface.SetMaterial(materials_img[imgurId])
-    surface.SetDrawColor(col.r, col.g, col.b, col.a)
-    surface.DrawTexturedRect(x, y, w, h)
+    surface_SetMaterial(materials_img[imgurId])
+    surface_SetDrawColor(col.r, col.g, col.b, col.a)
+    surface_DrawTexturedRect(x, y, w, h)
 end
 
 GNIL.Ui.DrawImgurRotated = function(x, y, w, h, rot, imgurId, col)
@@ -250,9 +304,9 @@ GNIL.Ui.DrawImgurRotated = function(x, y, w, h, rot, imgurId, col)
         return
     end
 
-    surface.SetMaterial(materials_img[imgurId])
-    surface.SetDrawColor(col.r, col.g, col.b, col.a)
-    surface.DrawTexturedRectRotated(x, y, w, h, rot)
+    surface_SetMaterial(materials_img[imgurId])
+    surface_SetDrawColor(col.r, col.g, col.b, col.a)
+    surface_DrawTexturedRectRotated(x, y, w, h, rot)
 end
 
 GNIL.Ui.LerpColor = function(frac, from, to) return Color(Lerp(frac, from.r, to.r), Lerp(frac, from.g, to.g), Lerp(frac, from.b, to.b), Lerp(frac, from.a, to.a)) end
@@ -268,11 +322,11 @@ local function drawCircle(x, y, r)
 
     for i = 1, 360 do
         circle[i] = {}
-        circle[i].x = x + math.cos(math.rad(i * 360) / 360) * r
-        circle[i].y = y + math.sin(math.rad(i * 360) / 360) * r
+        circle[i].x = x + math_cos(math_rad(i * 360) / 360) * r
+        circle[i].y = y + math_sin(math_rad(i * 360) / 360) * r
     end
 
-    surface.DrawPoly(circle)
+    surface_DrawPoly(circle)
 end
 
 --[[---------------------------------------------------------------------------
@@ -306,7 +360,7 @@ end
 	Classes
 ---------------------------------------------------------------------------]]
 classes.FadeHover = function(pnl, col, speed, rad)
-    col = col or Color(255, 255, 255, 30)
+    col = col or color_white
     speed = speed or 6
     pnl:SetupTransition("FadeHover", speed, GNIL.Ui.HoverFunc)
 
@@ -314,54 +368,54 @@ classes.FadeHover = function(pnl, col, speed, rad)
         local col = ColorAlpha(col, col.a * s.FadeHover)
 
         if (rad and rad > 0) then
-            draw.RoundedBox(rad, 0, 0, w, h, col)
+            draw_RoundedBox(rad, 0, 0, w, h, col)
         else
-            surface.SetDrawColor(col)
-            surface.DrawRect(0, 0, w, h)
+            surface_SetDrawColor(col)
+            surface_DrawRect(0, 0, w, h)
         end
     end)
 end
 
 classes.BarHover = function(pnl, col, height, speed)
-    col = col or Color(255, 255, 255, 255)
+    col = col or color_white
     height = height or 2
     speed = speed or 6
     pnl:SetupTransition("BarHover", speed, GNIL.Ui.HoverFunc)
 
     pnl:On("PaintOver", function(s, w, h)
-        local bar = math.Round(w * s.BarHover)
-        surface.SetDrawColor(col)
-        surface.DrawRect(w / 2 - bar / 2, h - height, bar, height)
+        local bar = math_Round(w * s.BarHover)
+        surface_SetDrawColor(col)
+        surface_DrawRect(w / 2 - bar / 2, h - height, bar, height)
     end)
 end
 
 classes.FillHover = function(pnl, col, dir, speed, mat)
-    col = col or Color(255, 255, 255, 30)
+    col = col or color_white
     dir = dir or LEFT
     speed = speed or 8
     pnl:SetupTransition("FillHover", speed, GNIL.Ui.HoverFunc)
 
     pnl:On("PaintOver", function(s, w, h)
-        surface.SetDrawColor(col)
+        surface_SetDrawColor(col)
         local x, y, fw, fh
 
         if (dir == LEFT) then
-            x, y, fw, fh = 0, 0, math.Round(w * s.FillHover), h
+            x, y, fw, fh = 0, 0, math_Round(w * s.FillHover), h
         elseif (dir == TOP) then
-            x, y, fw, fh = 0, 0, w, math.Round(h * s.FillHover)
+            x, y, fw, fh = 0, 0, w, math_Round(h * s.FillHover)
         elseif (dir == RIGHT) then
-            local prog = math.Round(w * s.FillHover)
+            local prog = math_Round(w * s.FillHover)
             x, y, fw, fh = w - prog, 0, prog, h
         elseif (dir == BOTTOM) then
-            local prog = math.Round(h * s.FillHover)
+            local prog = math_Round(h * s.FillHover)
             x, y, fw, fh = 0, h - prog, w, prog
         end
 
         if (mat) then
-            surface.SetMaterial(mat)
-            surface.DrawTexturedRect(x, y, fw, fh)
+            surface_SetMaterial(mat)
+            surface_DrawTexturedRect(x, y, fw, fh)
         else
-            surface.DrawRect(x, y, fw, fh)
+            surface_DrawRect(x, y, fw, fh)
         end
     end)
 end
@@ -370,86 +424,76 @@ classes.Background = function(pnl, col, rad, rtl, rtr, rbl, rbr)
     pnl:On("Paint", function(s, w, h)
         if (rad and rad > 0) then
             if (rtl ~= nil) then
-                draw.RoundedBoxEx(rad, 0, 0, w, h, col, rtl, rtr, rbl, rbr)
+                draw_RoundedBoxEx(rad, 0, 0, w, h, col, rtl, rtr, rbl, rbr)
             else
-                draw.RoundedBox(rad, 0, 0, w, h, col)
+                draw_RoundedBox(rad, 0, 0, w, h, col)
             end
         else
-            surface.SetDrawColor(col)
-            surface.DrawRect(0, 0, w, h)
+            surface_SetDrawColor(col)
+            surface_DrawRect(0, 0, w, h)
         end
     end)
 end
 
 classes.Material = function(pnl, mat, col)
-    col = col or Color(255, 255, 255)
+    col = col or color_white
 
     pnl:On("Paint", function(s, w, h)
-        surface.SetDrawColor(col)
-        surface.SetMaterial(mat)
-        surface.DrawTexturedRect(0, 0, w, h)
-    end)
-end
-
-classes.TiledMaterial = function(pnl, mat, tw, th, col)
-    col = col or Color(255, 255, 255, 255)
-
-    pnl:On("Paint", function(s, w, h)
-        surface.SetMaterial(mat)
-        surface.SetDrawColor(col)
-        surface.DrawTexturedRectUV(0, 0, w, h, 0, 0, w / tw, h / th)
+        surface_SetDrawColor(col)
+        surface_SetMaterial(mat)
+        surface_DrawTexturedRect(0, 0, w, h)
     end)
 end
 
 classes.Outline = function(pnl, col, width)
-    col = col or Color(255, 255, 255, 255)
+    col = col or color_white
     width = width or 1
 
     pnl:On("Paint", function(s, w, h)
-        surface.SetDrawColor(col)
+        surface_SetDrawColor(col)
 
         for i = 0, width - 1 do
-            surface.DrawOutlinedRect(0 + i, 0 + i, w - i * 2, h - i * 2)
+            surface_DrawOutlinedRect(0 + i, 0 + i, w - i * 2, h - i * 2)
         end
     end)
 end
 
 classes.LinedCorners = function(pnl, col, len)
-    col = col or Color(255, 255, 255, 255)
+    col = col or color_white
     len = len or 15
 
     pnl:On("Paint", function(s, w, h)
-        surface.SetDrawColor(col)
-        surface.DrawRect(0, 0, len, 1)
-        surface.DrawRect(0, 1, 1, len - 1)
-        surface.DrawRect(w - len, h - 1, len, 1)
-        surface.DrawRect(w - 1, h - len, 1, len - 1)
+        surface_SetDrawColor(col)
+        surface_DrawRect(0, 0, len, 1)
+        surface_DrawRect(0, 1, 1, len - 1)
+        surface_DrawRect(w - len, h - 1, len, 1)
+        surface_DrawRect(w - 1, h - len, 1, len - 1)
     end)
 end
 
 classes.SideBlock = function(pnl, col, size, side)
-    col = col or Color(255, 255, 255, 255)
+    col = col or color_white
     size = size or 3
     side = side or LEFT
 
     pnl:On("Paint", function(s, w, h)
-        surface.SetDrawColor(col)
+        surface_SetDrawColor(col)
 
         if (side == LEFT) then
-            surface.DrawRect(0, 0, size, h)
+            surface_DrawRect(0, 0, size, h)
         elseif (side == TOP) then
-            surface.DrawRect(0, 0, w, size)
+            surface_DrawRect(0, 0, w, size)
         elseif (side == RIGHT) then
-            surface.DrawRect(w - size, 0, size, h)
+            surface_DrawRect(w - size, 0, size, h)
         elseif (side == BOTTOM) then
-            surface.DrawRect(0, h - size, w, size)
+            surface_DrawRect(0, h - size, w, size)
         end
     end)
 end
 
 classes.Text = function(pnl, text, font, col, alignment, ox, oy, paint)
     font = font or "Trebuchet24"
-    col = col or Color(255, 255, 255, 255)
+    col = col or color_white
     alignment = alignment or TEXT_ALIGN_CENTER
     ox = ox or 0
     oy = oy or 0
@@ -468,25 +512,25 @@ classes.Text = function(pnl, text, font, col, alignment, ox, oy, paint)
                 x = w
             end
 
-            draw.SimpleText(text, font, x + ox, h / 2 + oy, col, alignment, TEXT_ALIGN_CENTER)
+            draw_SimpleText(text, font, x + ox, h / 2 + oy, col, alignment, TEXT_ALIGN_CENTER)
         end)
     end
 end
 
 classes.DualText = function(pnl, toptext, topfont, topcol, bottomtext, bottomfont, bottomcol, alignment, centerSpacing, xaliment)
     topfont = topfont or "Trebuchet24"
-    topcol = topcol or Color(0, 127, 255, 255)
+    topcol = topcol or color_white
     bottomfont = bottomfont or "Trebuchet18"
-    bottomcol = bottomcol or Color(255, 255, 255, 255)
+    bottomcol = bottomcol or color_white
     alignment = alignment or TEXT_ALIGN_CENTER
     centerSpacing = centerSpacing or 0
     xaliment = xaliment or 0
 
     pnl:On("Paint", function(s, w, h)
-        surface.SetFont(topfont)
-        local tw, th = surface.GetTextSize(toptext)
-        surface.SetFont(bottomfont)
-        local bw, bh = surface.GetTextSize(bottomtext)
+        surface_SetFont(topfont)
+        local tw, th = surface_GetTextSize(toptext)
+        surface_SetFont(bottomfont)
+        local bw, bh = surface_GetTextSize(bottomtext)
         local y1, y2 = h / 2 - bh / 2, h / 2 + th / 2
         local x
 
@@ -498,8 +542,8 @@ classes.DualText = function(pnl, toptext, topfont, topcol, bottomtext, bottomfon
             x = w
         end
 
-        draw.SimpleText(toptext, topfont, x + xaliment, y1 + centerSpacing, topcol, alignment, TEXT_ALIGN_CENTER)
-        draw.SimpleText(bottomtext, bottomfont, x + xaliment, y2 - centerSpacing, bottomcol, alignment, TEXT_ALIGN_CENTER)
+        draw_SimpleText(toptext, topfont, x + xaliment, y1 + centerSpacing, topcol, alignment, TEXT_ALIGN_CENTER)
+        draw_SimpleText(bottomtext, bottomfont, x + xaliment, y2 - centerSpacing, bottomcol, alignment, TEXT_ALIGN_CENTER)
     end)
 end
 
@@ -507,27 +551,27 @@ classes.Blur = function(pnl, amount)
     pnl:On("Paint", function(s, w, h)
         local x, y = s:LocalToScreen(0, 0)
         local scrW, scrH = ScrW(), ScrH()
-        surface.SetDrawColor(255, 255, 255)
-        surface.SetMaterial(blur)
+        surface_SetDrawColor(color_white)
+        surface_SetMaterial(blur)
 
         for i = 1, 3 do
             blur:SetFloat("$blur", (i / 3) * (amount or 8))
             blur:Recompute()
-            render.UpdateScreenEffectTexture()
-            surface.DrawTexturedRect(x * -1, y * -1, scrW, scrH)
+            render_UpdateScreenEffectTexture()
+            surface_DrawTexturedRect(x * -1, y * -1, scrW, scrH)
         end
     end)
 end
 
 classes.CircleClick = function(pnl, col, speed, trad)
-    col = col or Color(255, 255, 255, 50)
+    col = col or color_white
     speed = speed or 5
     pnl.Rad, pnl.Alpha, pnl.ClickX, pnl.ClickY = 0, 0, 0, 0
 
     pnl:On("Paint", function(s, w, h)
         if (s.Alpha >= 1) then
-            surface.SetDrawColor(ColorAlpha(col, s.Alpha))
-            draw.NoTexture()
+            surface_SetDrawColor(ColorAlpha(col, s.Alpha))
+            draw_NoTexture()
             drawCircle(s.ClickX, s.ClickY, s.Rad)
             s.Rad = Lerp(FrameTime() * speed, s.Rad, trad or w)
             s.Alpha = Lerp(FrameTime() * speed, s.Alpha, 0)
@@ -542,7 +586,7 @@ classes.CircleClick = function(pnl, col, speed, trad)
 end
 
 classes.CircleHover = function(pnl, col, speed, trad)
-    col = col or Color(255, 255, 255, 30)
+    col = col or color_white
     speed = speed or 6
     pnl.LastX, pnl.LastY = 0, 0
     pnl:SetupTransition("CircleHover", speed, GNIL.Ui.HoverFunc)
@@ -554,71 +598,71 @@ classes.CircleHover = function(pnl, col, speed, trad)
     end)
 
     pnl:On("PaintOver", function(s, w, h)
-        draw.NoTexture()
-        surface.SetDrawColor(ColorAlpha(col, col.a * s.CircleHover))
+        draw_NoTexture()
+        surface_SetDrawColor(ColorAlpha(col, col.a * s.CircleHover))
         drawCircle(s.LastX, s.LastY, s.CircleHover * (trad or w))
     end)
 end
 
 classes.SquareCheckbox = function(pnl, inner, outer, speed)
-    inner = inner or Color(0, 255, 0, 255)
-    outer = outer or Color(255, 255, 255, 255)
+    inner = inner or color_white
+    outer = outer or color_white
     speed = speed or 14
     pnl:SetupTransition("SquareCheckbox", speed, function(s) return s:GetChecked() end)
 
     pnl:On("Paint", function(s, w, h)
-        surface.SetDrawColor(outer)
-        surface.DrawRect(0, 0, w, h)
-        surface.SetDrawColor(inner)
-        surface.DrawOutlinedRect(0, 0, w, h)
+        surface_SetDrawColor(outer)
+        surface_DrawRect(0, 0, w, h)
+        surface_SetDrawColor(inner)
+        surface_DrawOutlinedRect(0, 0, w, h)
         local bw, bh = (w - 4) * s.SquareCheckbox, (h - 4) * s.SquareCheckbox
-        bw, bh = math.Round(bw), math.Round(bh)
-        surface.DrawRect(w / 2 - bw / 2, h / 2 - bh / 2, bw, bh)
+        bw, bh = math_Round(bw), math_Round(bh)
+        surface_DrawRect(w / 2 - bw / 2, h / 2 - bh / 2, bw, bh)
     end)
 end
 
 classes.CircleCheckbox = function(pnl, inner, outer, speed)
-    inner = inner or Color(0, 255, 0, 255)
-    outer = outer or Color(255, 255, 255, 255)
+    inner = inner or color_white
+    outer = outer or color_white
     speed = speed or 14
     pnl:SetupTransition("CircleCheckbox", speed, function(s) return s:GetChecked() end)
 
     pnl:On("Paint", function(s, w, h)
-        draw.NoTexture()
-        surface.SetDrawColor(outer)
+        draw_NoTexture()
+        surface_SetDrawColor(outer)
         drawCircle(w / 2, h / 2, w / 2 - 1)
-        surface.SetDrawColor(inner)
+        surface_SetDrawColor(inner)
         drawCircle(w / 2, h / 2, w * s.CircleCheckbox / 2)
     end)
 end
 
 classes.AvatarMask = function(pnl, mask)
-    pnl.Avatar = vgui.Create("AvatarImage", pnl)
+    pnl.Avatar = vgui_Create("AvatarImage", pnl)
     pnl.Avatar:SetPaintedManually(true)
 
     pnl.Paint = function(s, w, h)
-        render.ClearStencil()
-        render.SetStencilEnable(true)
-        render.SetStencilWriteMask(1)
-        render.SetStencilTestMask(1)
-        render.SetStencilFailOperation(STENCILOPERATION_REPLACE)
-        render.SetStencilPassOperation(STENCILOPERATION_ZERO)
-        render.SetStencilZFailOperation(STENCILOPERATION_ZERO)
-        render.SetStencilCompareFunction(STENCILCOMPARISONFUNCTION_NEVER)
-        render.SetStencilReferenceValue(1)
-        draw.NoTexture()
-        surface.SetDrawColor(255, 255, 255, 255)
+        render_ClearStencil()
+        render_SetStencilEnable(true)
+        render_SetStencilWriteMask(1)
+        render_SetStencilTestMask(1)
+        render_SetStencilFailOperation(STENCILOPERATION_REPLACE)
+        render_SetStencilPassOperation(STENCILOPERATION_ZERO)
+        render_SetStencilZFailOperation(STENCILOPERATION_ZERO)
+        render_SetStencilCompareFunction(STENCILCOMPARISONFUNCTION_NEVER)
+        render_SetStencilReferenceValue(1)
+        draw_NoTexture()
+        surface_SetDrawColor(color_white)
         mask(s, w, h)
-        render.SetStencilFailOperation(STENCILOPERATION_ZERO)
-        render.SetStencilPassOperation(STENCILOPERATION_REPLACE)
-        render.SetStencilZFailOperation(STENCILOPERATION_ZERO)
-        render.SetStencilCompareFunction(STENCILCOMPARISONFUNCTION_EQUAL)
-        render.SetStencilReferenceValue(1)
+        render_SetStencilFailOperation(STENCILOPERATION_ZERO)
+        render_SetStencilPassOperation(STENCILOPERATION_REPLACE)
+        render_SetStencilZFailOperation(STENCILOPERATION_ZERO)
+        render_SetStencilCompareFunction(STENCILCOMPARISONFUNCTION_EQUAL)
+        render_SetStencilReferenceValue(1)
         s.Avatar:SetPaintedManually(false)
         s.Avatar:PaintManual()
         s.Avatar:SetPaintedManually(true)
-        render.SetStencilEnable(false)
-        render.ClearStencil()
+        render_SetStencilEnable(false)
+        render_ClearStencil()
     end
 
     pnl.PerformLayout = function(s)
@@ -641,36 +685,36 @@ classes.CircleAvatar = function(pnl)
 end
 
 classes.Circle = function(pnl, col)
-    col = col or Color(255, 255, 255, 255)
+    col = col or color_white
 
     pnl:On("Paint", function(s, w, h)
-        draw.NoTexture()
-        surface.SetDrawColor(col)
-        drawCircle(w / 2, h / 2, math.min(w, h) / 2)
+        draw_NoTexture()
+        surface_SetDrawColor(col)
+        drawCircle(w / 2, h / 2, math_min(w, h) / 2)
     end)
 end
 
 classes.CircleFadeHover = function(pnl, col, speed)
-    col = col or Color(255, 255, 255, 30)
+    col = col or color_white
     speed = speed or 6
     pnl:SetupTransition("CircleFadeHover", speed, GNIL.Ui.HoverFunc)
 
     pnl:On("Paint", function(s, w, h)
-        draw.NoTexture()
-        surface.SetDrawColor(ColorAlpha(col, col.a * s.CircleFadeHover))
-        drawCircle(w / 2, h / 2, math.min(w, h) / 2)
+        draw_NoTexture()
+        surface_SetDrawColor(ColorAlpha(col, col.a * s.CircleFadeHover))
+        drawCircle(w / 2, h / 2, math_min(w, h) / 2)
     end)
 end
 
 classes.CircleExpandHover = function(pnl, col, speed)
-    col = col or Color(255, 255, 255, 30)
+    col = col or color_white
     speed = speed or 6
     pnl:SetupTransition("CircleExpandHover", speed, GNIL.Ui.HoverFunc)
 
     pnl:On("Paint", function(s, w, h)
-        local rad = math.Round(w / 2 * s.CircleExpandHover)
-        draw.NoTexture()
-        surface.SetDrawColor(ColorAlpha(col, col.a * s.CircleExpandHover))
+        local rad = math_Round(w / 2 * s.CircleExpandHover)
+        draw_NoTexture()
+        surface_SetDrawColor(ColorAlpha(col, col.a * s.CircleExpandHover))
         drawCircle(w / 2, h / 2, rad)
     end)
 end
@@ -680,34 +724,34 @@ classes.Gradient = function(pnl, col, dir, frac, op)
     frac = frac or 1
 
     pnl:On("Paint", function(s, w, h)
-        surface.SetDrawColor(col)
+        surface_SetDrawColor(col)
         local x, y, gw, gh
 
         if (dir == LEFT) then
-            local prog = math.Round(w * frac)
+            local prog = math_Round(w * frac)
             x, y, gw, gh = 0, 0, prog, h
-            surface.SetMaterial(op and gradRight or gradLeft)
+            surface_SetMaterial(op and gradRight or gradLeft)
         elseif (dir == TOP) then
-            local prog = math.Round(h * frac)
+            local prog = math_Round(h * frac)
             x, y, gw, gh = 0, 0, w, prog
-            surface.SetMaterial(op and gradDown or gradUp)
+            surface_SetMaterial(op and gradDown or gradUp)
         elseif (dir == RIGHT) then
-            local prog = math.Round(w * frac)
+            local prog = math_Round(w * frac)
             x, y, gw, gh = w - prog, 0, prog, h
-            surface.SetMaterial(op and gradLeft or gradRight)
+            surface_SetMaterial(op and gradLeft or gradRight)
         elseif (dir == BOTTOM) then
-            local prog = math.Round(h * frac)
+            local prog = math_Round(h * frac)
             x, y, gw, gh = 0, h - prog, w, prog
-            surface.SetMaterial(op and gradUp or gradDown)
+            surface_SetMaterial(op and gradUp or gradDown)
         end
 
-        surface.DrawTexturedRect(x, y, gw, gh)
+        surface_DrawTexturedRect(x, y, gw, gh)
     end)
 end
 
 classes.SetOpenURL = function(pnl, url)
     pnl:On("DoClick", function()
-        gui.OpenURL(url)
+        gui_OpenURL(url)
     end)
 end
 
@@ -715,9 +759,9 @@ classes.NetMessage = function(pnl, name, data)
     data = data or function() end
 
     pnl:On("DoClick", function()
-        net.Start(name)
+        net_Start(name)
         data(pnl)
-        net.SendToServer()
+        net_SendToServer()
     end)
 end
 
@@ -823,6 +867,4 @@ function meta:GNIL()
     return self
 end
 
-GNIL.Ui.Create = function(...)
-    return vgui.Create(...):GNIL()
-end
+GNIL.Ui.Create = function(...) return vgui_Create(...):GNIL() end
