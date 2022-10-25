@@ -74,7 +74,7 @@ function GNIL.Utils.IncludeDirectory(path, ignoredFiles)
     GNIL.log("Including directory '" .. path .. "'", "debug")
 
     for _, f in ipairs(file.Find(path .. "/*.lua", "LUA")) do
-        if ignoredFiles != nil and table.HasValue(ignoredFiles, f) then continue end
+        if (ignoredFiles != nil and istable(ignoredFiles)) and table.HasValue(ignoredFiles, f) then continue end
 
         local realm = GNIL.Utils.GetFilepathRealmPrefix(f)
         if realm == nil then continue end

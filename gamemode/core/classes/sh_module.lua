@@ -14,7 +14,7 @@ function Module:Initialize(name)
     self.hooks = {}
 
     self._added_delayed = false
-    self.delayed_autoload = {
+    self._delayed_autoload = {
         {}, -- files
         {}  -- directories
     }
@@ -63,6 +63,12 @@ function Module:GetDependencies() return self.dependencies and table.GetKeys(sel
 -- ommitted or false, the required module is immidiately loaded,
 -- and fully executed before continuing with the current module. 
 function Module:Require(requirement, delayed)
+
+    -- Retard dectection (raptor is a dumbass) just incase someone
+    -- tries to use this as Requires and they give a table despite
+    -- me making it very clear that theres a seperate function for it.
+    if istable(requirement) then self:Requires(requirement) return end
+
     if not GNIL.Modules.Exists(requirement) then self:log("Required module '" .. requirement .. "' is Missing/Invalid.", "error") end
     if self.dependencies == nil then self.dependencies = {} end
     self.dependencies[requirement] = true
@@ -74,10 +80,10 @@ function Module:Require(requirement, delayed)
 end
 
 -- Allow for multiple dependencies to be given at once.
-function Module:Requires(requirements, now)
+function Module:Requires(requirements, delayed)
     assert(not table.IsSequential(requirements), "Requirements should be given as a sequential array of module names.")
     for _, v in ipairs(requirements) do
-        if not self:Require(v, now) then return false end
+        if not self:Require(v, delayed) then return false end
     end
     return true
 end
@@ -89,7 +95,6 @@ function Module:RemoveHook(...) return GNIL.Hooks.RemoveHook(self._module_name, 
 function Module:GetHooks(...) return GNIL.Hooks.GetHooks(self._module_name, ...) end
 -------------------------
 
-
 -- Allow a module to include files or directories
 -- relative to its base. If the delayed argument
 -- is true then the include is processed with the
@@ -97,13 +102,13 @@ function Module:GetHooks(...) return GNIL.Hooks.GetHooks(self._module_name, ...)
 function Module:Include(path, delayed)
     local path = GNIL.Utils.ResolveGamemodePath("modules/" .. self._module_name .. "/" .. path)
     if not delayed then return GNIL.Utils.IncludeDirectory(path)
-    else self._added_delayed = true  self.delayed_autoload[1][path] = true end
+    else self._added_delayed = true  self._delayed_autoload[1][path] = true end
 end
 
 function Module:IncludeDirectory(directory, ignoredFiles, delayed)
     local path = GNIL.Utils.ResolveGamemodePath("modules/" .. self._module_name .. "/" .. directory)
     if not delayed then return GNIL.Utils.IncludeDirectory(path, ignoredFiles)    
-    else self._added_delayed = true self.delayed_autoload[2][path] = true end
+    else self._added_delayed = true self._delayed_autoload[2][path] = true end
 end
 -------------------------
 

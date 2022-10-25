@@ -3,6 +3,8 @@ GNIL.Modules = GNIL.Modules or {
     ["_cached_modules"] = {}
 }
 
+GNIL.Modules["_loaded"] = {} -- REMOVE THIS
+
 -- A helper function for the shared gamemode file to use when loading
 -- all modules at once. It constantly checks to ensure that the module
 -- isnt loaded incase of dependency loading.
