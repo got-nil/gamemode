@@ -1,4 +1,5 @@
 GNIL = GNIL or {}
+GNIL._VERSION = "pre-release"
 
 -- The table order is randomised when shown to stop anyone from crying.
 -- If your name isn't here, then you haven't made anything yet. If you
@@ -21,7 +22,7 @@ if not GNIL.GamemodeFolderName then
 end
 
 -- Core gamemode information.
-GM.Version = "1.0.0"
+GM.Version = GNIL._VERSION
 GM.Name = "DarkRP"
 GM.Author = "GotNil Development Team & FPtje Falco et al."
 
