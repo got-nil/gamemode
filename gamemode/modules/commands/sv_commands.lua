@@ -1,3 +1,4 @@
+local MODULE = MODULE
 
 -- Cache all hashed names
 GNIL.Commands.HashedNames = {}
@@ -113,6 +114,19 @@ function GNIL.Commands.Create(name, callback)
     assert(isfunction(callback), "The callback argument must be a function")
 
     return GNIL.Commands.OOP:New(name, callback)
+end
+
+-- Another method of creating commands. Accepts an associative table, where each key
+-- is a named argument (see GNIL.Commands.Add parameters).
+function GNIL.Commands.AddFromTable(tbl)
+    assert(istable(tbl) and not table.IsSequential(tbl), "The provided value must be an associative table")
+    return GNIL.Commands.Add(
+        tbl["name"],
+        tbl["callback"],
+        tbl["arguments"],
+        tbl["access_check"],
+        tbl["public"]
+    )
 end
 
 -- Ensure that the arguments 

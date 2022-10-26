@@ -1,6 +1,8 @@
 
 -- Recieve serverside commands manifest and store on the client, allowing
 -- for basic autocomplete to be handled as the client knows the argument structure.
+-- Default state is nil meaning that the server has not sent anything yet. Even when
+-- the server explictly sends no commands, this just becomes an empty table.
 GNIL.Commands["_r"] = nil
 
 net.Receive("gnil_cmds", function()

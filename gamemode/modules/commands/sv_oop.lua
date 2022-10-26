@@ -23,7 +23,7 @@ function GNCommand:SetAccess(...) return self:SetAccessCheck(...) end
 
 -- Add an argument to existing arguments set
 function GNCommand:AddArgument(enum)
-    assert(isnumber(enum) and 3 > enum and enum > 0)
+    assert(isnumber(enum) and GNIL.Commands.Arguments.Types[tostring(enum)], "Arguments must be a GNIL_CMD_ARGUMENT_ enum")
     if not self._data["arguments"] then self._data["arguments"] = {} end
     table.insert(self._data["arguments"], enum)
     return self

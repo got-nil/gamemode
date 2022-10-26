@@ -33,7 +33,7 @@ net.Receive("gnil_cmds", function(_, ply)
         for i = 2, #args do
 
             -- Convert the provided argument with the defined type id.
-            local converted = GNIL.Commands.Arguments.Convert(args[i], command[2][i-1])
+            local converted = GNIL.Commands.Arguments.Convert(args[i], command[2][i-1], ply)
             if converted == nil then
                 ply:log("Couldn't validate provided argument #" .. i, "error")
                 return
@@ -41,7 +41,7 @@ net.Receive("gnil_cmds", function(_, ply)
             table.insert(arguments, converted)
         end
     end
-    
+
     -- Finally, call the command callback!
     command[1](ply, arguments)
 end)

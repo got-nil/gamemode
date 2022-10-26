@@ -1,6 +1,6 @@
 GNIL.Commands.Arguments = GNIL.Commands.Arguments or {}
 
--- The regex for this function was very kindly donated by
+-- The pattern for this function was very kindly donated by
 -- VirtualRaptor#0001 as I am too retarded to make it myself.
 -- Even thought I'd move it into a shared file so the scumbags
 -- that eventually filesteal all our client stuff get to see it.
@@ -43,10 +43,10 @@ end
 
 -- Convert a provided input using the typeid validator/converter.
 -- Returns nil if invalid, or anything else if valid.
-function GNIL.Commands.Arguments.Convert(arg, typeid)
+function GNIL.Commands.Arguments.Convert(arg, typeid, ply)
     typeid = tostring(typeid)
     if not GNIL.Commands.Arguments.Types[typeid] then return nil end
-    return GNIL.Commands.Arguments.Types[typeid][1](arg)
+    return GNIL.Commands.Arguments.Types[typeid][1](arg, ply)
 end
 
 /*
@@ -80,7 +80,13 @@ local genericTypeNames = {
 
 local genericArguments = {
     [GNIL_CMD_ARGUMENT_PLAYER] = {
-        function(arg)
+        function(arg, ply)
+
+            -- If the argument provided is ^ then we should
+            -- return the calling player as a shortcut for
+            -- self referencing. This is common in admin systems.
+            if arg == "^" then return ply end
+
             for _, v in ipairs(player.GetAll()) do
                 if v:SteamID64() == arg then return v end
                 if v:SteamID() == arg then return v end
@@ -120,16 +126,14 @@ local genericArguments = {
             
             -- Validate that the provided argument looks like a vector
             -- then explode it and construct an actual vector pos from it.
+
+            -- Thankyou again to VirtualRaptor#0001 for this pattern.
+            local x, y, z = string.match(arg, "(%-?%d+%.*%d*)[,%s]%s-(%-?%d+%.*%d*)[,%s]%s-(%-?%d+%.*%d*)")
+            if x and y and z then return Vector(tonumber(x), tonumber(y), tonumber(z)) end
             return nil
         end,
-        function(arg, pos)
-            
-            -- Since these autocomplete functions only run
-            -- on the client, we can access the local player.
-            if pos == GNIL_CMD_ARGUMENT_VECTOR_VIEW then v = LocalPlayer():GetEyeTrace().HitPos
-            else v = LocalPlayer():GetPos() end
-
-            return tostring(v)
+        function(arg)
+            return {"\"" .. tostring(LocalPlayer():GetPos()) .. "\""}
         end
     }
 }
