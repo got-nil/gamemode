@@ -101,7 +101,7 @@ function Module:GetHooks(...) return GNIL.Hooks.GetHooks(self._module_name, ...)
 -- rest of the files.
 function Module:Include(path, delayed)
     local path = GNIL.Utils.ResolveGamemodePath("modules/" .. self._module_name .. "/" .. path)
-    if not delayed then return GNIL.Utils.IncludeDirectory(path)
+    if not delayed then return GNIL.Utils.Include(path)
     else self._added_delayed = true  self._delayed_autoload[1][path] = true end
 end
 
