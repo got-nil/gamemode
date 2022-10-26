@@ -116,8 +116,9 @@ end
 function Module:log(log, logtype) GNIL.log(log, logtype, self._module_name) end
 
 -- Class hook functions
-function Module:OnUnload() end
-function Module:OnLoad() end 
+function Module:OnUnload() end        -- Called when the module is being unloaded.
+function Module:OnLoad() end          -- Called while the module is being loaded.
+function Module:OnLoadFinished() end  -- Called once the module has finished loading everything.
 
 -- Middleclass allows us to directly overwrite the default tostring handler,
 -- allowing us to insert the module name and author if one is defined.
