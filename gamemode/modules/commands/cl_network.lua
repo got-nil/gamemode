@@ -6,10 +6,15 @@
 GNIL.Commands["_r"] = nil
 
 net.Receive("gnil_cmds", function()
-    local commands = {}
+    local commands, discovered = {}, {}
+
+    -- The server will send a "flush" signal to tell the client that
+    -- it should fully reset its command registry and use the provided
+    -- commands as the new ones instead of just adding to it.
+    local flush = net.ReadBool()
 
     -- Check if we're actually recieving any commands.
-    if net.ReadBit() == 0 then
+    if not net.ReadBool() then
         GNIL.log("The server sent no commands", "debug")
         GNIL.Commands["_r"] = {}
         return
@@ -26,7 +31,7 @@ net.Receive("gnil_cmds", function()
         -- for it.
         if command_plaintext then
             new_hash = util.SHA256(command_hash)
-            GNIL.Commands.DiscoveredCommands[command_hash] = new_hash
+            discovered[command_hash] = new_hash
             GNIL.log("Discovered plaintext command '" .. command_hash .. "'", "debug")
         end
 
@@ -42,9 +47,19 @@ net.Receive("gnil_cmds", function()
 
         commands[command_plaintext and new_hash or command_hash] = command_arguments
     end
-    GNIL.log("Successfully synchronised " .. command_count .. " commands.", "debug")
-    
-    -- Set the client commands registry to the gathered command data.
-    if GNIL.Commands["_r"] == nil then GNIL.Commands["_r"] = {} end
-    for k, v in pairs(commands) do GNIL.Commands["_r"][k] = v end
+    GNIL.log("Successfully synchronised " .. command_count .. " commands. " .. (flush and "Flushing registry" or "Appending to registry") .. ".", "debug")
+
+    if flush then
+        GNIL.Commands["_r"] = commands
+        GNIL.Commands.DiscoveredCommands = {}
+    else
+        if GNIL.Commands["_r"] == nil then GNIL.Commands["_r"] = {} end
+        for k, v in pairs(commands) do GNIL.Commands["_r"][k] = v end
+    end
+
+    -- Finally, if there are any discovered commands
+    -- (public commands) we should add them here (after flush).
+    for k, v in pairs(discovered) do
+        GNIL.Commands.DiscoveredCommands[k] = v
+    end
 end)

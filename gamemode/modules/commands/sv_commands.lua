@@ -11,9 +11,13 @@ end
 
 -- The network structure will remain the same, however eventually all the
 -- net code will be replaced with the GNIL net lib once I get around to it.
-
 util.AddNetworkString("gnil_cmds")
-local function sendPlayerCommandStructure(ply, command_name)
+
+-- The "flush" argument determines if the client should completely reset their
+-- command registry when recieving this command structure. Therefore it should
+-- only be used when broadcasting all commands to invalidate previously stored
+-- commands (useful for rank changes etc).
+local function sendPlayerCommandStructure(ply, command_name, flush)
     if ply == nil then return end
     
     -- Change the command_pool depending on if a command_name was provided.
@@ -34,15 +38,16 @@ local function sendPlayerCommandStructure(ply, command_name)
     end
 
     net.Start("gnil_cmds") -- Start the net message
-        
+    net.WriteBool(isbool(flush) and false or flush) -- Send the registry flush signal
+    
     -- If there aren't any commands collected, then there either no defined commands or
     -- the user doesn't have access to any of the commands to begin with. We should still
     -- network this to the client, essentially informing them that they have access to no
     -- commands so it doesnt look like they just never recieved any commands to begin with.
     if command_arguments == nil then
-        net.WriteBit(0) -- Literally tell the player they're getting nothing.
+        net.WriteBool(false) -- Literally tell the player they're getting nothing.
     else
-        net.WriteBit(1) -- Signify that commands are actually going to be sent
+        net.WriteBool(true) -- Signify that commands are actually going to be sent
         net.WriteUInt(#table.GetKeys(command_arguments), 10) -- The amount of commands that will be sent
         
         for name, data in pairs(command_arguments) do
@@ -67,10 +72,11 @@ end
 -- Send the command structure to all connected clients.
 -- Also allows for specific commands to be sent to a client
 -- instead of having to resend all of them (used for late commands).
-local function broadcastCommandsStructure(command_name)
-    GNIL.log("Broadcasting commands structure to clients.", "debug")
+local function broadcastCommandsStructure(command_name, flush)
+    if flush == nil then flush = true end
+    GNIL.log("Broadcasting commands structure to clients. " .. (flush and "Flushing registries." or "Appending to registries."), "debug")
     for _, v in ipairs(player.GetAll()) do
-        sendPlayerCommandStructure(v, command_name)
+        sendPlayerCommandStructure(v, command_name, flush)
     end
 end
 
@@ -164,7 +170,7 @@ function GNIL.Commands.Add(name, callback, arguments, access_check, public)
     -- initialised and sent the original command set (delayed command setup).
     if SHOULD_BROADCAST_NEW_COMMANDS then
         GNIL.log("Broadcasting newly created command '" .. name .. "' structure to clients. For optimisation commands should be added before server initialization.", "warning")
-        broadcastCommandsStructure(name)
+        broadcastCommandsStructure(name, false)
     end
 
     return true
@@ -181,3 +187,24 @@ if _broadcastLuaRefresh then
 else
     _broadcastLuaRefresh = true
 end
+
+/*
+
+    When a players usergroup is changed, we should send the
+    command structure back to them, ensuring that it flushes
+    their command registry/discovered commands.
+
+    This forces the server to re-run the access checks for the
+    player revoking/adding commands depending on their new
+    usergroup permissions.
+
+    Obviously the server still checks their access when they run
+    the command, this is just to hide/show commands they lost/gained
+    from the group change.
+
+*/
+
+hook.Add("CAMI.PlayerUsergroupChanged", "gnil_cmds_refresh", function(ply)
+    GNIL.log(ply:Nick() .. "'s usergroup has changed, re-sending command structure to them.", "debug")
+    sendPlayerCommandStructure(ply, nil, true) -- no specific command, flush
+end)
