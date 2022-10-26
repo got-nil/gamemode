@@ -90,8 +90,6 @@ function GNIL.Commands.Process(ply, _, args, argstr)
     local c = GNIL.Commands.GetCommandArgumentsByPlaintext(args[1])
     if c == nil then GNIL.log("The command '" .. args[1] .. "' is unrecognised by the client.", "error") return end
 
-    GNIL.log("Sending!")
-
     -- !!This net message is temporary!!
     net.Start("gnil_cmds")
         net.WriteString(argstr)

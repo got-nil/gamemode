@@ -9,12 +9,24 @@ function GNIL.Commands.IsSuitableName(name)
 end
 
 -- Parse an argument string into a table of arguments.
--- TODO: Make this support string quote encapsulation :(
+-- Shamelessly "borrowed" from SAMs admin system.
 function GNIL.Commands.Arguments.Parse(argstr)
-    local args = {}
-    for w in string.gmatch(argstr, "%S+") do
-        table.insert(args, w)
+    argstr = string.Trim(argstr)
+    local args, buffer, in_text = {}, "", false
+    for i = 1, #argstr do
+        local c = string.sub(argstr, i, i)
+        if c == "\"" then
+            in_text = not in_text
+            if buffer != "" or not in_text then
+                args[#args + 1], buffer = buffer, ""
+            end
+        elseif c != " " or in_text then
+            buffer = buffer .. c
+        elseif buffer != "" then
+            args[#args + 1], buffer = buffer, ""
+        end
     end
+    if buffer != "" then args[#args + 1] = buffer end    
     return args
 end
 

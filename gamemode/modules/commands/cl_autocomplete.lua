@@ -1,4 +1,4 @@
-GNIL.Commands.Autocomplete = {}
+GNIL.Commands.Autocomplete = GNIL.Commands.Autocomplete or {}
 
 function GNIL.Commands.AutocompleteType(typeid, argstr)
     if not GNIL.Commands.Arguments.Types[typeid] then return end
@@ -25,6 +25,7 @@ end
 function GNIL.Commands.Autocomplete.Process(cmd, strargs)
     if GNIL.Commands["_r"] == nil then return end
     local args = GNIL.Commands.Arguments.Parse(strargs)
+    GNIL.log(args)
 
     if #args >= 1 then GNIL.Commands.Discover(args[1]) end
     if 1 >= #args and not GNIL.Commands.DiscoveredCommands[args[1]] then
