@@ -1,4 +1,20 @@
 GNIL = GNIL or {}
+
+-- The table order is randomised when shown to stop anyone from crying.
+-- If your name isn't here, then you haven't made anything yet. If you
+-- have made something, feel free to submit a PR on the gamemode to edit.
+GNIL._CREDITS = {
+    ["morgverd"] = "Backend developer",
+    ["virtualraptor"] = "Backend developer and mapper",
+    ["professor"] = "UI/UX Lead"
+}
+
+-- Replace these once we get a website URL.
+GNIL.Website = "https://google.com"
+GNIL.WebsiteForums = "https://google.com"
+GNIL.WebsiteStore = "https://google.com"
+
+-- Store a global version of the folder name for luadev.
 if not GNIL.GamemodeFolderName then
     GNIL.GamemodeFolderName = GM.FolderName
     GNIL.GamemodeBasePath = GM.FolderName .. "/gamemode"
