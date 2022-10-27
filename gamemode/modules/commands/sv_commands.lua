@@ -38,7 +38,7 @@ local function sendPlayerCommandStructure(ply, command_name, flush)
     end
 
     net.Start("gnil_cmds") -- Start the net message
-    net.WriteBool(isbool(flush) and false or flush) -- Send the registry flush signal
+    net.WriteBool(isbool(flush) and flush != false and flush or false) -- Send the registry flush signal
     
     -- If there aren't any commands collected, then there either no defined commands or
     -- the user doesn't have access to any of the commands to begin with. We should still
