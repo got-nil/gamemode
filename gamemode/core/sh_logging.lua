@@ -25,6 +25,26 @@ function GNIL.Logging.Log(log, logtype, prefix)
     Msg("-> " .. (istable(log) and util.TableToJSON(log) or tostring(log)) .. "\n")
 end
 
+-- Send a log directly to a player. When using with the player metatable
+-- you can send logs to a player as simply as ply:log(...)
+function GNIL.Logging.LogToPlayer(ply, log, logtype)
+
+    -- !!!THIS IS TEMPORARY UNTIL I MAKE MY NET THING!!!!
+    net.Start("gnil_log")
+        net.WriteString(log)
+        net.WriteString(logtype or "")
+    net.Send(ply)
+end
+
+-- !!!THIS IS TEMPORARY UNTIL I MAKE MY NET THING!!!!
+if CLIENT then
+    net.Receive("gnil_log", function()
+        GNIL.Logging.Log(net.ReadString(), net.ReadString())
+    end)
+else    
+    util.AddNetworkString("gnil_log")    
+end
+
 -- This is basically the only exception for the
 -- no functions on base const rule. 
 GNIL.log = GNIL.Logging.Log

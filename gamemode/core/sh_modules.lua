@@ -121,6 +121,11 @@ function GNIL.Modules.Load(name, _dependency_chain)
     end
     GNIL.Modules._loaded[name] = true
 
+    -- Once everything has finished loading, we should call the OnLoadFinished hook function.
+    -- !!!EVENTUALLY ADD OUR HOOK THING IF WE MAKE ONE!!!
+    hook.Run("GNIL.Modules.Loaded", name, moduleInstance)
+    moduleInstance:OnLoadFinished()
+
     -- Once finished, restore the MODULE const to the previous, or nil.
     -- Allows other modules to load modules without losing their const.
     _G["MODULE"] = lastModule
