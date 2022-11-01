@@ -2,7 +2,7 @@ GNIL.Hooks = GNIL.Hooks or {
     ["_hooks"] = {}
 }
 
-local function _runHookFunction(eventName, ...)
+local function _runHookFunctions(eventName, ...)
     local callbacks = GNIL.Hooks["_hooks"][eventName]
     if callbacks == nil then return end
 
