@@ -7,7 +7,7 @@ local function _runHookFunctions(eventName, ...)
     if callbacks == nil then return end
 
     for ident, callback in pairs(callbacks) do
-        success, msg = pcall(callback, ...)
+        local success, msg = pcall(callback, ...)
         if !success then print("Hook for \"" .. eventName .. "\" with identifier \"" .. ident .. "\" caused the following error:"); print(msg) end
 
         if msg != nil then return msg end
