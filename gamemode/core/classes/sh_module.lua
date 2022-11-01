@@ -88,9 +88,9 @@ function Module:Requires(requirements, delayed)
     return true
 end
 
-function Module:AddHook(eventName, hookIdentifier, callback) return GNIL.Hooks.Add(self._module_name, eventName, hookIdentifier, callback) end
-function Module:RemoveHook(eventName, hookIdentifier) return GNIL.Hooks.RemoveHook(self._module_name, eventName, hookIdentifier) end
-function Module:GetHooks(eventName) return GNIL.Hooks.GetHooks(self._module_name, eventName) end
+function Module:AddHook(eventName, hookIdentifier, callback) return GNIL.Hooks.Add(self._module_name .. "." .. eventName, hookIdentifier, callback) end
+function Module:RemoveHook(eventName, hookIdentifier) return GNIL.Hooks.RemoveHook(self._module_name .. "." .. eventName, hookIdentifier) end
+function Module:GetHooks(eventName) return GNIL.Hooks.GetHooks(eventName, self._module_name) end
 
 -- Allow a module to include files or directories
 -- relative to its base. If the delayed argument

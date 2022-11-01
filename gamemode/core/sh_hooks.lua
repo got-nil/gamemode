@@ -14,7 +14,5 @@ local function _runHookFunctions(eventName, ...)
     end
 end
 
-function GNIL.Hooks.Add(moduleName, eventName, hookIdentifier, callback)
-    -- TODO:
-    -- Actually make this and the remove function
+function GNIL.Hooks.Add(eventName, hookIdentifier, callback)
 end
