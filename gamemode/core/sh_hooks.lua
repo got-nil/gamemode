@@ -1,11 +1,5 @@
 GNIL.Hooks = GNIL.Hooks or {
-    ["_hooks"] = {
-        ["test"] = {
-            ["test_func"] = function(test)
-                return a[1]
-            end
-        }
-    }
+    ["_hooks"] = {}
 }
 
 local function _runHookFunction(eventName, ...)
@@ -16,8 +10,7 @@ local function _runHookFunction(eventName, ...)
         success, msg = pcall(callback, ...)
         if !success then print("Hook for \"" .. eventName .. "\" with identifier \"" .. ident .. "\" caused the following error:"); print(msg) end
 
-        -- TODO:
-        -- Call function, handle returned values (as base hooks do, return first value)
+        if msg != nil then return msg end
     end
 end
 
