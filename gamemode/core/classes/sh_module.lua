@@ -18,6 +18,8 @@ function Module:Initialize(name)
         {}, -- files
         {}  -- directories
     }
+
+    self._included_files = {}
 end
 
 -- Simply call the modules utility with the current module name
@@ -101,8 +103,8 @@ function Module:GetHooks(...) return GNIL.Hooks.GetHooks(self._module_name, ...)
 -- rest of the files.
 function Module:Include(path, delayed)
     local path = GNIL.Utils.ResolveGamemodePath("modules/" .. self._module_name .. "/" .. path)
-    if not delayed then return GNIL.Utils.Include(path)
-    else self._added_delayed = true  self._delayed_autoload[1][path] = true end
+    if not delayed then self._included_files[path] = true return GNIL.Utils.Include(path)
+    else self._added_delayed = true self._delayed_autoload[1][path] = true end
 end
 
 function Module:IncludeDirectory(directory, ignoredFiles, delayed)
