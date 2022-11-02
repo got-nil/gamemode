@@ -80,8 +80,17 @@ local function broadcastCommandsStructure(command_name, flush)
     end
 end
 
+-- Get a flag value from command flags table, or return provided default
+-- if the given flag does not exist within the command (safe checking).
+local function getFlagFromCommand(command_data, flag, default)
+    if command_data[5] == false then return default end
+    if command_data[5][flag] then return command_data[5][flag]
+    else return default end
+end
+
 -- Generic access validator callbacks
 local genericAccessValidators = {
+    [GNIL_CMD_ACCESS_SERVER] = function(ply) return ply == nil end,
     [GNIL_CMD_ACCESS_ADMIN] = function(ply) return ply:IsAdmin() end,
     [GNIL_CMD_ACCESS_SUPERADMIN] = function(ply) return ply:IsSuperAdmin() end,
     [GNIL_CMD_ACCESS_DEVELOPER] = function(ply) return false end -- TODO
@@ -90,6 +99,14 @@ local genericAccessValidators = {
 function GNIL.Commands.CanAccess(command_name, ply)
     if not GNIL.Commands["_r"][command_name] then return end
     local command = GNIL.Commands["_r"][command_name]
+
+    -- If there is no player caller (server called command) then we should ensure the
+    -- command does not have the 'SERVER_EXECUTION_ALLOWED' flag disabled. If it doesn't
+    -- then we should bypass any additional validation.
+    if ply == nil then
+        local rtrn = getFlagFromCommand(command, "SERVER_EXECUTION_ALLOWED", true)
+        if isbool(rtrn) then return rtrn else return false end
+    end
 
     -- If the command doesnt not have an access validator we should just allow anyone
     -- and hope that the person who created the command has a good reason for doing so.
@@ -131,19 +148,21 @@ function GNIL.Commands.AddFromTable(tbl)
         tbl["callback"],
         tbl["arguments"],
         tbl["access_check"],
-        tbl["public"]
+        tbl["public"],
+        tbl["flags"]
     )
 end
 
 -- Ensure that the arguments 
 -- target should be a GNIL_COMMAND_ const value.
-function GNIL.Commands.Add(name, callback, arguments, access_check, public)
+function GNIL.Commands.Add(name, callback, arguments, access_check, public, flags)
     assert(GNIL.Commands.IsSuitableName(name), "The command name is unsuitable")
     assert(isfunction(callback), "The callback argument must be a function")
 
     assert(arguments == nil or istable(arguments), "The arguments table is optional, however it must either be nil or a structured arguments table")
     assert(access_check == nil or isnumber(access_check) or isfunction(access_check), "The access check callback is optional, however it must either be nil or a function callback (or a GNIL_CMD_ACCESS_ enum)")
     assert(public == nil or isbool(public), "The public argument is optional, however it must either be nil or boolean")
+    assert(flags == nil or (istable(flags) and not table.IsSequential(flags)), "The flags argument is optional, however is must be either nil or an associative table of flags.")
 
     -- Take an additional step to validate arguments if provided.
     if arguments then
@@ -155,6 +174,19 @@ function GNIL.Commands.Add(name, callback, arguments, access_check, public)
     if arguments == nil then arguments = false end
     if access_check == nil then access_check = false end
     if public == nil then public = false end
+    if flags == nil then flags = false end
+
+    -- Validate that the flags table only contains strings if provided.
+    -- Also convert all strings to uppercase for standardisation.
+    if flags then
+        local upper_flags = {}
+        for k, v in pairs(flags) do
+            assert(isstring(k), "All keys within the flags table must be strings.")
+            upper_flags[string.upper(k)] = v
+        end
+
+        flags = upper_flags
+    end
 
     -- Actually push the command
     name = string.lower(name)
@@ -163,7 +195,8 @@ function GNIL.Commands.Add(name, callback, arguments, access_check, public)
         callback,       -- Callback for command execution
         arguments,      -- Arguments the command uses
         access_check,   -- Access check callback (or GNIL_CMD_ARGUMENT_ enum)
-        public          -- Should the command name be sent as plaintext?
+        public,         -- Should the command name be sent as plaintext?
+        flags           -- A list of any additional flags applied to the command
     }
 
     -- If a new command has just been pushed, we should broadcast if we've already

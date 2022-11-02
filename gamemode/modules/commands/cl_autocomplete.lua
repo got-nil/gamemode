@@ -44,13 +44,7 @@ function GNIL.Commands.Autocomplete.Process(cmd, strargs)
         -- If the command exists and we're on the first argument then we should show a
         -- summary of the arguments data types.
         if (currentArgumentPos == 0) then
-
-            local typeSummary = {}
-            for _, argumentid in ipairs(cmd_arguments) do
-                table.insert(typeSummary, "<" .. string.lower(GNIL.Commands.Arguments.TypeNames[tostring(argumentid)]) .. ">")
-            end
-
-            return {"gnil " .. args[1] .. " " .. table.concat(typeSummary, " ")}
+            return {"gnil " .. args[1] .. " " .. GNIL.Commands.Arguments.GetArgumentsPreview(cmd_arguments)}
         end
 
         -- Ensure that the current argument doesn't exceed the max permitted arguments.

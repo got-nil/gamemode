@@ -8,6 +8,16 @@ function GNIL.Commands.IsSuitableName(name)
     return not string.match(name, "[^_%-.%a%d]") and true or false
 end
 
+-- Get a preview of the arguments types. Eg: <integer> <player> ...
+function GNIL.Commands.Arguments.GetArgumentsPreview(arguments)
+    if arguments == nil or not istable(arguments) then return "" end
+    local typeSummary = {}
+    for _, argumentid in ipairs(arguments) do
+        table.insert(typeSummary, "<" .. string.lower(GNIL.Commands.Arguments.TypeNames[tostring(argumentid)]) .. ">")
+    end
+    return table.concat(typeSummary, " ")
+end
+
 -- Parse an argument string into a table of arguments.
 -- Shamelessly "borrowed" from SAMs admin system.
 function GNIL.Commands.Arguments.Parse(argstr)

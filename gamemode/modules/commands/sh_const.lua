@@ -1,8 +1,9 @@
 
 -- Command access types
-GNIL_CMD_ACCESS_ADMIN = 0           -- Only allow administrator access
-GNIL_CMD_ACCESS_SUPERADMIN = 1      -- Superadmin rank only
-GNIL_CMD_ACCESS_DEVELOPER = 2       -- Verified GNIL developers only
+GNIL_CMD_ACCESS_SERVER = 0          -- Only allow the server to execute command
+GNIL_CMD_ACCESS_ADMIN = 1           -- Only allow administrator access
+GNIL_CMD_ACCESS_SUPERADMIN = 2      -- Superadmin rank only
+GNIL_CMD_ACCESS_DEVELOPER = 3       -- Verified GNIL developers only
 
 -- Command argument types
 GNIL_CMD_ARGUMENT_PLAYER = 1        -- The argument should be another player
