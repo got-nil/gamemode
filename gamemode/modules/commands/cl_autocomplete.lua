@@ -2,10 +2,10 @@ GNIL.Commands.Autocomplete = GNIL.Commands.Autocomplete or {}
 
 function GNIL.Commands.AutocompleteType(typeid, argstr)
     if not GNIL.Commands.Arguments.Types[typeid] then return end
-    
+
     -- Ensure that the argument type actually defines an autocomplete
     local argumentType = GNIL.Commands.Arguments.Types[typeid]
-    if 2 > #argumentType then return end 
+    if 2 > #argumentType then return end
 
     -- Run the argument autocomplete
     return argumentType[2](argstr)
@@ -28,13 +28,13 @@ function GNIL.Commands.Autocomplete.Process(cmd, strargs)
 
     if #args >= 1 then GNIL.Commands.Discover(args[1]) end
     if 1 >= #args and not GNIL.Commands.DiscoveredCommands[args[1]] then
-    
+
         -- If there are no/one argument we should just show the discovered commands
         return prefixStringsTable(table.GetKeys(GNIL.Commands.DiscoveredCommands), cmd .. " ")
 
     else
         local currentArgumentPos = #args - 1
-        
+
         -- If there are additional arguments after the command name, we should check to
         -- see if the first command argument has been discovered, and if it has registered
         -- arguments attached to it.

@@ -2,7 +2,7 @@
 
     Parse entities argument target syntax. Since we process the command
     serverside this entire file can be hidden away on the server too!
-    
+
     Command Syntax Format:
         Operator - The first character specifying the operation.
         Type - Each entity can either be a single or multiple.
@@ -21,7 +21,7 @@
       - Arguments: ?class_name, ?range (default: 500)
 
     @ - Direct selector (nil if not looking at entity)
-    
+
     * - World class lookup (using single returns the first found of class)
       - Arguments: class_name
 
@@ -45,7 +45,7 @@ GNIL.Commands.EntParser = GNIL.Commands.EntParser or {}
 local function basicArgumentParse(argstr)
     argstr = string.Trim(argstr)
     if string.find(argstr, ",") then return string.Explode(",", argstr)
-    else return {argstr} end    
+    else return {argstr} end
 end
 
 -- Get the classname from the argstr as the first argument. Also
@@ -78,7 +78,7 @@ local operators = {
             local rtrn_ents = {}
             for _, v in ipairs(found_ents) do
                 if v:GetClass() == arguments[1] then
-                    
+
                     -- If we're returning a single entity, we can just return immidiately
                     -- as one is found for maximum efficiency.
                     if single then return {v} end
@@ -151,7 +151,7 @@ function GNIL.Commands.EntParser.Execute(macro, ply)
             macro = operator .. "(" .. string.sub(macro, 2) .. ")"
 
         else
-           
+
             -- If the first bracket is valid, ensure that there is a closing bracket
             -- that matches the first in the above table. If there isn't then return
             -- nil as the syntax is just super invalid.
@@ -161,9 +161,9 @@ function GNIL.Commands.EntParser.Execute(macro, ply)
 
             if first_bracket == "[" then single = false end
         end
-    
+
     else
-        
+
         -- Default to single empty brackets if no arguments are provided.
         macro = operator .. "()"
     end
@@ -213,17 +213,17 @@ function GNIL.Commands.EntParser.Plus(remove_duplicates, argstr, ply)
             for _, v in ipairs(rtrn) do
                 local eid = tostring(v:EntIndex())
                 if used_ids[eid] then continue end
-                
+
                 used_ids[eid] = true
                 table.insert(new_rtrn, v)
             end
-            
+
             return new_rtrn
         end
         return rtrn
-        
+
     else
-       
+
         -- There is no seperator, and therefore the entire argstr
         -- can be treated simply as another macro that should be
         -- executed directly.

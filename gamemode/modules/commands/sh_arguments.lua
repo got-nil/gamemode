@@ -156,7 +156,7 @@ local genericArguments = {
                     ["here"] = function(ply) return ply:GetPos() end,
                     ["there"] = function(ply) return ply:GetEyeTrace().HitPos end
                 }
-                local arg = string.lower(arg)
+                arg = string.lower(arg)
 
                 -- If the argument matches a known alias, run the callback and return
                 -- its output directly.

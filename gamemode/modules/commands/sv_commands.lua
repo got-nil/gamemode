@@ -7,7 +7,7 @@ local function getHashedName(name)
         GNIL.Commands.HashedNames[name] = util.SHA256(name)
     end
     return GNIL.Commands.HashedNames[name]
-end 
+end
 
 -- The network structure will remain the same, however eventually all the
 -- net code will be replaced with the GNIL net lib once I get around to it.
@@ -19,7 +19,7 @@ util.AddNetworkString("gnil_cmds")
 -- commands (useful for rank changes etc).
 local function sendPlayerCommandStructure(ply, command_name, flush)
     if ply == nil then return end
-    
+
     -- Change the command_pool depending on if a command_name was provided.
     local command_pool = GNIL.Commands["_r"]
     if command_name then
@@ -39,7 +39,7 @@ local function sendPlayerCommandStructure(ply, command_name, flush)
 
     net.Start("gnil_cmds") -- Start the net message
     net.WriteBool(isbool(flush) and flush != false and flush or false) -- Send the registry flush signal
-    
+
     -- If there aren't any commands collected, then there either no defined commands or
     -- the user doesn't have access to any of the commands to begin with. We should still
     -- network this to the client, essentially informing them that they have access to no
@@ -49,10 +49,10 @@ local function sendPlayerCommandStructure(ply, command_name, flush)
     else
         net.WriteBool(true) -- Signify that commands are actually going to be sent
         net.WriteUInt(#table.GetKeys(command_arguments), 10) -- The amount of commands that will be sent
-        
+
         for name, data in pairs(command_arguments) do
             net.WriteBool(data[4]) -- Is the string below plaintext?
-            net.WriteString(data[4] and name or getHashedName(name)) -- The hashed command name 
+            net.WriteString(data[4] and name or getHashedName(name)) -- The hashed command name
             net.WriteBool(data[2] != false) -- Are there arguments defined
 
             -- Only write the argument types if the command actually has defined arguments.
@@ -62,7 +62,7 @@ local function sendPlayerCommandStructure(ply, command_name, flush)
                     net.WriteUInt(argument, 7) -- Write the argument type
                 end
             end
-        end    
+        end
     end
 
     -- Send the constucted message to the client.
@@ -113,10 +113,10 @@ function GNIL.Commands.CanAccess(command_name, ply)
     if command[3] == false then return true end
 
     if isfunction(command[3]) then
-        return command[3](ply)        
+        return command[3](ply)
     else
         if genericAccessValidators[command[3]] then
-            return genericAccessValidators[command[3]](ply)            
+            return genericAccessValidators[command[3]](ply)
         else
             GNIL.log("Invalid generic access validator used for command '" .. command_name .. "'", "warning")
             return false
@@ -153,7 +153,7 @@ function GNIL.Commands.AddFromTable(tbl)
     )
 end
 
--- Ensure that the arguments 
+-- Ensure that the arguments
 -- target should be a GNIL_COMMAND_ const value.
 function GNIL.Commands.Add(name, callback, arguments, access_check, public, flags)
     assert(GNIL.Commands.IsSuitableName(name), "The command name is unsuitable")

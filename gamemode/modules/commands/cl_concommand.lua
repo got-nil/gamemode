@@ -42,7 +42,7 @@ function GNIL.Commands.Process(ply, _, args, argstr)
 
     if #args == 0 then
         GNIL.Commands.print_logo()
-        
+
         local lines = {
             "GotNil is a GarrysMod development group started by a group of friends that wanted to make something cool.",
             "Commands will autocomplete once they've been 'discovered', however some commands may just default to being public.",
@@ -57,7 +57,7 @@ function GNIL.Commands.Process(ply, _, args, argstr)
                 MsgC(GNIL.Commands.logo_color, "    gnil " .. name)
 
                 -- If the discovered command has arguments, display them here.
-                local args = GNIL.Commands.GetCommandArgumentsByPlaintext(name)
+                args = GNIL.Commands.GetCommandArgumentsByPlaintext(name)
                 if args then
                     MsgC(GNIL.Commands.logo_color, " " .. GNIL.Commands.Arguments.GetArgumentsPreview(args))
                 end

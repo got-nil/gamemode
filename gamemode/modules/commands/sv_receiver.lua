@@ -16,7 +16,7 @@ concommand.Add(
             for k, v in pairs(GNIL.Commands["_r"]) do
                 if GNIL.Commands.CanAccess(k, nil) then
                     server_cmds[k] = v
-                end 
+                end
             end
 
             -- If there are no commands, show a little message.
@@ -48,7 +48,7 @@ concommand.Add(
 
 function GNIL.Commands.Receiver.Execute(argstr, ply)
     if argstr == "" then return end
-    
+
     -- Get the logger that should be used for errors. (Player logger if
     -- provided, or just the default log function for server executions.)
     local rlog = function(...)
@@ -59,7 +59,7 @@ function GNIL.Commands.Receiver.Execute(argstr, ply)
     -- Parse the raw argument string into its individual parts.
     local args = GNIL.Commands.Arguments.Parse(argstr)
     if #args == 0 then rlog("Invalid arguments string provided.", "error") return end
-    
+
     -- For "Security" the same error message should be used irregardless
     -- of validation issue. This means that a client cant use the different
     -- error messages to slowly map out the commands. (People can be dedicated).
@@ -79,7 +79,7 @@ function GNIL.Commands.Receiver.Execute(argstr, ply)
 
     -- Check to see if the player can access the command.
     if not GNIL.Commands.CanAccess(args[1], ply) then rlog(error_message_fn("Cannot access requested command."), "error") return end
-    
+
     -- At this point, we know that the client has sent a valid command, with the
     -- correct amount of arguments (if applicable) and they have access. We should
     -- now continue with validating each argument individually.
