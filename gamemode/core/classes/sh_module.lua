@@ -131,7 +131,7 @@ end
 -- With it, that specific event is remove only
 function Module:RemoveHook(eventName, hookIdentifier)
     local hooks = self._hooks[2][eventName]
-    assert(hooks ~= nil)
+    if hooks == nil then return end
 
     if hookIdentifier == nil then
         for ident, _ in pairs(hooks) do
@@ -141,7 +141,6 @@ function Module:RemoveHook(eventName, hookIdentifier)
         self._hooks[2][eventName] = nil
         self._hooks[1][eventName] = nil
     else
-        print("here")
         for ident, _ in pairs(hooks) do
             local s, e, match = string.find(ident, "%." .. hookIdentifier .. "$")
 
