@@ -92,8 +92,7 @@ function Module:Requires(requirements, delayed)
 end
 
 function Module:AddHook(eventName, idOrCallback, callback)
-    assert(callback == nil and isfunction(idOrCallback))
-    assert(callback ~= nil and isstring(idOrCallback) and isfunction(callback))
+    assert((callback == nil or isfunction(idOrCallback)) or (callback ~= nill and isstring(idOrCallback) and isfunction(callback)))
 
     local hookId = self._module_name .. "." .. eventName
     local hookCallback = callback or idOrCallback
