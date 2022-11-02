@@ -103,3 +103,33 @@ end)
 cmd:End()
 ```
 
+## Command Arguments
+Commands can choose to define existing argument types, or parse arguments themselves. Using existing types also allows for the command to be autocompleted in the console with helpful hint/suggestions etc.
+
+There are multiple argument types, however only the trickier ones are documented (since cba documenting the really simple ones you should be able to get that yourself).
+
+### GNIL_CMD_ARGUMENT_ENTITY_MULTI
+
+Each "command" must start with an operator (below) to specify its type. Arguments are then (usually) split using a `,` character. After the operator, there should be a type specifier. This is `[` for multiples, or `(` for singles (different operators may or may not support this, as shown in the below table) (there must also be a matching closing bracket).
+
+For example  `%[]` would return all entities  within the default range of the calling player, however using `%()` would specify that only a single entity should be returned (the closest).
+
+**Just to be even more confusing, Commands that omit a type specifying bracket default to single types. For example, `%prop_physics` will become `%(prop_physics)` meaning that it will return the closest `prop_physics`, Although for some operators that do not support singles, it will return multiple. For example, `*prop_physics` will return all `prop_physics` despite not having a clear multiple type bracket etc.**
+
+`Requires player` means that a player caller is required to use the operator. The only case where the caller is not a player is when the command is being ran from the server console.
+
+#### Command Operators
+|Operator|Requires Player|Supports Single|Arguments|Description|
+|--------|--------|------|---------|-----------|
+|`%`|Yes|Yes|`?class_name(str)`, `?range(int)`|Find all entities with classname in given range. If classname omitted, return all entities in range.|
+|`@`|Yes|Always|None|Return the entity that is being looked at by the calling player.|
+|`*`|No|No|`?class_name`|Returns all entities of given classname, or just all entities.|
+|`^`|Yes|Always|None|Returns the current calling player.|
+|`+`|No|No|`cmd1 cmd2 ...`|Combine the results of each macrocommand provided, seperated with `|` character. **Duplicate entities are removed**.
+|`;`|No|No|`cmd1 cmd2 ...`|The exact same as the `+` operator, however **duplicate entities are not removed**.
+
+#### Command Examples
+
+1. Targeting all `printer` entities within a range of `900`:  `%[printer, 900]`
+2. Targeting the entity you're looking at, and yourself: `+[^|@]`
+3. Targeting the nearest `sent_ball` and all `prop_vehicle_jeep` ents: `+[%sent_ball|*prop_vehicle_jeep]`

@@ -9,8 +9,10 @@ GNIL.Commands = GNIL.Commands or {
 
 -- Ensure that the constants are loaded before
 -- anything else since they're used a fair bit
--- as references in other files.
+-- as references in other files. Also load arguments
+-- as it defines some shared functions.
 MODULE:Include("sh_const.lua")
+MODULE:Include("sh_arguments.lua")
 
 if SERVER then
 
