@@ -1,14 +1,18 @@
 
 -- Command access types
-GNIL_CMD_ACCESS_ADMIN = 0           -- Only allow administrator access
-GNIL_CMD_ACCESS_SUPERADMIN = 1      -- Superadmin rank only
-GNIL_CMD_ACCESS_DEVELOPER = 2       -- Verified GNIL developers only
+GNIL_CMD_ACCESS_SERVER = 0          -- Only allow the server to execute command
+GNIL_CMD_ACCESS_ADMIN = 1           -- Only allow administrator access
+GNIL_CMD_ACCESS_SUPERADMIN = 2      -- Superadmin rank only
+GNIL_CMD_ACCESS_DEVELOPER = 3       -- Verified GNIL developers only
 
 -- Command argument types
 GNIL_CMD_ARGUMENT_PLAYER = 1        -- The argument should be another player
 GNIL_CMD_ARGUMENT_INTEGER = 2       -- The argument should be a positive integer
 GNIL_CMD_ARGUMENT_STRING = 3        -- The argument is a string
 GNIL_CMD_ARGUMENT_VECTOR = 10       -- The argument should be a vector representation
+
+GNIL_CMD_ARGUMENT_ENTITY_SINGLE = 14    -- The argument should be the entity being looked at
+GNIL_CMD_ARGUMENT_ENTITY_MULTI = 15     -- The argument should be a sequential table of entities, using multitarget syntax
 
 -- Command argument flow control, allows for variable argument count or ending string combination.
 GNIL_CMD_ARGUMENT_REPEAT = 99   -- Ends the arguments by making any following argument type repeat the one previous, argument becomes sequential table of types.
@@ -20,6 +24,8 @@ GNIL_CMD_ARGUMENTS = {
     GNIL_CMD_ARGUMENT_INTEGER,
     GNIL_CMD_ARGUMENT_STRING,
     GNIL_CMD_ARGUMENT_VECTOR,
+    GNIL_CMD_ARGUMENT_ENTITY_SINGLE,
+    GNIL_CMD_ARGUMENT_ENTITY_MULTI,
     GNIL_CMD_ARGUMENT_REPEAT,
-    GNIL_CMD_ARGUMENT_END    
+    GNIL_CMD_ARGUMENT_END
 }
