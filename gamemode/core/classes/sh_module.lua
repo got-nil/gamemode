@@ -11,7 +11,10 @@ function Module:Initialize(name)
     self.dependencies = nil
     self._loaded_dependencies = {}
 
-    self.hooks = {}
+    self._hooks = {
+        {}, --seq
+        {}  --unique
+    }
 
     self._added_delayed = false
     self._delayed_autoload = {
@@ -88,7 +91,37 @@ function Module:Requires(requirements, delayed)
     return true
 end
 
-function Module:AddHook(eventName, hookIdentifier, callback) return GNIL.Hooks.Add(self._module_name .. "." .. eventName, hookIdentifier, callback) end
+function Module:AddHook(eventName, idOrCallback, callback)
+    if callback == nil and not isfunction(idOrCallback) then return end
+    if callback ~= nil and (not isstring(idOrCallback) or not isfunction(callback)) then return end
+
+    local hookId = self._module_name .. "." .. eventName
+    local hookCallback = callback or idOrCallback
+
+    if callback == nil then
+        seq_hooks = self._hooks[1][eventName]
+
+        if seq_hooks == nil then
+            seq_hooks = 0
+        else
+            seq_hooks = seq_hooks + 1
+        end
+
+        self._hooks[1][eventName] = seq_hooks
+
+        hookId = hookId .. "." .. tostring(seq_hooks)
+    else
+        hookId = hookId .. "." .. idOrCallback
+    end
+
+    if self._hooks[2][eventName] == nil then
+        self._hooks[2][eventName] = {[hookId] = hookCallback}
+    else
+        self._hooks[2][eventName][hookId] = hookCallback
+    end
+
+    hook.Add(eventName, hookId, hookCallback)
+end
 function Module:RemoveHook(eventName, hookIdentifier) return GNIL.Hooks.RemoveHook(self._module_name .. "." .. eventName, hookIdentifier) end
 function Module:GetHooks(eventName) return GNIL.Hooks.GetHooks(eventName, self._module_name) end
 
