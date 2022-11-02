@@ -123,7 +123,20 @@ function Module:AddHook(eventName, idOrCallback, callback)
     hook.Add(eventName, hookId, hookCallback)
 end
 function Module:RemoveHook(eventName, hookIdentifier) return GNIL.Hooks.RemoveHook(self._module_name .. "." .. eventName, hookIdentifier) end
-function Module:GetHooks(eventName) return GNIL.Hooks.GetHooks(eventName, self._module_name) end
+function Module:ClearHooks()
+    for eventName, events in pairs(self._hooks[2]) do
+        for ident, _ in pairs(self._hooks[2][eventName]) do
+            hook.Remove(eventName, ident)
+        end
+    end
+
+    self._hooks = { {}, {} }
+end
+function Module:GetHooks(eventName)
+    if eventName == nil then return self._hooks[2] end
+
+    return self._hooks[2][eventName] or nil
+end
 
 -- Allow a module to include files or directories
 -- relative to its base. If the delayed argument
