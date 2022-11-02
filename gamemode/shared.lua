@@ -7,7 +7,8 @@ GNIL._VERSION = "pre-release"
 GNIL._CREDITS = {
     ["morgverd"] = "Backend developer",
     ["virtualraptor"] = "Backend developer and mapper",
-    ["professor"] = "UI/UX Lead"
+    ["professor"] = "UI/UX Lead",
+    ["sparib"] = "Backend developer"
 }
 
 -- Replace these once we get a website URL.
