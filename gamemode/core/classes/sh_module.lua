@@ -121,7 +121,32 @@ function Module:AddHook(eventName, idOrCallback, callback)
 
     hook.Add(eventName, hookId, hookCallback)
 end
-function Module:RemoveHook(eventName, hookIdentifier) return GNIL.Hooks.RemoveHook(self._module_name .. "." .. eventName, hookIdentifier) end
+function Module:RemoveHook(eventName, hookIdentifier)
+    local hooks = self._hooks[2][eventName]
+    assert(hooks ~= nil)
+
+    if hookIdentifier == nil then
+        for ident, _ in pairs(hooks) do
+            hook.Remove(eventName, ident)
+        end
+
+        self._hooks[2][eventName] = nil
+        self._hooks[1][eventName] = nil
+    else
+        print("here")
+        for ident, _ in pairs(hooks) do
+            local s, e, match = string.find(ident, "%." .. hookIdentifier .. "$")
+
+            if s then
+                hook.Remove(eventName, ident)
+                self._hooks[2][eventName][ident] = nil
+                break
+            end
+        end
+
+        if self._hooks[2][eventName] == {} then self._hooks[2][eventName] = nil end
+    end
+end
 function Module:ClearHooks()
     for eventName, events in pairs(self._hooks[2]) do
         for ident, _ in pairs(self._hooks[2][eventName]) do
