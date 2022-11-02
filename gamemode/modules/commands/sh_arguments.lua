@@ -128,7 +128,7 @@ local genericArguments = {
     },
     [GNIL_CMD_ARGUMENT_INTEGER] = {
         function(arg)
-            if (arg == "" or string.find(arg, "%D")) then return nil end
+            if (arg == "" or string.match(arg, "%D")) then return nil end
             return tonumber(arg)
         end,
         "<integer>"
@@ -140,6 +140,14 @@ local genericArguments = {
     [GNIL_CMD_ARGUMENT_VECTOR] = {
         function(arg, ply)
 
+            -- If the argument begins with a hashtag and contains just numbers then
+            -- we should treat it as an alias to a players location.
+            if arg[1] == "#" and string.match(arg, "#([%d]+)") then
+                local target = Player(tonumber(string.sub(arg, 2)))
+                if target == nil then return nil end
+                return target:GetPos()
+            end
+
             -- If the argument is an alias, then return that position instead.
             -- However, also note that this only works when the caller is a player
             -- (not server called commands) so we must also validate that.
@@ -149,7 +157,7 @@ local genericArguments = {
                     ["there"] = function(ply) return ply:GetEyeTrace().HitPos end
                 }
                 local arg = string.lower(arg)
-                
+
                 -- If the argument matches a known alias, run the callback and return
                 -- its output directly.
                 if aliases[arg] then
@@ -168,7 +176,8 @@ local genericArguments = {
             return {
                 "\"" .. tostring(LocalPlayer():GetPos()) .. "\"",
                 "here", -- Alias to the players current location
-                "there" -- Alias to the players view position
+                "there", -- Alias to the players view position
+                "#<playerid>" -- Alias to player id current location
             }
         end
     },
