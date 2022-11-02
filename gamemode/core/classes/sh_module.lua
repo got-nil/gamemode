@@ -91,6 +91,9 @@ function Module:Requires(requirements, delayed)
     return true
 end
 
+-- Add a module-based hook
+-- Either pass event name and callback for a non-unique name hook
+-- or pass event name, unique id, and callback for a removeable hook
 function Module:AddHook(eventName, idOrCallback, callback)
     assert((callback == nil or isfunction(idOrCallback)) or (callback ~= nill and isstring(idOrCallback) and isfunction(callback)))
 
@@ -121,6 +124,11 @@ function Module:AddHook(eventName, idOrCallback, callback)
 
     hook.Add(eventName, hookId, hookCallback)
 end
+
+-- Removes hook(s) that were made through the module
+-- Second argument is optional.
+-- Without it, all events attached to the module for specified hook are removed
+-- With it, that specific event is remove only
 function Module:RemoveHook(eventName, hookIdentifier)
     local hooks = self._hooks[2][eventName]
     assert(hooks ~= nil)
@@ -147,6 +155,8 @@ function Module:RemoveHook(eventName, hookIdentifier)
         if self._hooks[2][eventName] == {} then self._hooks[2][eventName] = nil end
     end
 end
+
+-- Clears all hooks attached to module
 function Module:ClearHooks()
     for eventName, events in pairs(self._hooks[2]) do
         for ident, _ in pairs(self._hooks[2][eventName]) do
@@ -156,6 +166,11 @@ function Module:ClearHooks()
 
     self._hooks = { {}, {} }
 end
+
+-- Returns table of hooks associated with module
+-- First argument is optional
+-- Without it, all hooks are in the table, with a table per event
+-- With it, all hooks for that event are listed, or an empty table if the hook doesn't have any callbacks
 function Module:GetHooks(eventName)
     if eventName == nil then return self._hooks[2] end
 
