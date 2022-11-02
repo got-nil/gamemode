@@ -135,7 +135,7 @@ end
 function Module:GetHooks(eventName)
     if eventName == nil then return self._hooks[2] end
 
-    return self._hooks[2][eventName] or nil
+    return self._hooks[2][eventName] or {}
 end
 
 -- Allow a module to include files or directories
