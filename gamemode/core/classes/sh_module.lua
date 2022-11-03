@@ -97,7 +97,7 @@ end
 -- Either pass event name and callback for a non-unique name hook
 -- or pass event name, unique id, and callback for a removeable hook
 function Module:AddHook(eventName, idOrCallback, callback)
-    assert((callback == nil or isfunction(idOrCallback)) or (callback ~= nill and isstring(idOrCallback) and isfunction(callback)))
+    assert((callback == nil or isfunction(idOrCallback)) or (callback != nil and isstring(idOrCallback) and isfunction(callback)))
 
     local hookId = self._module_name .. "." .. eventName
     local hookCallback = callback or idOrCallback
