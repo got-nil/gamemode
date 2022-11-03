@@ -2,10 +2,10 @@ GNIL.Commands.Autocomplete = GNIL.Commands.Autocomplete or {}
 
 function GNIL.Commands.AutocompleteType(typeid, argstr)
     if not GNIL.Commands.Arguments.Types[typeid] then return end
-    
+
     -- Ensure that the argument type actually defines an autocomplete
     local argumentType = GNIL.Commands.Arguments.Types[typeid]
-    if 2 > #argumentType then return end 
+    if 2 > #argumentType then return end
 
     -- Run the argument autocomplete
     return argumentType[2](argstr)
@@ -28,13 +28,13 @@ function GNIL.Commands.Autocomplete.Process(cmd, strargs)
 
     if #args >= 1 then GNIL.Commands.Discover(args[1]) end
     if 1 >= #args and not GNIL.Commands.DiscoveredCommands[args[1]] then
-    
+
         -- If there are no/one argument we should just show the discovered commands
         return prefixStringsTable(table.GetKeys(GNIL.Commands.DiscoveredCommands), cmd .. " ")
 
     else
         local currentArgumentPos = #args - 1
-        
+
         -- If there are additional arguments after the command name, we should check to
         -- see if the first command argument has been discovered, and if it has registered
         -- arguments attached to it.
@@ -44,13 +44,7 @@ function GNIL.Commands.Autocomplete.Process(cmd, strargs)
         -- If the command exists and we're on the first argument then we should show a
         -- summary of the arguments data types.
         if (currentArgumentPos == 0) then
-
-            local typeSummary = {}
-            for _, argumentid in ipairs(cmd_arguments) do
-                table.insert(typeSummary, "<" .. string.lower(GNIL.Commands.Arguments.TypeNames[tostring(argumentid)]) .. ">")
-            end
-
-            return {"gnil " .. args[1] .. " " .. table.concat(typeSummary, " ")}
+            return {"gnil " .. args[1] .. " " .. GNIL.Commands.Arguments.GetArgumentsPreview(cmd_arguments)}
         end
 
         -- Ensure that the current argument doesn't exceed the max permitted arguments.
