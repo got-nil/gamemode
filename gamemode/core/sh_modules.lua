@@ -141,7 +141,7 @@ end
 -- Unload a module, recursively unloading all its dependencies.
 function GNIL.Modules.Unload(name, _caller)
     if not GNIL.Modules.IsLoaded(name) then return false end
-    local moduleInstance = GNIL.Modules["_cached_existances"][name]
+    local moduleInstance = GNIL.Modules["_cached_modules"][name]
 
     -- Unload all modules that depend on the module being unloaded.
     for _, v in ipairs(moduleInstance.dependencies) do
