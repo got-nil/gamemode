@@ -106,7 +106,7 @@ function Module:AddHook(eventName, idOrCallback, callback)
         seq_hooks = self._hooks[1][eventName]
 
         if seq_hooks == nil then
-            seq_hooks = 0
+            seq_hooks = 1
         else
             seq_hooks = seq_hooks + 1
         end
