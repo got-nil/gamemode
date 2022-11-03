@@ -144,9 +144,11 @@ function GNIL.Modules.Unload(name, _caller)
     local moduleInstance = GNIL.Modules["_cached_modules"][name]
 
     -- Unload all modules that depend on the module being unloaded.
-    for _, v in ipairs(moduleInstance.dependencies) do
-        if v == _caller or v == name then continue end
-        GNIL.Modules.Unload(v, name)
+    if moduleInstance.dependencies != nil then
+        for _, v in ipairs(moduleInstance.dependencies) do
+            if v == _caller or v == name then continue end
+            GNIL.Modules.Unload(v, name)
+        end
     end
     hook.Run("GNIL.Modules.Unloaded", name, moduleInstance)
 
