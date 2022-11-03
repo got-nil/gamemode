@@ -107,10 +107,15 @@ function GNIL.Modules.Load(name, _dependency_chain)
     -- Load all of the directories that were gathered above. Ensure that
     -- the module init file is not included on the base directory as it will
     -- always be first.
-    local blocked_init_files = {"init.lua", "sv_init.lua", "sh_init.lua", "cl_init.lua"}
+    local ignored_root_files = {"init.lua", "sv_init.lua", "sh_init.lua", "cl_init.lua"}
+
+    -- Add any already included files and add to ignored root files.
+    for _, v in ipairs(table.GetKeys(moduleInstance._included_files)) do
+        table.insert(ignored_root_files, v)
+    end
     for i, directory_path in ipairs(directories) do
         if i == 1 then moduleInstance:log("Loading module top level directory contents.", "debug") end
-        GNIL.Utils.IncludeDirectory(directory_path, i == 1 and blocked_init_files or nil) -- Dont include base init file.
+        GNIL.Utils.IncludeDirectory(directory_path, i == 1 and ignored_root_files or nil) -- Dont include base init file.
     end
 
     -- Finally include the rest of the delayed files.
@@ -122,7 +127,6 @@ function GNIL.Modules.Load(name, _dependency_chain)
     GNIL.Modules._loaded[name] = true
 
     -- Once everything has finished loading, we should call the OnLoadFinished hook function.
-    -- !!!EVENTUALLY ADD OUR HOOK THING IF WE MAKE ONE!!!
     hook.Run("GNIL.Modules.Loaded", name, moduleInstance)
     moduleInstance:OnLoadFinished()
 
@@ -134,10 +138,19 @@ function GNIL.Modules.Load(name, _dependency_chain)
     return true
 end
 
--- TODO
-function GNIL.Modules.Unload(name)
+-- Unload a module, recursively unloading all its dependencies.
+function GNIL.Modules.Unload(name, _caller)
     if not GNIL.Modules.IsLoaded(name) then return false end
+    local moduleInstance = GNIL.Modules["_cached_existances"][name]
 
+    -- Unload all modules that depend on the module being unloaded.
+    for _, v in ipairs(moduleInstance.dependencies) do
+        if v == _caller or v == name then continue end
+        GNIL.Modules.Unload(v, name)
+    end
+    hook.Run("GNIL.Modules.Unloaded", name, moduleInstance)
+
+    GNIL.log("The module '" .. name .. "' has been unloaded.", "debug")
     GNIL.Modules._loaded[name] = true
 end
 

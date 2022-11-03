@@ -1,18 +1,6 @@
 
 GNIL.Commands.DiscoveredCommands = GNIL.Commands.DiscoveredCommands or {}
 
--- A completely useless but cool looking ascii art that shows
--- when someone attempts to call the gnil command without arguments.
-local logoColour = Color(30, 194, 180)
-local asciiLogoLines = string.Explode("\n", [[
-     ______      __  _   ___ __   ____                 __                                 __ 
-    / ____/___  / /_/ | / (_) /  / __ \___ _   _____  / /___  ____  ____ ___  ___  ____  / /_
-   / / __/ __ \/ __/  |/ / / /  / / / / _ \ | / / _ \/ / __ \/ __ \/ __ `__ \/ _ \/ __ \/ __/
-  / /_/ / /_/ / /_/ /|  / / /  / /_/ /  __/ |/ /  __/ / /_/ / /_/ / / / / / /  __/ / / / /_  
-  \____/\____/\__/_/ |_/_/_/  /_____/\___/|___/\___/_/\____/ .___/_/ /_/ /_/\___/_/ /_/\__/  
-                                                          /_/                                
-]])
-
 -- Cache the hashed plaintext result so I can at least
 -- pretend that this isn't terribly inefficient.
 cachedHashes = {}
@@ -53,10 +41,8 @@ function GNIL.Commands.Process(ply, _, args, argstr)
     if GNIL.Commands["_r"] == nil then GNIL.log("The server has not yet sent a command manifest.", "error") return end
 
     if #args == 0 then
-        for _, v in ipairs(asciiLogoLines) do
-            MsgC(logoColour, v .. "\n")
-        end
-        
+        GNIL.Commands.print_logo()
+
         local lines = {
             "GotNil is a GarrysMod development group started by a group of friends that wanted to make something cool.",
             "Commands will autocomplete once they've been 'discovered', however some commands may just default to being public.",
@@ -68,14 +54,22 @@ function GNIL.Commands.Process(ply, _, args, argstr)
         if #table.GetKeys(GNIL.Commands.DiscoveredCommands) > 0 then
             Msg("Here are the commands you've discovered:\n")
             for name, _ in pairs(GNIL.Commands.DiscoveredCommands) do
-                MsgC(logoColour, "    gnil " .. name .. "\n")
+                MsgC(GNIL.Commands.logo_color, "    gnil " .. name)
+
+                -- If the discovered command has arguments, display them here.
+                args = GNIL.Commands.GetCommandArgumentsByPlaintext(name)
+                if args then
+                    MsgC(GNIL.Commands.logo_color, " " .. GNIL.Commands.Arguments.GetArgumentsPreview(args))
+                end
+
+                Msg("\n")
             end
-            MsgC("\n")
+            Msg("\n")
         end
 
         Msg("Finally, while you're here, enjoy some credits:\n")
         for name, desc in pairs(GNIL._CREDITS) do
-            MsgC(logoColour, "    [" .. name .. "]")
+            MsgC(GNIL.Commands.logo_color, "    [" .. name .. "]")
             Msg(" -> " .. desc .. "\n")
         end
         return
