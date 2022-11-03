@@ -205,3 +205,6 @@ function GNIL.Modules.Get(name, additional) -- ?Module
 
     return GNIL.Modules["_cached_modules"][name]
 end
+
+-- Remove hooks from module if it is being unloaded
+hook.Add("GNIL.Modules.Unloaded", "gnil_module_unload_clearhooks", function(_, m) m:ClearHooks() end)
