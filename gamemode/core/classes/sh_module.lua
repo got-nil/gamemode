@@ -159,7 +159,7 @@ end
 
 -- Clears all hooks attached to module
 function Module:ClearHooks()
-    for eventName, events in pairs(self._hooks[2]) do
+    for eventName, _ in pairs(self._hooks[2]) do
         for ident, _ in pairs(self._hooks[2][eventName]) do
             hook.Remove(eventName, ident)
         end
