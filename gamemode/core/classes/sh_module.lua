@@ -11,7 +11,10 @@ function Module:Initialize(name)
     self.dependencies = nil
     self._loaded_dependencies = {}
 
-    self.hooks = {}
+    self._hooks = {
+        {}, --seq
+        {}  --unique
+    }
 
     self._added_delayed = false
     self._delayed_autoload = {
@@ -90,12 +93,90 @@ function Module:Requires(requirements, delayed)
     return true
 end
 
--- TODO: VirtualRaptor --
--- Not my work because cba --
-function Module:AddHook(...) return GNIL.Hooks.Add(self._module_name, ...) end
-function Module:RemoveHook(...) return GNIL.Hooks.RemoveHook(self._module_name, ...) end
-function Module:GetHooks(...) return GNIL.Hooks.GetHooks(self._module_name, ...) end
--------------------------
+-- Add a module-based hook
+-- Either pass event name and callback for a non-unique name hook
+-- or pass event name, unique id, and callback for a removeable hook
+function Module:AddHook(eventName, idOrCallback, callback)
+    assert((callback == nil or isfunction(idOrCallback)) or (callback != nil and isstring(idOrCallback) and isfunction(callback)), "Arugments must be string, function or string, string, function")
+
+    local hookId = self._module_name .. "." .. eventName
+    local hookCallback = callback or idOrCallback
+
+    if callback == nil then
+        seq_hooks = self._hooks[1][eventName]
+
+        if seq_hooks == nil then
+            seq_hooks = 1
+        else
+            seq_hooks = seq_hooks + 1
+        end
+
+        self._hooks[1][eventName] = seq_hooks
+
+        hookId = hookId .. "." .. tostring(seq_hooks)
+    else
+        hookId = hookId .. "." .. idOrCallback
+    end
+
+    if self._hooks[2][eventName] == nil then
+        self._hooks[2][eventName] = {[hookId] = hookCallback}
+    else
+        self._hooks[2][eventName][hookId] = hookCallback
+    end
+
+    hook.Add(eventName, hookId, hookCallback)
+end
+
+-- Removes hook(s) that were made through the module
+-- Second argument is optional.
+-- Without it, all events attached to the module for specified hook are removed
+-- With it, that specific event is remove only
+function Module:RemoveHook(eventName, hookIdentifier)
+    local hooks = self._hooks[2][eventName]
+    if hooks == nil then return end
+
+    if hookIdentifier == nil then
+        for ident, _ in pairs(hooks) do
+            hook.Remove(eventName, ident)
+        end
+
+        self._hooks[2][eventName] = nil
+        self._hooks[1][eventName] = nil
+    else
+        for ident, _ in pairs(hooks) do
+            local s, e, match = string.find(ident, "%." .. hookIdentifier .. "$")
+
+            if s then
+                hook.Remove(eventName, ident)
+                self._hooks[2][eventName][ident] = nil
+                break
+            end
+        end
+
+        if self._hooks[2][eventName] == {} then self._hooks[2][eventName] = nil end
+    end
+end
+
+-- Clears all hooks attached to module
+function Module:ClearHooks()
+    for eventName, _ in pairs(self._hooks[2]) do
+        for ident, _ in pairs(self._hooks[2][eventName]) do
+            hook.Remove(eventName, ident)
+        end
+    end
+
+    self._hooks = { {}, {} }
+end
+
+-- Returns table of hooks associated with module
+-- First argument is optional
+-- Without it, all hooks are in the table, with a table per event
+-- With it, all hooks for that event are listed, or an empty table if the hook doesn't have any callbacks
+function Module:GetHooks(eventName)
+    if eventName == nil then return self._hooks[2] end
+
+    return self._hooks[2][eventName] or {}
+end
 
 -- Allow a module to include files or directories
 -- relative to its base. If the delayed argument
