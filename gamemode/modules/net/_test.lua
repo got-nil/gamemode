@@ -42,3 +42,18 @@ elseif target == "client" and SERVER then
 else
     GNIL.log("Invalid realm for given target.")
 end
+
+/*
+
+
+local 📩 = 🌐.🛠️("test")
+
+📩:✏️📄("This is the future of GMod Networking") -- string
+📩:✏️🎨(me:GetColor()) -- color
+📩:✏️📐(me:EyeAngles()) -- angle
+📩:✏️📍(me:GetPos()) -- vector
+
+📩:✉️🖥️() -- send the message to the server
+
+
+*/
