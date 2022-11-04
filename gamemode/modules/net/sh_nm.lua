@@ -11,19 +11,19 @@ end
 -- This is pretty ugly, but its the result of having to alias
 -- everything into the write cache.
 function NetworkMessage:_WriteToBuffer(args, fn) table.insert(self._write_buffer, {args, fn}) return self end
-function NetworkMessage:WriteAngle(...) return self:_WriteToBuffer({...}, net.WriteAngle) end
-function NetworkMessage:WriteBit(...) return self:_WriteToBuffer({...}, net.WriteBit) end
-function NetworkMessage:WriteBool(...) return self:_WriteToBuffer({...}, net.WriteBool) end
-function NetworkMessage:WriteColor(...) return self:_WriteToBuffer({...}, net.WriteColor) end
-function NetworkMessage:WriteData(...) return self:_WriteToBuffer({...}, net.WriteData) end
+function NetworkMessage:WriteAngle(...)  return self:_WriteToBuffer({...}, net.WriteAngle)  end
+function NetworkMessage:WriteBit(...)    return self:_WriteToBuffer({...}, net.WriteBit)    end
+function NetworkMessage:WriteBool(...)   return self:_WriteToBuffer({...}, net.WriteBool)   end
+function NetworkMessage:WriteColor(...)  return self:_WriteToBuffer({...}, net.WriteColor)  end
+function NetworkMessage:WriteData(...)   return self:_WriteToBuffer({...}, net.WriteData)   end
 function NetworkMessage:WriteDouble(...) return self:_WriteToBuffer({...}, net.WriteDouble) end
 function NetworkMessage:WriteEntity(...) return self:_WriteToBuffer({...}, net.WriteEntity) end
-function NetworkMessage:WriteFloat(...) return self:_WriteToBuffer({...}, net.WriteFloat) end
-function NetworkMessage:WriteInt(...) return self:_WriteToBuffer({...}, net.WriteInt) end
+function NetworkMessage:WriteFloat(...)  return self:_WriteToBuffer({...}, net.WriteFloat)  end
+function NetworkMessage:WriteInt(...)    return self:_WriteToBuffer({...}, net.WriteInt)    end
 function NetworkMessage:WriteMatrix(...) return self:_WriteToBuffer({...}, net.WriteMatrix) end
 function NetworkMessage:WriteString(...) return self:_WriteToBuffer({...}, net.WriteString) end
-function NetworkMessage:WriteType(...) return self:_WriteToBuffer({...}, net.WriteType) end
-function NetworkMessage:WriteUInt(...) return self:_WriteToBuffer({...}, net.WriteUInt) end
+function NetworkMessage:WriteType(...)   return self:_WriteToBuffer({...}, net.WriteType)   end
+function NetworkMessage:WriteUInt(...)   return self:_WriteToBuffer({...}, net.WriteUInt)   end
 function NetworkMessage:WriteVector(...) return self:_WriteToBuffer({...}, net.WriteVector) end
 
 -- Allow for the write buffer to be flushed or written to an
@@ -37,6 +37,7 @@ end
 
 -- Start the netmessage (writing the header id) and the buffer.
 function NetworkMessage:_WriteToStream()
+    GNIL.log("Writing message '" .. self.name .. "' to stream.", "debug")
     GNIL.Net.Start(self.name)
     self:_WriteBufferToStream()
 end

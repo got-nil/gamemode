@@ -14,7 +14,7 @@ end
 -- if you want to get fancy. (You can also use a table of players)
 -- NetMessage instance can be provided as second argument to allow
 -- for message queuing (and just being OOP which is automatically cool)
-function GNIL.Net.Send(ply, _nm)
+function GNIL.Net.Send(ply, _nm, _allowqueue)
     
     local t = TypeID(ply)
     if t == TYPE_RECIPIENTFILTER then
@@ -45,13 +45,13 @@ function GNIL.Net.Send(ply, _nm)
         -- If a NetMessage instance is provided, and the player has not yet had
         -- their networking loaded then we should add the nm instance to the queue.
         local sid = ply:SteamID()
-        if not GNIL.Net.HasPlayerNetLoaded(sid) then
+        if _allowqueue != false and not GNIL.Net.HasPlayerNetLoaded(sid) then
             if not GNIL.Net["_q"][sid] then
                 GNIL.Net["_q"][sid] = {}
             end
-            table.insert(GNIL.Net["_q"][sid], {ply, nm})
+            table.insert(GNIL.Net["_q"][sid], {ply, _nm})
 
-            GNIL.log("Message '" .. nm.name .. "' to player '" .. ply:Nick() .. "' has been queued ", "debug")
+            GNIL.log("Message '" .. _nm.name .. "' to player '" .. ply:Nick() .. "' has been queued ", "debug")
             return
         end
 
@@ -77,11 +77,15 @@ hook.Add("PlayerNetLoad", "gnil_net_send_queue", function(ply)
     -- messages for the loaded player's steamid.
     local sid = ply:SteamID()
     local messages = GNIL.Net["_q"][sid]
-    if message == nil then return end
+    if messages == nil then return end
+
+    GNIL.log("Client '" .. ply:Nick() .. "' has netloaded, with messages queued. Sending now.", "debug")
 
     -- Send all of the messages within the queue.
+    -- If the message still somehow fails to send, it
+    -- will not be re-queued (to prevent loops).
     for _, v in ipairs(messages) do
-        v[2]:Send(v[1])
+        GNIL.Net.Send(v[1], v[2], false)
     end
 
     -- Empty the queue for the given player.

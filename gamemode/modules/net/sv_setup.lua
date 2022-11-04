@@ -2,7 +2,6 @@
 -- Add the core required network strings.
 local netstrings = {
     "gnil",   -- GNIL Network (default message entrypoint)
-    "gnilr",  -- GNIL Ready (sent when the client is ready to receive net messages)
     "gnilc",  -- GNIL Chunked (chunked messages for large datasets)
     "gnils"   -- GNIL Sync (sync pooled netstrings between client and server)
 }
@@ -12,7 +11,7 @@ end
 
 -- This is used to sync the player netmessage pool between
 -- the server and specified clients.
-local function syncNetworkIDs(ply)
+function GNIL.Net._SyncNetworkIDs(ply)
     GNIL.Net["_sent_netids"] = true
 
     net.Start("gnils")
@@ -25,12 +24,6 @@ local function syncNetworkIDs(ply)
     -- player specifically. If none is provided, broadcast to all.
     if ply then net.Send(ply) else net.Broadcast() end
 end
-
--- When a player has loaded (and they're able to recieve net messages)
--- we should send the netmessage pool back to the client.
-hook.Add("PlayerNetLoad", "gnil_net_sync", function(ply)
-    syncNetworkIDs(ply)
-end)
 
 -- Add network string alias, works the exact same.
 function GNIL.Net.AddNetworkString(str, _d)
@@ -45,9 +38,7 @@ function GNIL.Net.AddNetworkString(str, _d)
     -- now re-broadcast the network ids to all players), so we complain.
     if _d != false and GNIL.Net["_sent_netids"] then
         GNIL.log("Network string '" .. str .. "' has been pooled late, which is VERY bad for optimisation.", "warning")
-        for _, v in ipairs(player.GetAll()) do
-            syncNetworkIDs(v)
-        end
+        GNIL.Net._SyncNetworkIDs()
     end
 
     return l

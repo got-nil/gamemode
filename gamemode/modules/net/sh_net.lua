@@ -19,6 +19,12 @@ end
 
 ------------------------------------------------
 
+-- Create a network message instance with the given
+-- message name (class constructor alias basically).
+function GNIL.Net.Create(messageName)
+    return GNIL.Net.NetworkMessage:New(messageName)
+end
+
 -- Start a net message, inserting the message id
 -- header and using the blanket gnil message name.
 function GNIL.Net.Start(messageName, unreliable)
