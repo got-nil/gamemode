@@ -43,7 +43,8 @@ end
 
 -- Literally just alias the actual send function, providing the self
 -- NetworkMessage instance (which could be queued, so nothing is written yet).
-function NetworkMessage:Send(ply) assert(SERVER, "This function may only be used by the server.") GNIL.Net.Send(ply, self) end
+-- **Send can be used by both server and client (client realm aliasing SendToServer)
+function NetworkMessage:Send(ply) if SERVER then GNIL.Net.Send(ply, self) else self:SendToServer() end end
 function NetworkMessage:Broadcast() assert(SERVER, "This function may only be used by the server.") GNIL.Net.Broadcast(self) end
 function NetworkMessage:SendToServer() assert(CLIENT, "This function may only be used by a client.") GNIL.Net.SendToServer(self) end
 
