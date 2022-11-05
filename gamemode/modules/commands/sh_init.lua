@@ -1,7 +1,10 @@
+local MODULE = MODULE
 
 MODULE.name = "Commands"
 MODULE.author = "morgverd"
 MODULE.description = "Register callbacks as chat/console commands."
+
+MODULE:Require("net") -- This module requires net messages.
 
 GNIL.Commands = GNIL.Commands or {
     ["_r"] = {}, -- The command registry. (THIS IS VERY DIFFERENT FROM SERVER TO CLIENT)

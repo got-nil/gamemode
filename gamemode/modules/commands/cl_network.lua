@@ -3,9 +3,8 @@
 -- for basic autocomplete to be handled as the client knows the argument structure.
 -- Default state is nil meaning that the server has not sent anything yet. Even when
 -- the server explictly sends no commands, this just becomes an empty table.
-GNIL.Commands["_r"] = nil
 
-net.Receive("gnil_cmds", function()
+GNIL.Net.Receive("module_commands_sync", function()
     local commands, discovered = {}, {}
 
     -- The server will send a "flush" signal to tell the client that
