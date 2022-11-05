@@ -79,15 +79,14 @@ function GNIL.Utils.IncludeDirectory(path, ignoredFiles, absoluteIgnoredFiles)
             -- If there is a set of ignored files, we should check to
             -- make sure that the file path isn't in the table. Both
             -- relative and absolute paths are checked.
-            local ignored = false
             local seq = table.IsSequential(ignoredFiles)
             
             -- Allow for all ignored to be already declared as absolute,
             -- this means we dont even have to bother checking the relative
             -- path (which for large ignore sets would be more efficient). 
-            local absolute = path .. "/" .. f
+            local ignored, absolute = false, path .. "/" .. f
             for _, v in ipairs(absoluteIgnoredFiles == true and {absolute} or {f, absolute}) do
-                if seq then local ignored = table.HasValue(ignoredFiles, v)
+                if seq then ignored = table.HasValue(ignoredFiles, v)
                 else ignored = ignoredFiles[v] == true end
                 if ignored then break end
             end
