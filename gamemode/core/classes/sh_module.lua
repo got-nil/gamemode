@@ -22,7 +22,8 @@ function Module:Initialize(name)
         {}  -- directories
     }
 
-    self._included_files = {}
+    self._added_ignored_file = false
+    self._ignored_files = {}
 end
 
 -- Simply call the modules utility with the current module name
@@ -178,19 +179,64 @@ function Module:GetHooks(eventName)
     return self._hooks[2][eventName] or {}
 end
 
+-- Add an absolute path to be ignored directly.
+local function _addIgnoredFile(self, absolute_path)
+    self._added_ignored_file = true
+    self._ignored_files[absolute_path] = true
+end
+
+-- Allow for relative file paths to be "ignored" when
+-- loading directories. This persists across directory
+-- includes that are called directly on the module (such
+-- as the initial loading of the module etc.)
+function Module:Ignore(path)
+    self:log("Ignorning file '" .. path .. "'", "debug")
+    _addIgnoredFile(self, GNIL.Utils.ResolveGamemodePath("modules/" .. self._module_name .. "/" .. path))
+end
+
 -- Allow a module to include files or directories
 -- relative to its base. If the delayed argument
 -- is true then the include is processed with the
 -- rest of the files.
 function Module:Include(path, delayed)
     path = GNIL.Utils.ResolveGamemodePath("modules/" .. self._module_name .. "/" .. path)
-    if not delayed then self._included_files[path] = true return GNIL.Utils.Include(path)
+    if not delayed then
+        if self._ignored_files[path] == true then
+            return self:log("Refusing to include '" .. path .."' as it is ignored", "debug")
+        end
+        
+        _addIgnoredFile(self, path)
+        return GNIL.Utils.Include(path)
+
     else self._added_delayed = true self._delayed_autoload[1][path] = true end
 end
 
+-- Loading directories directly on the module allows
+-- for the module specific ignored files set to be applied
+-- (which is important for actually ignoring files). So use
+-- this as much as possible when dealing with a module directly.
 function Module:IncludeDirectory(directory, ignoredFiles, delayed)
     local path = GNIL.Utils.ResolveGamemodePath("modules/" .. self._module_name .. "/" .. directory)
-    if not delayed then return GNIL.Utils.IncludeDirectory(path, ignoredFiles)    
+    if not delayed then
+        
+        local ignored_files = nil
+        if ignoredFiles or self._added_ignored_file then
+            ignored_files = self._ignored_files
+
+            -- If there are provided ignored paths, then we should ensure the
+            -- provided ignoredFiles table is associative and attempt to merge
+            -- it with the current ignored files set. Any provided paths are
+            -- also made absolute here.
+            if ignoredFiles then
+                local seq = table.IsSequential(ignoredFiles)
+                local iterator = seq and ipairs or pairs
+                for k, v in iterator(ignoredFiles) do
+                    ignored_files[seq and v or k] = true
+                end
+            end
+        end
+        return GNIL.Utils.IncludeDirectory(path, ignored_files, true)    
+        
     else self._added_delayed = true self._delayed_autoload[2][path] = true end
 end
 -------------------------

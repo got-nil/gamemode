@@ -110,12 +110,19 @@ function GNIL.Modules.Load(name, _dependency_chain)
     local ignored_root_files = {"init.lua", "sv_init.lua", "sh_init.lua", "cl_init.lua"}
 
     -- Add any already included files and add to ignored root files.
-    for _, v in ipairs(table.GetKeys(moduleInstance._included_files)) do
-        table.insert(ignored_root_files, v)
-    end
     for i, directory_path in ipairs(directories) do
-        if i == 1 then moduleInstance:log("Loading module top level directory contents.", "debug") end
-        GNIL.Utils.IncludeDirectory(directory_path, i == 1 and ignored_root_files or nil) -- Dont include base init file.
+
+        -- Ensure that the ignored files table is persisted while loading the
+        -- top level directory and any other requested directories by the init.
+        -- On the root level, also ignore anything that looks like an init file.
+        local ignored_files = moduleInstance._ignored_files
+        if i == 1 then
+            moduleInstance:log("Loading module top level directory contents.", "debug")
+            for _, v in ipairs(ignored_root_files) do
+                ignored_files[GNIL.Utils.ResolveGamemodePath("modules/" .. name .. "/" .. v)] = true
+            end
+        end
+        GNIL.Utils.IncludeDirectory(directory_path, ignored_files, true)
     end
 
     -- Finally include the rest of the delayed files.
