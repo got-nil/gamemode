@@ -9,7 +9,7 @@ setmetatable(GNIL.Http, {
 
 -- If we're on the server we should always attempt to use the
 -- chttp module instead of the builtin.
-if SERVER and pcall(require, "chttp") and CHTTP ~= nil then
+if SERVER and pcall(require, "chttp") and CHTTP != nil then
     GNIL.log("Using CHTTP http driver instead of default", "debug")
     GNIL.Http._driver = CHTTP
 end

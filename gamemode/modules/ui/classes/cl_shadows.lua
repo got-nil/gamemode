@@ -67,7 +67,7 @@ shadows.BeginShadow = function(panel, recreate)
         for otherPanel in next, shadows.RealRenderTargets do
             local otherTblRT = shadows.RenderTargets[otherPanel]
 
-            if otherTblRT.Size.h == h and otherTblRT.Size.w == w and otherPanel ~= panel then
+            if otherTblRT.Size.h == h and otherTblRT.Size.w == w and otherPanel != panel then
                 tblRT.RT = otherTblRT.RT
                 tblRT.Origin = otherTblRT.Origin
                 tblRT.Finished = true

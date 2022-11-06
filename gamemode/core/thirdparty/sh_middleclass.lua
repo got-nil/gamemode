@@ -34,7 +34,7 @@ local function _createIndexWrapper(aClass, f)
         return function(self, name)
             local value = aClass.__instanceDict[name]
 
-            if value ~= nil then
+            if value != nil then
                 return value
             elseif type(f) == "function" then
                 return (f(self, name))
@@ -120,7 +120,7 @@ local function _includeMixin(aClass, mixin)
     assert(type(mixin) == 'table', "mixin must be a table")
 
     for name, method in pairs(mixin) do
-        if name ~= "Included" and name ~= "static" then
+        if name != "Included" and name != "static" then
             aClass[name] = method
         end
     end
