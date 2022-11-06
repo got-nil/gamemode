@@ -91,3 +91,6 @@ hook.Add("PlayerNetLoad", "gnil_net_send_queue", function(ply)
     -- Empty the queue for the given player.
     GNIL.Net["_q"][sid] = {}
 end)
+
+-- Add an alias to the chunked send function.
+function GNIL.Net.SendChunkedData(...) return GNIL.Net.Chunks.Send(...) end

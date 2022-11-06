@@ -13,9 +13,21 @@ function GNIL.Net.NetworkStringToID(str)
     if GNIL.Net["_i"][str] then return GNIL.Net["_i"][str] end
     return 0
 end
-function GNIL.Net.Receive(messageName, callback)
-    GNIL.Net["_c"][messageName] = callback
+
+-- Each messagename can have two receivers, a standard network
+-- callback and a chunked data callback.
+local function _addReceiverAtPos(name, pos, callback)
+    if not GNIL.Net["_c"][name] then
+        GNIL.Net["_c"][name] = {nil, nil}
+    end
+    GNIL.Net["_c"][name][pos] = callback
 end
+
+-- Seperate adding receivers for standard messages and chunked
+-- data. This is because each uses different callback arguments.
+-- (ReceiveChunked can only be used by clients).
+function GNIL.Net.Receive(messageName, callback) _addReceiverAtPos(messageName, 1, callback) end
+function GNIL.Net.ReceiveChunked(messageName, callback) assert(CLIENT, "Only the client can receive chunked data.") _addReceiverAtPos(messageName, 2, callback) end
 
 ------------------------------------------------
 
@@ -44,9 +56,9 @@ net.Receive("gnil", function(len, ply)
     -- Get the message name string from the sent
     -- message id in the header. (Double headers)
     local mstr = GNIL.Net.NetworkIDToString(net.ReadUInt(GNIL.Net["_idsize"]))
-    if mstr == nil or GNIL.Net["_c"][mstr] == nil then return end
+    if mstr == nil or GNIL.Net["_c"][mstr] == nil or GNIL.Net["_c"][mstr][1] == nil then return end
 
     -- Call the associated network receiver with the
     -- provided length (- idsize) and the calling ply
-    GNIL.Net["_c"][mstr](len - GNIL.Net["_idsize"], ply)
+    GNIL.Net["_c"][mstr][1](len - GNIL.Net["_idsize"], ply)
 end)
