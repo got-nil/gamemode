@@ -1,21 +1,34 @@
 
 -- Tests multiple strings sent with crc validation on client
 
+local function crc(tbl)
+    for i, v in ipairs(tbl) do
+        GNIL.log("#" .. i .. ": " .. util.CRC(v), "debug", "CRC Verification")
+    end
+end
+
 if CLIENT then
     GNIL.Net.ReceiveChunked("test", function(out)
-        GNIL.log("a: " .. #out[1] .. ", b: " .. #out[2], "success")
-        GNIL.log({util.CRC(out[1]), util.CRC(out[2])})
+        crc(out)
+
+        for i, y in ipairs(out) do    
+            GNIL.log("#" .. i .. ":", "success")
+            for _, v in ipairs(string.Explode("\n", y)) do
+                Msg(v .. "\n")
+            end
+        end
     end)
 
 else
     GNIL.Net.AddNetworkString("test")
 
     local data = {
-        GNIL.Utils.Random(65533 * 2),
-        GNIL.Utils.Random(65533 * 1)
+        file.Read(GNIL.Utils.ResolveGamemodePath("core/sh_utils.lua"), "LUA"),
+        file.Read(GNIL.Utils.ResolveGamemodePath("core/sh_modules.lua"), "LUA"),
+        file.Read(GNIL.Utils.ResolveGamemodePath("modules/commands/sv_commands.lua"), "LUA"),
+        GNIL.Utils.Random(65533 * 24)
     }
-    GNIL.log({#data[1], #data[2]}, "success")
-    GNIL.log({util.CRC(data[1]), util.CRC(data[2])})
+    crc(data)
 
     GNIL.Net.Chunks.Send(me, "test", data, true, function(success, out)
         GNIL.log({
