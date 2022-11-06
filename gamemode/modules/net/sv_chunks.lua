@@ -16,14 +16,14 @@ function GNIL.Net.Chunks.Send(ply, message, data, verify_checksum, callback)
     -- that it actually exists (this id is also sent in some chunks)
     local messageid = GNIL.Net.NetworkStringToID(message)
     if messageid == 0 then
-        GNIL.log("Unknown/Unpooled message '" .. message .. "', refusing to send chunked data.", "debug")
+        GNIL.log("Unknown/Unpooled message '" .. message .. "', refusing to send chunked data.", "error")
         return
     end
 
-    local use_positions, positions = istable(data), {}
-    if use_positions then
+    local use_lengths, lengths = istable(data), {}
+    if use_lengths then
 
-        -- To minimise size used to send the positions, the table may not be
+        -- To minimise size used to send the lengths, the table may not be
         -- a size greater than 15 (since each is a uint with 32 bits).
         if #data > 15 then
             GNIL.log("Cannot write more than 15 individual data strings for chunked messages.", "error")
@@ -31,17 +31,18 @@ function GNIL.Net.Chunks.Send(ply, message, data, verify_checksum, callback)
         end
 
         -- Add all data strings from the provided table into a single buffer
-        -- recoding the buffer size for each index. This is used by the client
-        -- to use as the splitting positions to seperate data.
+        -- recording the length of each individual string. (This should result
+        -- in us not overflowing the 32 int siz, since we're not tracking
+        -- the position of each start which grows exponentially in size).
         local buffer =  ""
         for i, v in ipairs(data) do
+            assert(isstring(v), "All data values must be strings")
+
             buffer = buffer .. v
-            positions[i] = #buffer
+            lengths[i] = #v
         end
         data = buffer -- Overwrite data to constructed buffer
     end
-
-    GNIL.log(positions)
 
     -- Create a return code that is used by the client to identify
     -- the chunks being sent (allows for multiple to be sent to the
@@ -92,11 +93,11 @@ function GNIL.Net.Chunks.Send(ply, message, data, verify_checksum, callback)
                 if verify_checksum == true then net.WriteString(GNIL.Net.Chunks["return_codes"][return_code][2]) end -- Checksum?
                 net.WriteUInt(messageid, GNIL.Net["_idsize"]) -- Target message id
 
-                -- Also add positions in the last message to split the data in the correct positions.
-                net.WriteBool(use_positions)
-                if use_positions then
-                    net.WriteUInt(#positions, 4)
-                    for _, v in ipairs(positions) do
+                -- Also add lengths in the last message to split the data in the correct positions.
+                net.WriteBool(use_lengths)
+                if use_lengths then
+                    net.WriteUInt(#lengths, 4)
+                    for _, v in ipairs(lengths) do
                         net.WriteUInt(v, 32)
                     end
                 end

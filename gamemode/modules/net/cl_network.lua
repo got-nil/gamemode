@@ -76,6 +76,12 @@ net.Receive("gnilc", function()
     
     else
 
+        -- (Sanity check, make sure theres actually an existing buffer for id)
+        if GNIL.Net.recv_chunks[data.id] == nil then
+            GNIL.log("Somehow the server sent a last/terminating packet with an invalid id.", "error")
+            return
+        end
+
         -- Gather the final output from the buffer table and flush
         local output = table.concat(GNIL.Net.recv_chunks[data.id])
         GNIL.Net.recv_chunks[data.id] = nil
@@ -104,19 +110,19 @@ net.Receive("gnilc", function()
             
             else
 
-                -- Finally, if the data recieved is valid we should read any positions
-                -- required to split the data into individual strings.
-                local has_positions, buffer = net.ReadBool(), {}
-                if has_positions then
+                -- Finally, if the data recieved is valid we should read any lengths
+                -- provided, so we can split the data into its individual strings.
+                local has_lengths, buffer = net.ReadBool(), {}
+                if has_lengths then
                     local previous, current = 0, 0
                     for i = 1, net.ReadUInt(4) do
-                        current = net.ReadUInt(32)
-                        buffer[i] = string.sub(output, previous, current)
-                        previous = current + 1
+                        current = previous + net.ReadUInt(32)
+                        buffer[i] = string.sub(output, previous + 1, current)
+                        previous = current
                     end
                     output = buffer
                 end
-
+                
                 -- Call the callback reciever. If there is multiple strings recieved
                 -- we should call them each as individual arguments.
                 GNIL.Net["_c"][mstr][2](output)

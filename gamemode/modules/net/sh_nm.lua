@@ -88,6 +88,31 @@ function NetworkMessage:SendPVS(pos) assert(SERVER and isvector(pos), "Provided 
 -- Basically just an alias to the default, but the buffer is also written.
 function NetworkMessage:SendToServer() assert(CLIENT, "This function may only be used by a client.") self:_WriteToStream() net.SendToServer() end
 
+-- Send the current net message as a chunked message to the client.
+-- **Please read the module README before you use this, it does
+-- not use the standard recievers on the client.**
+-- **Requires ALL WRITES to be DATA ONLY**
+function NetworkMessage:SendChunked(ply, verify_checksum, callback)
+    local data = {}
+    for _, v in ipairs(self._write_buffer) do
+        if v[2] != net.WriteData then
+            GNIL.log("To send as chunks, all writes MUST be written with WriteData, cannot send message.", "error")
+            return
+        end
+        table.insert(data, v[1][1])
+    end
+    assert(#data >= 1, "There must be at least one data write to send chunked message.")
+
+    -- If there is only one write, then we should send it as a single
+    -- argument instead of a table to skip sizes etc from being sent
+    -- as if it were a multi string sequence.
+    if #data == 1 then data = data[1] end
+
+    -- As with everything here, just call the real function to do all
+    -- the heavy lifting with the data collected + optional arguments.
+    GNIL.Net.Chunks.Send(ply, self.name, data, verify_checksum, callback)
+end
+
 function NetworkMessage:__tostring()
     return "NetMessage " .. self.name
 end
