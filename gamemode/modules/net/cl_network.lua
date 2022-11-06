@@ -29,48 +29,54 @@ GNIL.Net.recv_chunks = GNIL.Net.recv_chunks or {}
 net.Receive("gnilc", function()
     local data = {
         ["id"] = tostring(net.ReadUInt(15)),
-        ["chunk"] = net.ReadData(net.ReadUInt(16)),
         ["last"] = net.ReadBool()
     }
+    
+    if not data.last then
 
-    -- Add the received chunk to the table of existing chunks (for the
-    -- given id if one exists, if not create the table from id)
-    if not GNIL.Net.recv_chunks[data.id] then
+        -- If its not the last message, read the chunked data.
+        data.chunk = net.ReadData(net.ReadUInt(16))
 
-        -- If this is the first time that this chunk id has been used,
-        -- then there should also be a target_message id sent. We should
-        -- validate that there actually is a chunked reciever for this
-        -- message before accepting more chunks.
-        local mid = net.ReadUInt(GNIL.Net["_idsize"])
-        local mstr = GNIL.Net.NetworkIDToString(mid)
+        -- Add the received chunk to the table of existing chunks (for the
+        -- given id if one exists, if not create the table from id)
+        if not GNIL.Net.recv_chunks[data.id] then
 
-        -- (Sanity check, make sure the ID is actually valid although this
-        -- should've been validated on the server before sending anyway).
-        if mstr == nil then
-            GNIL.log("The server somehow sent an unpooled messageid as the chunk target", "error")
-            return
+            -- If this is the first time that this chunk id has been used,
+            -- then there should also be a target_message id sent. We should
+            -- validate that there actually is a chunked reciever for this
+            -- message before accepting more chunks.
+            local mid = net.ReadUInt(GNIL.Net["_idsize"])
+            local mstr = GNIL.Net.NetworkIDToString(mid)
+
+            -- (Sanity check, make sure the ID is actually valid although this
+            -- should've been validated on the server before sending anyway).
+            if mstr == nil then
+                GNIL.log("The server somehow sent an unpooled messageid as the chunk target", "error")
+                return
+            end
+
+            if GNIL.Net["_c"][mstr] == nil or GNIL.Net["_c"][mstr][2] == nil then
+                GNIL.log("The server is sending chunked data for message '" .. mstr .. "' however there are no chunked recievers for it.", "debug")
+
+                -- If there are no chunked recievers, then we should send the
+                -- termination message back to the server to prevent it from
+                -- attempting to continue sending data for a message that cant
+                -- even be recieved.
+                net.Start("gnilc")
+                    net.WriteUInt(tonumber(data.id), 15)
+                    net.WriteBool(false)
+                    net.WriteString("The client does not have any chunked recievers for the message")
+                net.SendToServer()
+                return
+            end
+
+            GNIL.Net.recv_chunks[data.id] = {}
         end
+        table.insert(GNIL.Net.recv_chunks[data.id], data.chunk)
+    
+    else
 
-        if GNIL.Net["_c"][mstr] == nil or GNIL.Net["_c"][mstr][2] == nil then
-            GNIL.log("The server is sending chunked data for message '" .. mstr .. "' however there are no chunked recievers for it.", "debug")
-
-            -- If there are no chunked recievers, then we should send the
-            -- termination message back to the server to prevent it from
-            -- attempting to continue sending data for a message that cant
-            -- even be recieved.
-            net.Start("gnilc")
-                net.WriteUInt(tonumber(data.id), 15)
-                net.WriteBool(false)
-                net.WriteString("The client does not have any chunked recievers for the message")
-            net.SendToServer()
-            return
-        end
-
-        GNIL.Net.recv_chunks[data.id] = {}
-    end
-    table.insert(GNIL.Net.recv_chunks[data.id], data.chunk)
-
-    if data.last then
+        -- Gather the final output from the buffer table and flush
         local output = table.concat(GNIL.Net.recv_chunks[data.id])
         GNIL.Net.recv_chunks[data.id] = nil
 
@@ -97,6 +103,22 @@ net.Receive("gnilc", function()
                 errmessage = "Invalid messageid/No chunked recievers"
             
             else
+
+                -- Finally, if the data recieved is valid we should read any positions
+                -- required to split the data into individual strings.
+                local has_positions, buffer = net.ReadBool(), {}
+                if has_positions then
+                    local previous, current = 0, 0
+                    for i = 1, net.ReadUInt(4) do
+                        current = net.ReadUInt(32)
+                        buffer[i] = string.sub(output, previous, current)
+                        previous = current + 1
+                    end
+                    output = buffer
+                end
+
+                -- Call the callback reciever. If there is multiple strings recieved
+                -- we should call them each as individual arguments.
                 GNIL.Net["_c"][mstr][2](output)
                 success = true
             end

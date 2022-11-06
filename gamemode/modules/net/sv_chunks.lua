@@ -8,7 +8,7 @@ GNIL.Net.Chunks = GNIL.Net.Chunks or {
 function GNIL.Net.Chunks.Send(ply, message, data, verify_checksum, callback)
     assert(IsEntity(ply) and ply:IsPlayer(), "The provided player argument must be a player entity")
     assert(isstring(message), "The message name argument provided must be a string")
-    assert(isstring(data), "The data argument to be chunked must be a string")
+    assert(isstring(data) or (istable(data) and table.IsSequential(data)), "The data argument to be chunked may either be a string, or a sequential table of strings")
     assert(verify_checksum == nil or isbool(verify_checksum), "The verify_checksum argument must be nil or a bool value")
     assert(callback == nil or isfunction(callback), "The callback argument must be null or a function")
 
@@ -19,6 +19,29 @@ function GNIL.Net.Chunks.Send(ply, message, data, verify_checksum, callback)
         GNIL.log("Unknown/Unpooled message '" .. message .. "', refusing to send chunked data.", "debug")
         return
     end
+
+    local use_positions, positions = istable(data), {}
+    if use_positions then
+
+        -- To minimise size used to send the positions, the table may not be
+        -- a size greater than 15 (since each is a uint with 32 bits).
+        if #data > 15 then
+            GNIL.log("Cannot write more than 15 individual data strings for chunked messages.", "error")
+            return
+        end
+
+        -- Add all data strings from the provided table into a single buffer
+        -- recoding the buffer size for each index. This is used by the client
+        -- to use as the splitting positions to seperate data.
+        local buffer =  ""
+        for i, v in ipairs(data) do
+            buffer = buffer .. v
+            positions[i] = #buffer
+        end
+        data = buffer -- Overwrite data to constructed buffer
+    end
+
+    GNIL.log(positions)
 
     -- Create a return code that is used by the client to identify
     -- the chunks being sent (allows for multiple to be sent to the
@@ -32,11 +55,15 @@ function GNIL.Net.Chunks.Send(ply, message, data, verify_checksum, callback)
 
     -- Iterate over all chunks sending each in a timer to ensure that
     -- the client isn't overwhelmed.
-    for i = 1, chunk_count do
+    for i = 1, chunk_count + 1 do
         timer.Simple(GNIL.Net.Chunks["chunk_rate"] * (i - 1), function()
-            local chunk = string.sub(data, (i - 1) * GNIL.Net.Chunks["max_chunk_size"] + 1, i * GNIL.Net.Chunks["max_chunk_size"])
-            local chunk_size = string.len(chunk)
-
+            local final_chunk, chunk, chunk_size = i > chunk_count, nil, 0
+            
+            if not final_chunk then
+                chunk = string.sub(data, (i - 1) * GNIL.Net.Chunks["max_chunk_size"] + 1, i * GNIL.Net.Chunks["max_chunk_size"])
+                chunk_size = string.len(chunk)
+            end 
+            
             -- If the return code is nil then we should just return, as
             -- a previous chunk has failed, or the client has rejected
             -- the first chunk. (For whatever reason).
@@ -44,23 +71,35 @@ function GNIL.Net.Chunks.Send(ply, message, data, verify_checksum, callback)
             
             net.Start("gnilc") -- Start netmessage
             net.WriteUInt(tonumber(return_code), 15) -- The return id
-            net.WriteUInt(chunk_size, 16) -- Size of the data being sent
-            net.WriteData(chunk, chunk_size) -- Write the actual data
-            net.WriteBool(i == chunk_count) -- Used to indicate if this is the last chunk
+            net.WriteBool(final_chunk) -- Used to indicate if this is the last chunk
 
-            if i != chunk_count then
-                -- Standard chunk message. If this is the first message,
-                -- then we should send some additional data to the client
-                -- (specifying the message id target).
+            -- Standard chunk message. If this is the first message,
+            -- then we should send some additional data to the client
+            -- (specifying the message id target).
+            if not final_chunk then
+                net.WriteUInt(chunk_size, 16) -- Size of the data being sent
+                net.WriteData(chunk, chunk_size) -- Write the actual data                    
+            
+                -- If its the first message, send the id to validate that
+                -- the client has required chunk reciever.
                 if i == 1 then
                     net.WriteUInt(messageid, GNIL.Net["_idsize"])               
                 end
-            
+
             else
                 -- Terminating message, send checksum (if enabled) and the target message id
                 net.WriteBool(verify_checksum == true) -- Checksum existance
                 if verify_checksum == true then net.WriteString(GNIL.Net.Chunks["return_codes"][return_code][2]) end -- Checksum?
                 net.WriteUInt(messageid, GNIL.Net["_idsize"]) -- Target message id
+
+                -- Also add positions in the last message to split the data in the correct positions.
+                net.WriteBool(use_positions)
+                if use_positions then
+                    net.WriteUInt(#positions, 4)
+                    for _, v in ipairs(positions) do
+                        net.WriteUInt(v, 32)
+                    end
+                end
             end
 
             -- Finally send the constructed message to the client
