@@ -82,3 +82,41 @@ function GNIL.Utils.IncludeDirectory(path, ignoredFiles)
         GNIL.Utils.Include(path  .. "/" .. f, realm)
     end
 end
+
+-- Execute given LUA code, returning any execution return values, or error
+-- message if compilation/execution failed. Returns:
+--  bool: success
+--  output: string error when unsuccessful, or Any output when successful
+function GNIL.Utils.Execute(code, name)
+    local compiled = CompileString(code, name == nil and "gnil_exec" or name, false)
+
+    -- If the compiled result is a string then the compilation failed.
+    if isstring(compiled) then
+        return false, "Failed to compile with error: " .. compiled
+    end
+
+    -- If the compilation did not fail, we should run the code within a pcall
+    -- to catch any runtime errors and catch any return values.
+    local success, response = pcall(compiled)
+    if success then
+        return true, response
+    end
+    return false, "Execution failed with error: " .. response
+end
+
+-- Precache character set, skipping certain punctuation.
+local charset = {}  do
+    for c = 48, 57  do table.insert(charset, string.char(c)) end
+    for c = 65, 90  do table.insert(charset, string.char(c)) end
+    for c = 97, 122 do table.insert(charset, string.char(c)) end
+end
+function GNIL.Utils.Random(len)
+    if not len or len <= 0 then len = 28 end -- default to 28 length
+    math.randomseed(os.clock()^5)
+    
+    local s = {}
+    for i = 1, len do
+        table.insert(s, charset[math.random(1, #charset)])
+    end
+    return table.concat(s)
+end
