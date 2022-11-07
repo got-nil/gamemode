@@ -34,7 +34,7 @@ local function checkPositiveInteger(number, name)
 end
 
 local function present(value)
-    return value and value ~= ""
+    return value and value != ""
 end
 
 -- splitByDot("a.bbc.d") == {"a", "bbc", "d"}
@@ -135,7 +135,7 @@ local function smallerIdList(myIds, otherIds)
 
     for i = 1, myLength do
         comparison = compareIds(myIds[i], otherIds[i])
-        if comparison ~= 0 then return comparison == -1 end
+        if comparison != 0 then return comparison == -1 end
         -- if comparison == 0, continue loop
     end
 
@@ -176,9 +176,9 @@ function mt:__eq(other)
 end
 
 function mt:__lt(other)
-    if self.major ~= other.major then return self.major < other.major end
-    if self.minor ~= other.minor then return self.minor < other.minor end
-    if self.patch ~= other.patch then return self.patch < other.patch end
+    if self.major != other.major then return self.major < other.major end
+    if self.minor != other.minor then return self.minor < other.minor end
+    if self.patch != other.patch then return self.patch < other.patch end
     -- notice that build is ignored for precedence in semver 2.0.0
 
     return smallerPrerelease(self.prerelease, other.prerelease)

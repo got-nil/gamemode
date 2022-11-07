@@ -70,11 +70,30 @@ end
 -- Load all realm prefixed files within a directory, non-recursive
 -- Absolute LUA paths are required, when working in gamemode ensure
 -- the path is locally resolved (see above)
-function GNIL.Utils.IncludeDirectory(path, ignoredFiles)
+function GNIL.Utils.IncludeDirectory(path, ignoredFiles, absoluteIgnoredFiles)
     GNIL.log("Including directory '" .. path .. "'", "debug")
 
     for _, f in ipairs(file.Find(path .. "/*.lua", "LUA")) do
-        if (ignoredFiles != nil and istable(ignoredFiles)) and table.HasValue(ignoredFiles, f) then continue end
+        if istable(ignoredFiles) then
+
+            -- If there is a set of ignored files, we should check to
+            -- make sure that the file path isn't in the table. Both
+            -- relative and absolute paths are checked.
+            local seq = table.IsSequential(ignoredFiles)
+            
+            -- Allow for all ignored to be already declared as absolute,
+            -- this means we dont even have to bother checking the relative
+            -- path (which for large ignore sets would be more efficient). 
+            local ignored, absolute = false, path .. "/" .. f
+            for _, v in ipairs(absoluteIgnoredFiles == true and {absolute} or {f, absolute}) do
+                if seq then ignored = table.HasValue(ignoredFiles, v)
+                else ignored = ignoredFiles[v] == true end
+                if ignored then break end
+            end
+
+            -- If the file is ignored, then continue to the next one.
+            if ignored then GNIL.log("Not loading filepath '" .. absolute .. "' as it is ignored.", "debug") continue end           
+        end 
 
         local realm = GNIL.Utils.GetFilepathRealmPrefix(f)
         if realm == nil then continue end

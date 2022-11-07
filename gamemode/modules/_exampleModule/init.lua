@@ -28,6 +28,13 @@ MODULE.description = "This module is never actually loaded, and does nothing." -
 -- will automatically add the current module name to the log prefix to make debugging easier.
 MODULE:log("Woah look at this", "debug")
 
+-- Ignore allows for specific files (including files that are nested within other directories)
+-- to remain unloaded. These files are completely skipped when loading directories, and are therefore
+-- useful for files that should only be loaded in certain environments, etc. This ignore list
+-- persists for subsequent Include calls on the module. 
+MODULE:Ignore("relative_file.lua")
+MODULE:Ignore("nested/relative_file.lua")
+
 -- "Require" is used to signify that this module requires another module to function. When
 -- requiring a module its init file is loaded and executed, along with all top level module
 -- files. Essentially its loading the module with some added protection to prevent loops.
@@ -36,10 +43,15 @@ MODULE:Require("OtherModule")
 -- Iterative over the require function above.
 MODULE:Requires({"ModuleTwo", "ModuleThree"})
 
+-- ** BY NEW DESIGN (MODULE FILE IGNORING) YOU SHOULD ALWAYS USE THE MODULE VERSIONS OF
+-- INCLUDE AND INCLUDEDIRECTORY OVER ITS GLOBAL. THE MODULE VERSION WILL HANDLE THE IGNORED
+-- FILES FOR YOU, BUT USING THE GLOBAL UTILITY WILL NOT. ** 
+
 -- If your module needs to load other directories, the module class provides a simple interface
 -- for including relative directories without having to resolve it yourself. The second argument
 -- allows the include to be "delayed" until the init file has finished executing (once the other
--- top level files are loaded).
+-- top level files are loaded). **Even if there are no ignored files provided, any files ignored
+-- using the Ignore class method will be ignored by default, this cannot be disabled.
 MODULE:IncludeDirectory("other_shit")       -- Will include the directory immidiately.
 MODULE:IncludeDirectory("other_shit", true) -- Will include the directory when the root directory files are being loaded.
 MODULE:Include(path, ignoredFiles, delayed) -- The same functionality as IncludeDirectory with the last argument being the delayed flag.

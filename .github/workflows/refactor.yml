@@ -1,0 +1,50 @@
+name: Check inequality operators
+
+on:
+  pull_request:
+    types:
+      - opened
+    branches:
+      - 'main'
+    paths:
+      - '**.lua'
+
+jobs:
+  refactor:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - name: Find and replace
+        id: far
+        uses: jacobtomlinson/gha-find-replace@v2
+        with:
+          find: "~="
+          replace: "!="
+          regex: false
+          include: '**.lua'
+      - name: Obtain GitHub App Installation Access Token
+        if: steps.far.outputs.modifiedFiles > 0
+        id: github_app_auth
+        run: |
+          TOKEN="$(npx obtain-github-app-installation-access-token ci ${{ secrets.GH_APP_CREDENTIALS_TOKEN }})"
+          echo "::add-mask::$TOKEN"
+          echo "::set-output name=token::$TOKEN"
+      - name: Get Branch Name
+        if: steps.far.outputs.modifiedFiles > 0
+        id: get_branch
+        run: |
+          BRANCH_NAME="$(git branch --show-current)"
+          echo "::add-mask::$BRANCH_NAME"
+          echo "::set-output name=branch_name::$BRANCH_NAME"
+      - name: Commit, push, alert
+        if: steps.far.outputs.modifiedFiles > 0
+        run: |
+          git config --local user.email "117417791+got-nil-overseer[bot]@users.noreply.github.com"
+          git config --local user.name "got-nil-overseer[bot]"
+          git add **.lua
+          git commit -m "Refactor inequalities"
+          git push https://x-access-token:${{ steps.github_app_auth.outputs.token }}@github.com/${{ github.repository }}.git HEAD:${{ github.head_ref }}
+          curl -X POST -H "Accept: application/vnd.github+json" -H "Authorization: Bearer ${{ steps.github_app_auth.outputs.token}}" https://api.github.com/repos/${{ github.repository }}/issues/${{ github.event.pull_request.number }}/comments -d '{"body":"The PR contained usage of `~=` instead of `!=`. This **__treasonous__** action has be rectified."}'
