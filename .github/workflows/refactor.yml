@@ -25,6 +25,7 @@ jobs:
           replace: "!="
           regex: false
           include: '**.lua'
+          exclude: '*/thirdparty/*'
       - name: Obtain GitHub App Installation Access Token
         if: steps.far.outputs.modifiedFiles > 0
         id: github_app_auth
