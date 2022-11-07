@@ -31,7 +31,7 @@ net.Receive("gnilc", function()
         ["id"] = tostring(net.ReadUInt(15)),
         ["last"] = net.ReadBool()
     }
-    
+
     if not data.last then
 
         -- If its not the last message, read the chunked data.
@@ -73,7 +73,7 @@ net.Receive("gnilc", function()
             GNIL.Net.recv_chunks[data.id] = {}
         end
         table.insert(GNIL.Net.recv_chunks[data.id], data.chunk)
-    
+
     else
 
         -- (Sanity check, make sure theres actually an existing buffer for id)
@@ -98,7 +98,7 @@ net.Receive("gnilc", function()
             GNIL.log("Checksum validation failed when combining chunks for '" .. data.id .. "'", "error")
             errmessage = "Checksum validation failed"
         else
-            
+
             -- Finally, if the checksum validation succeeded, we should just
             -- call the reciever callback with the resulting output.
             local mid = net.ReadUInt(GNIL.Net["_idsize"])
@@ -107,7 +107,7 @@ net.Receive("gnilc", function()
             -- (Another sanity check before actually running the callback).
             if mstr == nil or GNIL.Net["_c"][mstr] == nil or GNIL.Net["_c"][mstr][2] == nil then
                 errmessage = "Invalid messageid/No chunked recievers"
-            
+
             else
 
                 -- Finally, if the data recieved is valid we should read any lengths
@@ -122,7 +122,7 @@ net.Receive("gnilc", function()
                     end
                     output = buffer
                 end
-                
+
                 -- Call the callback reciever. If there is multiple strings recieved
                 -- we should call them each as individual arguments.
                 GNIL.Net["_c"][mstr][2](output)

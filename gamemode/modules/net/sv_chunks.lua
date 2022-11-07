@@ -67,17 +67,17 @@ function GNIL.Net.Chunks.Send(ply, message, data, verify_checksum, callback)
         timer.Simple(GNIL.Net.Chunks["chunk_rate"] * (i - 1), function()
             if not IsValid(ply) then return end -- Ensure the player is still valid
             local final_chunk, chunk, chunk_size = i > chunk_count, nil, 0
-            
+
             if not final_chunk then
                 chunk = string.sub(data, (i - 1) * GNIL.Net.Chunks["max_chunk_size"] + 1, i * GNIL.Net.Chunks["max_chunk_size"])
                 chunk_size = string.len(chunk)
-            end 
-            
+            end
+
             -- If the return code is nil then we should just return, as
             -- a previous chunk has failed, or the client has rejected
             -- the first chunk. (For whatever reason).
             if GNIL.Net.Chunks["return_codes"][return_code] == nil then return end
-            
+
             net.Start("gnilc") -- Start netmessage
             net.WriteUInt(tonumber(return_code), 15) -- The return id
             net.WriteBool(final_chunk) -- Used to indicate if this is the last chunk
@@ -87,12 +87,12 @@ function GNIL.Net.Chunks.Send(ply, message, data, verify_checksum, callback)
             -- (specifying the message id target).
             if not final_chunk then
                 net.WriteUInt(chunk_size, 16) -- Size of the data being sent
-                net.WriteData(chunk, chunk_size) -- Write the actual data                    
-            
+                net.WriteData(chunk, chunk_size) -- Write the actual data
+
                 -- If its the first message, send the id to validate that
                 -- the client has required chunk reciever.
                 if i == 1 then
-                    net.WriteUInt(messageid, GNIL.Net["_idsize"])               
+                    net.WriteUInt(messageid, GNIL.Net["_idsize"])
                 end
 
             else
@@ -118,7 +118,7 @@ function GNIL.Net.Chunks.Send(ply, message, data, verify_checksum, callback)
 end
 
 net.Receive("gnilc", function(len, ply)
-    
+
     -- Get the return code from the netmessage to correlate to
     -- the returncodes table (to validate response id)
     local return_code = tostring(net.ReadUInt(15))

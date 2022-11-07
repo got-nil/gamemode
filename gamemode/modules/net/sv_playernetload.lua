@@ -2,7 +2,7 @@
 -- The PlayerNetLoad is a serverside hook that is called similar
 -- to PlayerInitialSpawn (in that its only called once per player connection)
 -- however unlike PlayerInitialSpawn it indicates that the client
--- is able to send and receive net data. 
+-- is able to send and receive net data.
 
 GNIL.Net["_pnl"] = GNIL.Net["_pnl"] or {}
 
@@ -36,7 +36,7 @@ hook.Add("PlayerInitialSpawn", "gnil_net_pnl_initialspawn", function(ply)
         if not cmd:IsForced() then
             _playerNetLoaded(ply)
             hook.Remove("SetupMove", setup_move_id)
-        end 
+        end
     end)
 end)
 

@@ -28,7 +28,7 @@ end
 -- Add network string alias, works the exact same.
 function GNIL.Net.AddNetworkString(str, _d)
     assert(isstring(str), "The provided network string... must be a string.")
-    
+
     local l = #GNIL.Net["_r"] + 1
     GNIL.Net["_r"][l] = str
     GNIL.Net["_i"][str] = l

@@ -1,7 +1,7 @@
 
 -- The NetworkMessage is an OOP interface for writing network data
 -- to a write buffer instead of directly to the write stream. This
--- allows for messages to be queued etc. 
+-- allows for messages to be queued etc.
 local NetworkMessage = GNIL.Thirdparty.middleclass("NetworkMessage")
 function NetworkMessage:Initialize(name)
     self.name = name

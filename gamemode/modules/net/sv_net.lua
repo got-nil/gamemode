@@ -15,30 +15,30 @@ end
 -- NetMessage instance can be provided as second argument to allow
 -- for message queuing (and just being OOP which is automatically cool)
 function GNIL.Net.Send(ply, _nm, _allowqueue)
-    
+
     local t = TypeID(ply)
     if t == TYPE_RECIPIENTFILTER then
-        
+
         -- If a recipient filter is provided, then we should simply get all
         -- the players that apply to the filter, and iteratively send the message
         -- to each of them.
         for _, v in ipairs(ply:GetPlayers()) do
             GNIL.Net.Send(v, _nm)
         end
-        
+
     elseif t == TYPE_TABLE then
-        
+
         -- If a table is provided, it must be a sequential table of players.
         assert(table.IsSequential(t), "If a table is provided, it must be a sequential table of players.")
         for i, v in ipairs(ply) do
-            
+
             -- Don't bother validating the table value since the send functions
             -- will revalidate its type anyway. Micro optimisations add up 🙏
             GNIL.Net.Send(v, _nm)
         end
-    
+
     elseif t == TYPE_ENTITY then
-        
+
         -- If an entity is provided, then it must be a player.
         assert(ply:IsPlayer(), "If an entity is provided, it must be a player.")
 
@@ -72,7 +72,7 @@ end
 -- When a player has loaded to the point where they can send/recieve
 -- network messages, then we should send any messages that are queued.
 hook.Add("PlayerNetLoad", "gnil_net_send_queue", function(ply)
-    
+
     -- Ensure that there actually are queued net
     -- messages for the loaded player's steamid.
     local sid = ply:SteamID()

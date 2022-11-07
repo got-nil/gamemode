@@ -1,6 +1,6 @@
 
 -- These functions are the exact same as the default net functions
--- in terms of input arguments and return values.  
+-- in terms of input arguments and return values.
 
 function GNIL.Net.NetworkIDToString(id)
     if id == 0 or id > #GNIL.Net["_r"] then return nil end
@@ -42,7 +42,7 @@ end
 function GNIL.Net.Start(messageName, unreliable)
     local mid = GNIL.Net.NetworkStringToID(messageName)
     if mid == 0 then error("The provided message name '" .. messageName .. "' is unpooled. Ensure you're using GNIL.Net.AddNetworkString beforehand.") end
-    
+
     if unreliable then GNIL.log("Net message '" .. messageName .. "' is being sent unreliably.", "debug") end
 
     net.Start("gnil", unreliable)
@@ -52,7 +52,7 @@ end
 ------------------------------------------------
 
 net.Receive("gnil", function(len, ply)
-    
+
     -- Get the message name string from the sent
     -- message id in the header. (Double headers)
     local mstr = GNIL.Net.NetworkIDToString(net.ReadUInt(GNIL.Net["_idsize"]))
