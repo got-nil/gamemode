@@ -68,9 +68,9 @@ function GNIL.Commands.Process(ply, _, args, argstr)
         end
 
         Msg("Finally, while you're here, enjoy some credits:\n")
-        for name, desc in pairs(GNIL._CREDITS) do
-            MsgC(GNIL.Commands.logo_color, "    [" .. name .. "]")
-            Msg(" -> " .. desc .. "\n")
+        for _, v in ipairs(GNIL._CREDITS) do
+            MsgC(GNIL.Commands.logo_color, "    [" .. v["name"] .. "]")
+            Msg(" -> " .. v["title"] .. "\n")
         end
         return
     end
@@ -84,10 +84,9 @@ function GNIL.Commands.Process(ply, _, args, argstr)
     local c = GNIL.Commands.GetCommandArgumentsByPlaintext(args[1])
     if c == nil then GNIL.log("The command '" .. args[1] .. "' is unrecognised by the client.", "error") return end
 
-    -- !!This net message is temporary!!
-    net.Start("gnil_cmds")
-        net.WriteString(argstr)
-    net.SendToServer()
+    GNIL.Net.Create("module_commands_executed")
+        :WriteString(argstr)
+    :SendToServer()
 end
 
 -- Add the root gnil command and add both processors.

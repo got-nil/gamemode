@@ -101,6 +101,6 @@ function GNIL.Commands.Receiver.Execute(argstr, ply)
     command[1](ply, arguments)
 end
 
-net.Receive("gnil_cmds", function(_, ply)
+GNIL.Net.Receive("module_commands_executed", function(_, ply)
     GNIL.Commands.Receiver.Execute(net.ReadString(), ply)
 end)

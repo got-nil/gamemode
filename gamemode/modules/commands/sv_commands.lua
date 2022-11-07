@@ -9,9 +9,11 @@ local function getHashedName(name)
     return GNIL.Commands.HashedNames[name]
 end
 
--- The network structure will remain the same, however eventually all the
--- net code will be replaced with the GNIL net lib once I get around to it.
-util.AddNetworkString("gnil_cmds")
+-- Add the used network IDs to the net pool.
+GNIL.Net.AddNetworkStrings(
+    "module_commands_sync",
+    "module_commands_executed"
+)
 
 -- The "flush" argument determines if the client should completely reset their
 -- command registry when recieving this command structure. Therefore it should
@@ -37,36 +39,36 @@ local function sendPlayerCommandStructure(ply, command_name, flush)
         command_arguments[k] = v
     end
 
-    net.Start("gnil_cmds") -- Start the net message
-    net.WriteBool(isbool(flush) and flush != false and flush or false) -- Send the registry flush signal
+    local nm = GNIL.Net.Create("module_commands_sync") -- Create the net message (as instance)
+    nm:WriteBool(isbool(flush) and flush != false and flush or false) -- Send the registry flush signal
 
     -- If there aren't any commands collected, then there either no defined commands or
     -- the user doesn't have access to any of the commands to begin with. We should still
     -- network this to the client, essentially informing them that they have access to no
     -- commands so it doesnt look like they just never recieved any commands to begin with.
     if command_arguments == nil then
-        net.WriteBool(false) -- Literally tell the player they're getting nothing.
+        nm:WriteBool(false) -- Literally tell the player they're getting nothing.
     else
-        net.WriteBool(true) -- Signify that commands are actually going to be sent
-        net.WriteUInt(#table.GetKeys(command_arguments), 10) -- The amount of commands that will be sent
+        nm:WriteBool(true) -- Signify that commands are actually going to be sent
+        nm:WriteUInt(table.Count(command_arguments), 10) -- The amount of commands that will be sent
 
         for name, data in pairs(command_arguments) do
-            net.WriteBool(data[4]) -- Is the string below plaintext?
-            net.WriteString(data[4] and name or getHashedName(name)) -- The hashed command name
-            net.WriteBool(data[2] != false) -- Are there arguments defined
+            nm:WriteBool(data[4]) -- Is the string below plaintext?
+            nm:WriteString(data[4] and name or getHashedName(name)) -- The hashed command name
+            nm:WriteBool(data[2] != false) -- Are there arguments defined
 
             -- Only write the argument types if the command actually has defined arguments.
             if data[2] != false then
-                net.WriteUInt(#table.GetKeys(data[2]), 8) -- The amount of arguments within the command
+                nm:WriteUInt(#table.GetKeys(data[2]), 8) -- The amount of arguments within the command
                 for _, argument in ipairs(data[2]) do
-                    net.WriteUInt(argument, 7) -- Write the argument type
+                    nm:WriteUInt(argument, 7) -- Write the argument type
                 end
             end
         end
     end
 
     -- Send the constucted message to the client.
-    net.Send(ply)
+    nm:Send(ply)
 end
 
 -- Send the command structure to all connected clients.
