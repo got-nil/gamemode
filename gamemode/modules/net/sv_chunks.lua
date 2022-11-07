@@ -47,7 +47,14 @@ function GNIL.Net.Chunks.Send(ply, message, data, verify_checksum, callback)
     -- Create a return code that is used by the client to identify
     -- the chunks being sent (allows for multiple to be sent to the
     -- same message at the same time without conflict).
-    local return_code = tostring(math.random(1023, 32767)) -- 15 bits
+    local return_code
+    while true do
+        return_code = tostring(math.random(1023, 32767)) -- 15 bits
+        if not GNIL.Net.Chunks["return_codes"][return_code] then
+            break
+        end
+    end
+
     GNIL.Net.Chunks["return_codes"][return_code] = {ply:SteamID64(), verify_checksum == true and util.CRC(data) or nil, callback}
 
     -- Calculate the amount of chunks that are required to send all data.
@@ -58,6 +65,7 @@ function GNIL.Net.Chunks.Send(ply, message, data, verify_checksum, callback)
     -- the client isn't overwhelmed.
     for i = 1, chunk_count + 1 do
         timer.Simple(GNIL.Net.Chunks["chunk_rate"] * (i - 1), function()
+            if not IsValid(ply) then return end -- Ensure the player is still valid
             local final_chunk, chunk, chunk_size = i > chunk_count, nil, 0
             
             if not final_chunk then

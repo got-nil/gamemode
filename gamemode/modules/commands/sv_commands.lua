@@ -50,7 +50,7 @@ local function sendPlayerCommandStructure(ply, command_name, flush)
         nm:WriteBool(false) -- Literally tell the player they're getting nothing.
     else
         nm:WriteBool(true) -- Signify that commands are actually going to be sent
-        nm:WriteUInt(#table.GetKeys(command_arguments), 10) -- The amount of commands that will be sent
+        nm:WriteUInt(table.Count(command_arguments), 10) -- The amount of commands that will be sent
 
         for name, data in pairs(command_arguments) do
             nm:WriteBool(data[4]) -- Is the string below plaintext?
