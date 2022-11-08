@@ -49,6 +49,7 @@ function Module:_ResolveRequirement(requirement)
 
     -- Ensure that the module has not yet been loaded.
     if GNIL.Modules.IsLoaded(requirement) then
+        self._loaded_dependencies[requirement] = true
         self:log("Dependency '" .. requirement .. "' is already loaded.", "debug")
         return
     end

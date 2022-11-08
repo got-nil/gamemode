@@ -32,9 +32,9 @@ end
 -- ready message and remain in a state of never recieving net messages.
 hook.Add("PlayerInitialSpawn", "gnil_net_pnl_initialspawn", function(ply)
     local setup_move_id = "gnil_net_pnl_setupmove_" .. ply:SteamID64()
-    hook.Add("SetupMove", setup_move_id, function(ply, _, cmd)
-        if not cmd:IsForced() then
-            _playerNetLoaded(ply)
+    hook.Add("SetupMove", setup_move_id, function(pl, _, cmd)
+        if ply == pl and not cmd:IsForced() then
+            _playerNetLoaded(pl)
             hook.Remove("SetupMove", setup_move_id)
         end
     end)
