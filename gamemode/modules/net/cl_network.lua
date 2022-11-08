@@ -121,9 +121,6 @@ net.Receive("gnilc", function()
                     local header_size = net.ReadUInt(32)
                     local header, body = string.sub(output, 1, header_size), string.sub(output, header_size + 1, #output)
 
-                    GNIL.log(header_size)
-                    GNIL.log(header)
-
                     -- Use the size values from header to read the body. (Comma seperated).
                     local buffer, previous, current = {}, 0, 0
                     for i, len in ipairs(string.Explode(",", header)) do
