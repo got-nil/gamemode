@@ -1,7 +1,15 @@
-GNIL.Utils = GNIL.Utils or {}
+GNIL.Utils = GNIL.Utils or {
+    ["blacklisted_files"] = {}
+}
 
 -- Include relative to caller.
 function GNIL.Utils.Include(filepath, realm)
+
+    -- Ensure that the filepath isn't blacklisted.
+    if GNIL.Utils["blacklisted_files"][filepath] then
+        GNIL.log("Cannot include file '" .. filepath .. "' as it is blacklisted.", "warning")
+        return
+    end
 
     -- If a realm argument is not provided, we should infer one
     -- from its realm prefix.
