@@ -110,14 +110,25 @@ net.Receive("gnilc", function()
 
             else
 
-                -- Finally, if the data recieved is valid we should read any lengths
-                -- provided, so we can split the data into its individual strings.
-                local has_lengths, buffer = net.ReadBool(), {}
-                if has_lengths then
-                    local previous, current = 0, 0
-                    for i = 1, net.ReadUInt(4) do
-                        current = previous + net.ReadUInt(32)
-                        buffer[i] = string.sub(output, previous + 1, current)
+                -- Finally, if the data recieved is valid we should parse the data to
+                -- seperate the header and body (if a header has been sent). The body
+                -- is then split based on the header length values.
+                local has_header = net.ReadBool()
+                if has_header then
+                    
+                    -- Read the header size and split the output into a header and body
+                    -- based upon the header length. (If theres a more efficient way lmk).
+                    local header_size = net.ReadUInt(32)
+                    local header, body = string.sub(output, 1, header_size), string.sub(output, header_size + 1, #output)
+
+                    GNIL.log(header_size)
+                    GNIL.log(header)
+
+                    -- Use the size values from header to read the body. (Comma seperated).
+                    local buffer, previous, current = {}, 0, 0
+                    for i, len in ipairs(string.Explode(",", header)) do
+                        current = previous + tonumber(len)
+                        buffer[i] = string.sub(body, previous + 1, current)
                         previous = current
                     end
                     output = buffer

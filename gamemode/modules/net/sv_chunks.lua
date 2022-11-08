@@ -20,28 +20,29 @@ function GNIL.Net.Chunks.Send(ply, message, data, verify_checksum, callback)
         return
     end
 
-    local use_lengths, lengths = istable(data), {}
-    if use_lengths then
+    local has_header, header, header_size = istable(data), "", 0
+    if has_header then
 
-        -- To minimise size used to send the lengths, the table may not be
-        -- a size greater than 25 (since each is a uint with 32 bits).
-        if #data > 25 then
-            GNIL.log("Cannot write more than 25 individual data strings for chunked messages.", "error")
-            return
-        end
-
-        -- Add all data strings from the provided table into a single buffer
-        -- recording the length of each individual string. (This should result
-        -- in us not overflowing the 32 int siz, since we're not tracking
-        -- the position of each start which grows exponentially in size).
-        local buffer =  ""
+        -- A header and a buffer is created. The header is a comma seperated
+        -- string of integers each representing the string length of an individual
+        -- data string within the buffer. The buffer is simply all the data strings
+        -- concatenated. Once both have been written, the data becomes the header
+        -- followed by the buffer, with the terminating chunk sending the header
+        -- size to be decoded by the client.
+        local header, buffer = {}, ""
         for i, v in ipairs(data) do
             assert(isstring(v), "All data values must be strings")
 
+            table.insert(header, #v)
             buffer = buffer .. v
-            lengths[i] = #v
         end
-        data = buffer -- Overwrite data to constructed buffer
+
+        -- Convert the header to a string seperated by commas.
+        header = table.concat(header, ",")
+        header_size = string.len(header)
+
+        -- Format the data as described above.
+        data = header .. buffer
     end
 
     -- Create a return code that is used by the client to identify
@@ -101,13 +102,11 @@ function GNIL.Net.Chunks.Send(ply, message, data, verify_checksum, callback)
                 if verify_checksum == true then net.WriteString(GNIL.Net.Chunks["return_codes"][return_code][2]) end -- Checksum?
                 net.WriteUInt(messageid, GNIL.Net["_idsize"]) -- Target message id
 
-                -- Also add lengths in the last message to split the data in the correct positions.
-                net.WriteBool(use_lengths)
-                if use_lengths then
-                    net.WriteUInt(#lengths, 4)
-                    for _, v in ipairs(lengths) do
-                        net.WriteUInt(v, 32)
-                    end
+                -- If the data contains a header with individual length data, then we should 
+                -- inform the client of this and give the header size so it can decode.
+                net.WriteBool(has_header)
+                if has_header then
+                    net.WriteUInt(header_size, 32) -- Just incase 😉
                 end
             end
 
