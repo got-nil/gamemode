@@ -24,9 +24,9 @@ function GNIL.Net.Chunks.Send(ply, message, data, verify_checksum, callback)
     if use_lengths then
 
         -- To minimise size used to send the lengths, the table may not be
-        -- a size greater than 15 (since each is a uint with 32 bits).
-        if #data > 15 then
-            GNIL.log("Cannot write more than 15 individual data strings for chunked messages.", "error")
+        -- a size greater than 25 (since each is a uint with 32 bits).
+        if #data > 25 then
+            GNIL.log("Cannot write more than 25 individual data strings for chunked messages.", "error")
             return
         end
 
