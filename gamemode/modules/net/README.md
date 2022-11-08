@@ -18,13 +18,31 @@ This documentation was created by morgverd, and therefore I've used the PHP form
 ![Shared](https://cdn.morgverd.com/static/github/gmod/realms/shared.png) `GNIL.Net.Create(string messageName, callable fn):` [NetworkMessage](#networkmessage). <br/>
 ![Shared](https://cdn.morgverd.com/static/github/gmod/realms/shared.png) `GNIL.Net.Start(string messageName, ?boolean unreliable)` - Start/Open a stream with pooled name.  <br/>
 
-![Shared](https://cdn.morgverd.com/static/github/gmod/realms/shared.png) ![Internal](https://cdn.morgverd.com/static/github/gmod/realms/internal.png) `GNIL.Net._SyncNetworkIDs(?Entity ply)` - Sync the network ids between server and client. <br/>
+![Server](https://cdn.morgverd.com/static/github/gmod/realms/server.png) ![Internal](https://cdn.morgverd.com/static/github/gmod/realms/internal.png) `GNIL.Net._SyncNetworkIDs(?Entity ply)` - Sync the network ids between server and client. <br/>
 
 The following functions accept a [NetworkMessage](#networkmessage) instance that will be used to start and write the message data. If the NetworkMessage is not provided, then an open stream should already be open (using `GNIL.Net.Start(messageName, unreliable)`.  <br/>
 
 ![Server](https://cdn.morgverd.com/static/github/gmod/realms/server.png) `GNIL.Net.Send(Entity ply, ?NetworkMessage _nm, ?boolean _allowqueue)` - Send a netmessage. <br/>
 ![Server](https://cdn.morgverd.com/static/github/gmod/realms/server.png) `GNIL.Net.Broadcast(?NetworkMessage _nm)` - Broadcast a netmessage to all connected players. <br/>
 
+
+## <a name="player"></a>Player Functions
+
+The player supports a direct interface for chunking lua code to be executed. **There is no `IncludeDirectory` function**, this is because it would make security issues alot easier. With the current interface the
+filepath/code has to be directly supplied, whereas a wildcard directory includer could result in code that should not be sent to the client being sent to the client. If you want to include a directory, simply iterate over the directory collecting all the files and use that files table as the argument to `ply:Include(files)`. 
+
+Including code directly on the player allows for certain files such as development or variable effect files to be ran on a specific player instead of all.
+
+![Server](https://cdn.morgverd.com/static/github/gmod/realms/server.png) `ply:Execute(table|string code)` - Send a luastring, or sequential table of lua strings to be executed on the client. <br/>
+![Server](https://cdn.morgverd.com/static/github/gmod/realms/server.png) `ply:Include(table|string absolute_filepath, ?boolean allow_server_files)` - Read all filepaths provided and execute on player. <br/>
+
+**Both functions accept tables for multiple values. You should use larger tables over calling the function multiple times, as sending all at once is more efficient for the player.**
+
+Below is an example, sending all files within the `gamemode/dev` directory to a player.
+```lua
+local files, _ = file.Find(GNIL.Utils.ResolveGamemodePath("dev"), "LUA")
+me:Include(files)
+```
 
 ## <a name="networkmessage"></a>Network Message
 
