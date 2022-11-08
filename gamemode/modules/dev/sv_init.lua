@@ -6,6 +6,7 @@ MODULE.author = "morgverd"
 
 -- This module requires the network module to send chunked file data.
 MODULE:Require("net")
+MODULE:SetAutoload(false) -- Handle loading ourselves.
 
 --[[
 
@@ -98,22 +99,29 @@ if not GNIL.Dev["_setup"] then
     
     local module_base = GNIL.Utils.ResolveGamemodePath("modules/dev")
     local files, _ = file.Find(module_base .. "/*.lua", "LUA")
+
     for _, v in ipairs(files) do
+        if v == "sv_init.lua" then continue end
         local absolute = module_base .. "/" .. v
 
         -- Ensure the file isn't a server file or unprefixed.
         local prefix = GNIL.Utils.GetFilepathRealmPrefix(v)
-        if prefix == nil or prefix == "sv_" then continue end
+        if prefix == nil then continue end
 
-        -- If the file is shared then it should still be executed
-        -- by the server.
-        if prefix == "sh_" then
+        -- If the file is shared or serverside, it should still be included
+        -- by the server on intial load (like standard autoload).
+        if prefix == "sh_" or prefix == "sv_" then
             include(absolute)
         end
 
-        -- Finally, add it as a developer only file that should be
-        -- sent to connecting developers.
-        GNIL.Dev.AddDeveloperOnlyFile(absolute)
+        -- If the prefix isnt serverside then we should add it as a file that
+        -- should be sent to all developers on load (shared and client files).
+        if prefix != "sv_" then
+
+            -- Finally, add it as a developer only file that should be
+            -- sent to connecting developers.
+            GNIL.Dev.AddDeveloperOnlyFile(absolute)
+        end
     end
 
     -- If there are currently connected developers send the files out.
