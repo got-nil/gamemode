@@ -28,6 +28,12 @@ MODULE.description = "This module is never actually loaded, and does nothing." -
 -- will automatically add the current module name to the log prefix to make debugging easier.
 MODULE:log("Woah look at this", "debug")
 
+-- Once the init file has been executed, the default MODULE behaviour is to autoload all correctly
+-- prefixed files in the module base directory. If you want the init file to directly handle all
+-- file includes via its own loaders, disable the rest of the module entirely, etc then the autoload
+-- can be disabled using the function below.
+MODULE:SetAutoload(false) -- Disabled, after this file no other files will be loaded unless from this file.
+
 -- Ignore allows for specific files (including files that are nested within other directories)
 -- to remain unloaded. These files are completely skipped when loading directories, and are therefore
 -- useful for files that should only be loaded in certain environments, etc. This ignore list
