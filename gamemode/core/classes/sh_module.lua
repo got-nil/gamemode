@@ -8,6 +8,10 @@ function Module:Initialize(name)
     self.description = "No Description Defined"
     self.author = "No Author Defined"
 
+    -- Should the rest of the root directory files within the module
+    -- be loaded once the init file has been ran. SetAutoload(...)
+    self.autoload = true
+
     self.dependencies = nil
     self._loaded_dependencies = {}
 
@@ -32,6 +36,10 @@ end
 function Module:IsLoaded() return GNIL.Modules.IsLoaded(self._module_name) end
 function Module:Load() return GNIL.Modules.Load(self._module_name) end
 function Module:Unload() return GNIL.Modules.Unload(self._module_name) end
+
+-- A functional way to set the autoload if you want to be fancy.
+-- (Although you could just change the class var directly)
+function Module:SetAutoload(boolean) assert(isbool(boolean), "The argument must be boolean") self.autoload = boolean end
 
 -- "Resolve" a required module. Basically load it and prevent loops.
 function Module:_ResolveRequirement(requirement)

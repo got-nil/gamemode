@@ -96,33 +96,37 @@ function GNIL.Modules.Load(name, _dependency_chain)
     -- Include the rest of the module directory without any of the init files.
     moduleInstance:OnLoad() -- Call the load function/hook.
 
-    -- Get all of the directories that should be used when including all of the module.
-    -- If there are defined autoload directories then convert them all to absolute paths
-    -- to be included also.
-    local directories = {GNIL.Utils.ResolveGamemodePath("modules/" .. name)}
-    if moduleInstance._added_delayed then
-        directories = table.Merge(directories, table.GetKeys(moduleInstance._delayed_autoload[2]))
-    end
+    -- Allow modules to disable autoloading. Allows init file to essentially "disable" modules.
+    if moduleInstance.autoload then
 
-    -- Load all of the directories that were gathered above. Ensure that
-    -- the module init file is not included on the base directory as it will
-    -- always be first.
-    local ignored_root_files = {"init.lua", "sv_init.lua", "sh_init.lua", "cl_init.lua"}
-
-    -- Add any already included files and add to ignored root files.
-    for i, directory_path in ipairs(directories) do
-
-        -- Ensure that the ignored files table is persisted while loading the
-        -- top level directory and any other requested directories by the init.
-        -- On the root level, also ignore anything that looks like an init file.
-        local ignored_files = moduleInstance._ignored_files
-        if i == 1 then
-            moduleInstance:log("Loading module top level directory contents.", "debug")
-            for _, v in ipairs(ignored_root_files) do
-                ignored_files[GNIL.Utils.ResolveGamemodePath("modules/" .. name .. "/" .. v)] = true
-            end
+        -- Get all of the directories that should be used when including all of the module.
+        -- If there are defined autoload directories then convert them all to absolute paths
+        -- to be included also.
+        local directories = {GNIL.Utils.ResolveGamemodePath("modules/" .. name)}
+        if moduleInstance._added_delayed then
+            directories = table.Merge(directories, table.GetKeys(moduleInstance._delayed_autoload[2]))
         end
-        GNIL.Utils.IncludeDirectory(directory_path, ignored_files, true)
+
+        -- Load all of the directories that were gathered above. Ensure that
+        -- the module init file is not included on the base directory as it will
+        -- always be first.
+        local ignored_root_files = {"init.lua", "sv_init.lua", "sh_init.lua", "cl_init.lua"}
+
+        -- Add any already included files and add to ignored root files.
+        for i, directory_path in ipairs(directories) do
+
+            -- Ensure that the ignored files table is persisted while loading the
+            -- top level directory and any other requested directories by the init.
+            -- On the root level, also ignore anything that looks like an init file.
+            local ignored_files = moduleInstance._ignored_files
+            if i == 1 then
+                moduleInstance:log("Loading module top level directory contents.", "debug")
+                for _, v in ipairs(ignored_root_files) do
+                    ignored_files[GNIL.Utils.ResolveGamemodePath("modules/" .. name .. "/" .. v)] = true
+                end
+            end
+            GNIL.Utils.IncludeDirectory(directory_path, ignored_files, true)
+        end 
     end
 
     -- Finally include the rest of the delayed files.
