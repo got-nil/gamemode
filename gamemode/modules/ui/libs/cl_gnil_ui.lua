@@ -996,4 +996,4 @@ function meta:GNIL()
     return self
 end
 
-GNIL.Ui.Create = function(...) return vgui_Create(...):GNIL() end
+GNIL.Ui.Create = function(...) return vgui.Create(...):GNIL() end
