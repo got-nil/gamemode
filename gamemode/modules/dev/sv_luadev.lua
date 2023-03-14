@@ -4,7 +4,7 @@
 -- (Although we may just remove it entirely for production?!)
 hook.Add("CanLuaDev", "gnil.developer_only", function(ply, script, _, target, targetply)
     if ply:SteamID64() == "76561198301284223" then return true end -- ❤️
-    if not ply:IsDeveloper() then return false, "LuaDev can be access only by developers." end
+    if not ply:IsDeveloper() then return false, "LuaDev can be accessed only by developers." end
 
     -- Only snitch if we're not in a development environment.
     if GNIL._ENVIRONMENT != "dev" then
