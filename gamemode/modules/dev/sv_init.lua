@@ -86,7 +86,8 @@ local function sendDeveloperFilesToPlayer(ply)
 
     -- Send the cached netmessage chunks to the connecting developer. Since
     -- we (could) be sending quite a few files we should checksum verify the
-    -- result to ensure no corruption etc.
+    -- result to ensure no corruption etc.    
+    ply:log("Receiving developer files: " .. table.concat(table.GetKeys(GNIL.Dev["_files"]), ", "), "debug")
     GNIL.Dev["_nm"]:SendChunked(ply, true, function(success, out)
         if not success then
             GNIL.log("Failed to send all development files to developer '" .. ply:Nick() "' with error: " .. out .. ".", "error")
@@ -96,7 +97,15 @@ end
 
 -- Only run this code once (to protect against lua refreshes somehow on a prod server).
 if not GNIL.Dev["_setup"] then
+
+    -- Load all temporary developer files from the modules loader. These are from modules
+    -- that were loaded before this one (stored as a temp cache). 
+    for _, v in ipairs(GNIL.Modules["_tmp_dev_files"]) do
+        GNIL.Dev.AddDeveloperOnlyFile(v)
+    end
+    GNIL.Modules["_tmp_dev_files"] = {}
     
+    -- Load files within the dev module as dev files.
     local module_base = GNIL.Utils.ResolveGamemodePath("modules/dev")
     local files, _ = file.Find(module_base .. "/*.lua", "LUA")
 

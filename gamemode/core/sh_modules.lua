@@ -1,6 +1,7 @@
 GNIL.Modules = GNIL.Modules or {
     ["_loaded"] = {},
-    ["_cached_modules"] = {}
+    ["_cached_modules"] = {},
+    ["_tmp_dev_files"] = {}
 }
 
 GNIL.Modules["_loaded"] = {} -- REMOVE THIS
@@ -125,6 +126,32 @@ function GNIL.Modules.Load(name, _dependency_chain)
                     ignored_files[GNIL.Utils.ResolveGamemodePath("modules/" .. name .. "/" .. v)] = true
                 end
             end
+
+            -- Remove any other restricted files (developer files + ignored files).
+            local files, _ = file.Find(GNIL.GamemodeBasePath .. "/modules/" .. name .. "/*.lua", "LUA")
+            for _, v in ipairs(files) do
+                if v[1] == "_" || v[1] == "~" then
+                    local path = GNIL.Utils.ResolveGamemodePath("modules/" .. name .. "/" .. v)
+                    ignored_files[path] = true
+
+                    -- If its a developer file (tilde prefix) then we should add the path
+                    -- to the temp developer files table (until the dev module is loaded).
+                    if v[1] == "~" then
+
+                        -- If the developer module is loaded, just call the add dev file directly
+                        -- if its not yet loaded, then store it temporarily until its loaded.
+                        moduleInstance:log("Adding developer only file '" .. v .. "'", "debug")
+                        if GNIL.Modules.IsLoaded("dev") then
+                            GNIL.Dev.AddDeveloperOnlyFile(path)
+                        else
+                            moduleInstance:log("Developer module is not yet loaded, storing dev file in temp until loaded.", "debug")
+                            table.insert(GNIL.Modules["_tmp_dev_files"], path)
+                        end
+                    end
+                end
+            end
+
+            -- Load the directory removing ignored files.
             GNIL.Utils.IncludeDirectory(directory_path, ignored_files, true)
         end 
     end
