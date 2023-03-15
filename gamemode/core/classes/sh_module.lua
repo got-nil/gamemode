@@ -248,6 +248,17 @@ function Module:IncludeDirectory(directory, ignoredFiles, delayed)
         
     else self._added_delayed = true self._delayed_autoload[2][path] = true end
 end
+
+-- Resolve a module path to a full gamemode path.
+function Module:ResolvePath(path)
+    return GNIL.Utils.ResolveGamemodePath("modules/" .. self._module_name) .. "/" .. path
+end
+
+-- Alias of file.Find with the resolved gamemode module path.
+function Module:Find(path, sorting)
+    return file.Find(self:ResolvePath(path), "LUA", sorting)
+end
+
 -------------------------
 
 -- Logging passthrough with module name as prefix.
