@@ -4,6 +4,9 @@ local red = Color(255, 0, 0)
 local blue = Color(0, 0, 255)
 local z = -1200
 
+local blue_mat = Material("color-celeste-2")
+local red_mat = Material("color-rojo")
+
 return {
     name = "properties-grid",
     enable = function()
@@ -18,6 +21,7 @@ return {
                 )
                 
                 if i == 1 then
+                    render.SetMaterial(red_mat)
                     render.DrawSphere(Vector(x, 0, z), 500, 50, 50, red)
                 end
             end
@@ -29,6 +33,7 @@ return {
                 )
 
                 if i == 1 then
+                    render.SetMaterial(blue_mat)
                     render.DrawSphere(Vector(0, y, z), 500, 50, 50, blue)
                 end
             end

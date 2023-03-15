@@ -1,4 +1,3 @@
--- Binary search algo
 
 local function generateCoordSet(start_pos, width, amount, is_row)
     local set = {}

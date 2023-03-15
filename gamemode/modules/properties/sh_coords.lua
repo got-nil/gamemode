@@ -51,7 +51,7 @@ function GNIL.Properties.GetCoordinates(pos, name)
     end
 
     -- Find the players current coordinates.
-    out = {
+    local out = {
         x = binarySearchSet(rowset, pos, true),
         y = binarySearchSet(colset, pos, false)
     }
