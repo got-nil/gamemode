@@ -4,11 +4,11 @@ local Request = GNIL.Thirdparty.middleclass("Request")
 function Request:Initialize(...)
     local args = {...}
     self.requestProperties = {
-        "method",
-        "url",
-        "body",
-        "headers",
-        "callback"
+        ["method"] = true,
+        ["url"] = true,
+        ["callback"] = true,
+        ["body"] = false,
+        ["headers"] = false,
     }
     
     -- If an associative table is provided as the first argument
@@ -19,7 +19,7 @@ function Request:Initialize(...)
             self[k] = v
         end
     else
-        for i, v in ipairs(self.requestProperties) do
+        for i, v in ipairs(table.GetKeys(self.requestProperties)) do
             if i > #args then return end
             self[v] = args[i]
         end
@@ -43,9 +43,9 @@ end
 -- The actual validation (type/functional) is done in sh_http once
 -- the request is actually sent.
 function Request:IsValid()
-    for _, v in ipairs(self.requestProperties) do
-        if self[v] == nil then
-            GNIL.log("Required request key '" .. v .. "' cannot be unset.", "warning")
+    for k, v in pairs(self.requestProperties) do
+        if self[k] == nil && v then
+            GNIL.log("Required request key '" .. k .. "' cannot be unset.", "warning")
             return false
         end
     end
@@ -62,9 +62,9 @@ function Request:Send()
     -- Get all class properties as a single table for
     -- the request function arguments.
     local args = {}
-    for i, v in ipairs(self.requestProperties) do args[i] = v end
+    for k, _ in pairs(self.requestProperties) do args[k] = self[k] end
     
-    return GNIL.Http.SendRequest(unpack(args))
+    return GNIL.Http.SendRequest(args)
 end
 
 -- Setup the class const.

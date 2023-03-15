@@ -1,5 +1,5 @@
 GNIL.Http = {
-    ["_driver"] = http
+    ["_driver"] = HTTP
 }
 
 -- Allow the table to be called as an alias to send request.
