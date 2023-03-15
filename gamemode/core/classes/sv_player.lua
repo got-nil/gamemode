@@ -13,3 +13,8 @@ end
 function PlayerMeta:IsDeveloper()
     return DeveloperSteamIDs[self:SteamID64()] == true
 end
+
+function PlayerMeta:ToString(quotes, steamid)
+    return (quotes == false && "" || "'") .. self:Nick() .. (quotes == false && "" || "'") ..
+           (steamid == false && "" || (" (" .. self:SteamID() .. ")"))
+end
