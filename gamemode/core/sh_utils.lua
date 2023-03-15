@@ -16,6 +16,11 @@ function GNIL.Utils.Include(filepath, realm)
     if realm == nil then
         realm = GNIL.Utils.GetFilepathRealmPrefix(filepath)
         if realm == nil then return nil end
+    else
+        -- Ensure realms end with an underscore.
+        if realm[#realm] != "_" then
+            realm = realm .. "_"
+        end
     end
 
     GNIL.log("Including file '" .. filepath .. "' (" .. realm .. ")", "debug")
