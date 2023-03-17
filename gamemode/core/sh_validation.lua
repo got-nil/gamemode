@@ -44,3 +44,8 @@ function GNIL.Validation.IsType(provided, type_enum)
     if isnumber(type_enum) then return TypeID(provided) == type_enum
     else return type(provided) == type_enum end
 end
+
+-- Validate Thirdparty middleclass instance class name.
+function GNIL.Validation.IsClass(provided, class_name)
+    return provided != nil && istable(provided.class) && provided.class.name == class_name
+end

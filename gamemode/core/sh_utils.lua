@@ -131,6 +131,17 @@ function GNIL.Utils.Execute(code, name)
     return false, "Execution failed with error: " .. response
 end
 
+-- Ensure a DATA directories path will exist, creates directories if required.
+function GNIL.Utils.CreateDataPath(path)
+    local parts = string.Explode("/", path)
+    for i, v in ipairs(parts) do
+        local p = table.concat(table.slice(parts, 1, i), "/")
+        if not file.IsDir(p, "DATA") then
+            file.CreateDir(p)
+        end
+    end
+end
+
 -- Precache character set, skipping certain punctuation.
 local charset = {}  do
     for c = 48, 57  do table.insert(charset, string.char(c)) end
