@@ -95,7 +95,7 @@ local genericAccessValidators = {
     [GNIL_CMD_ACCESS_SERVER] = function(ply) return ply == nil end,
     [GNIL_CMD_ACCESS_ADMIN] = function(ply) return ply:IsAdmin() end,
     [GNIL_CMD_ACCESS_SUPERADMIN] = function(ply) return ply:IsSuperAdmin() end,
-    [GNIL_CMD_ACCESS_DEVELOPER] = function(ply) return false end -- TODO
+    [GNIL_CMD_ACCESS_DEVELOPER] = function(ply) return ply:IsDeveloper() end
 }
 
 function GNIL.Commands.CanAccess(command_name, ply)
