@@ -5,13 +5,13 @@ MODULE.description = "Filter out the really stupid skiddies."
 MODULE.author = "morgverd"
 
 -- This module relies heavily on the networking module, so that
--- must be loaded before the other files!
+-- must be loaded before the other files! + Commands module
 MODULE:Require("net")
+MODULE:Require("commands")
 
 GNIL.AntiSkid = GNIL.AntiSkid or {
     ["_message_name"] = GNIL.Utils.Random(math.random(18, 24)),
-    ["_checks"] = {},
-    ["_waiting_for"] = {}
+    ["_checks"] = {}
 }
 
 -- Once all the utilities etc have been loaded, we should load the
@@ -25,8 +25,8 @@ function MODULE:OnLoadFinished()
         
         -- Include the detection and register the check if it returns one.
         -- ALL DETECTION FILES ARE LOADED SERVERSIDE ONLY!!
-        local out = GNIL.Utils.Include(MODULE:ResolvePath("detections/" .. v), "sv")
-        if out and out.class and out.class.name == "SkidCheck" then
+        local out = GNIL.Utils.Include(MODULE:ResolvePath("detections/" .. v), "sv_")
+        if GNIL.Validation.IsClass(out, "SkidCheck") then
             MODULE:log("Skid Detection file '" .. v .. "' returns a SkidCheck '" .. out.name .. "', auto-registering.", "debug")
             GNIL.AntiSkid.AddCheck(out)
         else

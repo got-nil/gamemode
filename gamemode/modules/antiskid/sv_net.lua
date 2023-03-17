@@ -4,7 +4,10 @@
 GNIL.Net.AddNetworkString(GNIL.AntiSkid["_message_name"])
 
 GNIL.Net.Receive(GNIL.AntiSkid["_message_name"], function(len, ply)
-    local identifier = net.ReadString()
+    local identifier, using_callback_id, callback_id = net.ReadString(), net.ReadBool(), nil
+    if using_callback_id then
+        callback_id = net.ReadString()
+    end
 
     -- Find the message identifier in any registered checks.
     for _, check in pairs(GNIL.AntiSkid["_checks"]) do
@@ -13,12 +16,21 @@ GNIL.Net.Receive(GNIL.AntiSkid["_message_name"], function(len, ply)
             -- If the check is waiting for the player to respond, then reset
             -- it so the check doesn't try to trigger NoResponse.
             local sid = ply:SteamID64()
-            if GNIL.AntiSkid["_waiting_for"][sid] and GNIL.AntiSkid["_waiting_for"][sid][check.name] then
-                GNIL.AntiSkid["_waiting_for"][sid][check.name] = false
+            if check._net_waiting_for[sid] then
+                check._net_waiting_for[sid] = false
             end
 
-            -- Actually call the check reciever.
-            check:Receive(len, ply)
+            -- Actually call the check reciever and call the callback if
+            -- one was provided (by callback identifier).
+            local out = check:Receive(len, ply)
+            if using_callback_id then
+                local callback = check._net_callbacks[callback_id]
+                if not callback then
+                    GNIL.log(ply:ToString() .. " sent a network message to AntiSkid reciever with an invalid callback ID. Weird.", "warning")
+                    return
+                end
+                callback(true, out)
+            end
             return
         end
     end

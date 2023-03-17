@@ -10,6 +10,6 @@ end
 
 -- Add a check to be used as a cheater test.
 function GNIL.AntiSkid.AddCheck(check)
-    if not (check.class && check.class.name == "SkidCheck") then return end
+    if not GNIL.Validation.IsClass(check, "SkidCheck") then return end
     GNIL.AntiSkid["_checks"][check.name] = check
 end
