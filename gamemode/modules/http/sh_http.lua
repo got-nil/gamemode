@@ -1,5 +1,6 @@
-GNIL.Http = {
-    ["_driver"] = HTTP
+GNIL.Http = GNIL.Http or {
+    ["_driver"] = http,
+    ["_loaded"] = false
 }
 
 -- Allow the table to be called as an alias to send request.
@@ -7,11 +8,26 @@ setmetatable(GNIL.Http, {
     __call = function(_, ...) return GNIL.Http.SendRequest(...) end,
 })
 
--- If we're on the server we should always attempt to use the
--- chttp module instead of the builtin.
-if SERVER and pcall(require, "chttp") and CHTTP != nil then
-    GNIL.log("Using CHTTP http driver instead of default", "debug")
-    GNIL.Http._driver = CHTTP
+-- Only trust the server!
+if SERVER then 
+        
+    -- Support both reqwest and CHTTP. (Prefer reqwest).
+    for possible_driver, const in pairs({["reqwest"] = "reqwest", ["chttp"] = "CHTTP"}) do
+        if GNIL.Utils.IsInstalled(possible_driver) then
+            require(possible_driver)
+            
+            -- Verify that the driver was loaded correctly.
+            if not _G[const] then
+                GNIL.log("Despite HTTP driver '" .. possible_driver .. "' existing, it failed to load.", "error")
+            else
+                GNIL.Http._driver = _G[const]
+                GNIL.log("Successfully loaded HTTP driver '" .. possible_driver .. "'.", "success")
+                break
+            end
+        else
+            GNIL.log("Missing optional HTTP driver '" .. possible_driver .. "'", "debug")
+        end
+    end
 end
 
 -- Validate and structure raw arguments into a table that can be
@@ -47,13 +63,13 @@ local function _getArgumentsAsTable(...)
             return table.HasValue({"GET", "POST", "DELETE", "PUT", "OPTIONS", "HEAD"}, method), method
         end,
         ["url"] = TYPE_STRING, -- trust them
+        ["query"] = TYPE_TABLE, -- query table arguments
         ["body"] = TYPE_STRING, -- nil or a string
         ["headers"] = function(headers)
             if headers == nil then return true, {} end
 
-            if header == nil or                     -- Allow no headers
-               not istable(headers) or              -- If there are headers, it must be a table
-               table.IsSequential(header) then      -- The table must be associative
+            if not istable(headers) or              -- If there are headers, it must be a table
+               table.IsSequential(headers) then      -- The table must be associative
                     return false, {}
             end
 
@@ -63,7 +79,8 @@ local function _getArgumentsAsTable(...)
 
             return true, lower_header_keys
         end,
-        ["callback"] = function(callback) return isfunction(callback), callback end -- nil or a function
+        ["callback"] = function(callback) return isfunction(callback), callback end, -- nil or a function
+        ["type"] = function(ctype) return ctype == nil || isstring(ctype), ctype end
     }
 
     for k, v in pairs(parameterValidators) do
@@ -123,24 +140,59 @@ function GNIL.Http.SendRequest(...)
     local arguments = _getArgumentsAsTable(...)
     if arguments == nil then return end
 
+    -- Add query arguments to the URL.
+    if arguments["query"] then
+        local query_string = "?"
+        for k, v in pairs(arguments["query"]) do
+            query_string = query_string .. (k .. "=" .. v) .. "&"
+        end
+        
+        -- Remove trailing &
+        query_string = string.sub(query_string, 0, -2)
+        arguments["url"] = arguments["url"] .. query_string
+    end
+
+    -- If there is a content type provided and no type, use that.
+    if arguments["type"] == nil && arguments["headers"]["content-type"] != nil then
+        arguments["type"] = arguments["headers"]["content-type"]
+    end
+
     -- Create the actual request structure from the
     -- validated/structured table.
     local httpStruct = HTTP({
-        ["failed"] = function(reason)
-            GNIL.log("Failed to send request to " .. arguments["url"], "debug")
-            arguments["callback"](false, reason)
+        ["failed"] = function(...)
+            
+            -- Reqwests provides an additional/better error message
+            -- as the second argument. Therefore we should always use
+            -- the last provided argument as the reason (supports both
+            -- driver methods).
+            local args = {...}
+            arguments["callback"](false, args[#args])
         end,
         ["success"] = function(...)
-            GNIL.log("Successfully sent request to " .. arguments["url"], "debug")
             arguments["callback"](true, GNIL.Http.Classes.Response:New(arguments, {...}))
         end,
         ["method"] = arguments["method"],
         ["url"] = arguments["url"],
         ["headers"] = arguments["headers"],
         ["body"] = arguments["body"],
-        ["type"] = arguments["headers"]["content-type"] and arguments["headers"]["content-type"]
+        ["type"] = arguments["type"]
     })
     
     -- Create the actual request.
     GNIL.Http._driver(httpStruct)
+end
+
+-- Only run this once, not for lua refreshes.
+if not GNIL.Http["_loaded"] then
+
+    -- Since ISteamHTTP loads relatively late in the cycle, this hook should
+    -- allow us to send requests as soon as its loaded (on the first think).
+    hook.Add("Think", "GNIL.Http.HTTPLoaded", function()
+        hook.Run("FirstThink") -- Alias for non HTTP things.
+        hook.Run("HTTPLoaded")
+        hook.Remove("Think", "GNIL.Http.HTTPLoaded")
+
+        GNIL.Http["_loaded"] = true
+    end)
 end

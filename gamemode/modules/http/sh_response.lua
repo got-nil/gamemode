@@ -2,11 +2,15 @@ local Response = GNIL.Thirdparty.middleclass("Response")
 local ResponseBody = GNIL.Thirdparty.middleclass("ResponseBody")
 
 -------- The ResponseBody is returned when using Response:GetBody --------
-function ResponseBody:Initialize(body) self.body = body end
+function ResponseBody:Initialize(body) self.body, self._cached_json = body, nil end
 function ResponseBody:Read() return self.body end
-function ResponseBody:FromJSON() return util.JSONToTable(self.body) end
 function ResponseBody:Checksum() return util.CRC(self.body) end
 function ResponseBody:__tostring() return self.body end
+function ResponseBody:FromJSON()
+    if self._cached_json != nil then return self._cached_json end
+    self._cached_json = util.JSONToTable(self.body)
+    return self._cached_json
+end
 --------------------------------------------------------------------------
 
 function Response:Initialize(request, data)
