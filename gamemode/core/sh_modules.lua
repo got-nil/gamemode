@@ -79,6 +79,12 @@ function GNIL.Modules.Load(name, _dependency_chain)
         moduleInstance:log("Loading init file '" .. initFile .. "'", "debug")
         GNIL.Utils.Include(GNIL.Utils.ResolveGamemodePath("modules/" .. name .. "/" .. initFile), initFile == "init.lua" and "sv_" or nil)
 
+        -- Allow modules to be disabled, preventing loading.
+        if moduleInstance._disabled then
+            moduleInstance:log("Module is disabled.", "warning")
+            return false
+        end
+
         -- Ensure that any dependencies that have not yet been resolved are resolved
         -- once the init file has finished. Essentially delayed module dependencies.
         if moduleInstance.dependencies then
@@ -190,8 +196,11 @@ function GNIL.Modules.Unload(name, _caller)
     end
     hook.Run("GNIL.Modules.Unloaded", name, moduleInstance)
 
+    -- Call the module unloader.
+    moduleInstance:OnUnload()
+
     GNIL.log("The module '" .. name .. "' has been unloaded.", "debug")
-    GNIL.Modules._loaded[name] = true
+    GNIL.Modules._loaded[name] = false
 end
 
 -- Check if a module exists. Will attempt to used cached existance check unless

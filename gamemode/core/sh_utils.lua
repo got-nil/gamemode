@@ -152,3 +152,12 @@ function GNIL.Utils.Random(len)
     end
     return table.concat(s)
 end
+
+-- Check if a lua bin module is installed.
+local suffix = ({"osx64", "osx", "linux64", "linux", "win64", "win32"})[(system.IsWindows() and 4 or 0) + (system.IsLinux() and 2 or 0) + (jit.arch == "x86" and 1 or 0) + 1]
+local fmt = "lua/bin/gm" .. (CLIENT and "cl" or "sv") .. "_%s_%s.dll"
+function GNIL.Utils.IsInstalled(name)
+    if file.Exists(string.format(fmt, name, suffix), "GAME") then return true end
+    if jit.versionnum ~= 20004 and jit.arch == "x86" and system.IsLinux() then return file.Exists(string.format(fmt, name, "linux32"), "GAME") end
+    return false
+end
