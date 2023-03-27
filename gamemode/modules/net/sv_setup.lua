@@ -51,6 +51,11 @@ end
 -- need to add late messages anyway).
 function GNIL.Net.AddNetworkStrings(...)
     local args = {...}
+
+    -- If the first argument is a table, use that instead.
+    if #args >= 1 and istable(args[1]) then
+        args = args[1]
+    end
     for i, v in ipairs(args) do
 
         -- Add the network ID, while also only allowing the
