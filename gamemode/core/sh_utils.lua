@@ -2,6 +2,42 @@ GNIL.Utils = GNIL.Utils or {
     ["blacklisted_files"] = {}
 }
 
+-- Filename realm aliaes, these are used by default
+-- garrysmod structures (such as entities, weapons etc).
+local filenameRealmAliases = {
+    ["shared.lua"] = "sh_",
+    ["init.lua"] = "sv_",
+    ["cl_init.lua"] = "cl_"
+}
+
+-- IsDir doesnt work for client sometimes.
+function GNIL.Utils.DirectoryExists(filePath, gamePath)
+
+    -- https://github.com/Facepunch/garrysmod-issues/issues/1038
+    if SERVER then
+        return file.IsDir(filePath, gamePath)
+    end
+
+    local baseFilepath, directoryName = GNIL.Utils.SplitPath(filePath)
+    local _, directories = file.Find(baseFilepath .. "/*", gamePath)
+    if directories == nil then return false end
+    for _, v in ipairs(directories) do
+        if v == directoryName then
+            return true
+        end
+    end
+end
+
+-- Split a provided path into: base(str), filename(str)
+function GNIL.Utils.SplitPath(filepath)
+    local parts = string.Explode("/", filepath)
+    local base, last = "", parts[#parts]
+    for i = 1, #parts - 1 do
+        base = base .. "/" .. parts[i]
+    end
+    return base, last
+end
+
 -- Include relative to caller.
 function GNIL.Utils.Include(filepath, realm)
 
@@ -51,6 +87,11 @@ function GNIL.Utils.GetFilepathRealmPrefix(filepath) -- ?str
         filepath = parts[#parts]
     end
 
+    -- If the filename is a realm alias, return that instead of prefix.
+    local realmAlias = filenameRealmAliases[filepath]
+    if realmAlias then return realmAlias end
+
+    -- First three characters should be the prefix.
     local realm = string.lower(string.Left(filepath, 3))
     return table.HasValue(realms, realm) and realm or nil
 end
