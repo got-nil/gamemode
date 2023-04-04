@@ -262,6 +262,47 @@ end
 
 -------------------------
 
+-- Directory MUST be a directory supported by a load handler.
+-- Eg: 'entities'. If the directory has a weird name, use LoadDirectory.
+function Module:LoadDirectories(directory, handler)
+    if not handler then
+        for k, v in pairs(GNIL.Loader.GetLoaders()) do
+            if v.Directory == directory then
+                handler = k
+            end
+        end
+        if not handler then
+            return false
+        end
+    end
+
+    local path = self:ResolvePath(directory)
+    local files, directories = file.Find(path .. "/*", "LUA")
+    
+    for _, v in ipairs(directories) do
+        self:log("Found '" .. handler .. "' '" .. v .. "' at '" .. path .. "'", "debug")
+        self:LoadDirectory(path, v, handler)
+    end
+end
+
+-- base: The base filepath of the directory.
+-- directory: The directory name / classname.
+-- handler: The load handler to use, eg: 'entity'.
+function Module:LoadDirectory(base, directory, handler)
+    local loader, path = GNIL.Loader.GetLoader(handler), base .. "/" .. directory
+    if loader == nil then
+        self:log("Unknown provided load handler '" .. handler .. "' when loading '" .. path .. "'", "error")
+        return false
+    end
+
+    -- Use the load handler to actually load the directory.
+    local success = loader.LoadDirectory(directory, path)
+    self:log((success && "Successfully loaded" || "Failed to load") .. " '" .. handler .. "' directory '" .. path .. "'!", success && "success" || "warning")
+    return success
+end
+
+-------------------------
+
 -- Logging passthrough with module name as prefix.
 function Module:log(log, logtype) GNIL.log(log, logtype, self._module_name) end
 
