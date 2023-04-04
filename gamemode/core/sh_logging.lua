@@ -29,22 +29,30 @@ end
 -- Send a log directly to a player. When using with the player metatable
 -- you can send logs to a player as simply as ply:log(...)
 function GNIL.Logging.LogToPlayer(ply, log, logtype)
+    if not GNIL.Net then return end
 
-    -- !!!THIS IS TEMPORARY UNTIL I MAKE MY NET THING!!!!
-    net.Start("gnil_log")
-        net.WriteString(log)
-        net.WriteString(logtype or "")
-    net.Send(ply)
+    -- Send the log net message to player.
+    GNIL.Net.Create("log")
+        :WriteString(log)
+        :WriteString(logtype)
+    :Send(ply)
 end
 
--- !!!THIS IS TEMPORARY UNTIL I MAKE MY NET THING!!!!
-if CLIENT then
-    net.Receive("gnil_log", function()
-        GNIL.Logging.Log(net.ReadString(), net.ReadString())
-    end)
-else    
-    util.AddNetworkString("gnil_log")    
-end
+-- Since this utility loads before the net module
+-- we must add a hook to do the net stuff once its
+-- been loaded (later down the init order).
+hook.Add("GNIL.Modules.Loaded", "GNIL.Logging.Net", function(name)
+    if name != "net" then return end
+    hook.Remove("GNIL.Modules.Loaded", "GNIL.Logging.Net")
+
+    if SERVER then
+        GNIL.Net.AddNetworkString("log")
+    else
+        GNIL.Net.Receive("log", function()
+            GNIL.Logging.Log(net.ReadString(), net.ReadString())
+        end)
+    end
+end)
 
 -- This is basically the only exception for the
 -- no functions on base const rule. 
