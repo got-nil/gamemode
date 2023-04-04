@@ -17,7 +17,7 @@ end
 -- Wrap a function to be called in between a const
 -- being set. After completion, the previous value
 -- is restored.
-function GNIL.Loader.ConstWrap(const, fn)
+function GNIL.Loader.ConstWrap(const, const_default, fn)
     local previous = _G[const]
     _G[const] = const_default or {}
     local fn_out, out = fn(), _G[const]
@@ -31,7 +31,7 @@ end
 -- Load directory files wrapped as a const. The
 -- return value is the modified const_default or nil.
 function GNIL.Loader.DirectoryConst(const, directory_path, const_default)
-    return GNIL.Loader.ConstWrap(const, function()
+    return GNIL.Loader.ConstWrap(const, const_default or {}, function()
 
         -- Load all files within the directory, ignoring files unsuitable
         -- for the current realm.
@@ -62,14 +62,14 @@ end
 -- Load a directory of files into a table. Each key will be the 
 -- filename without extension (uppercase first if argument set).
 -- The value is the return value of the file. (could be nil!)
-function GNIL.Loader.DirectoryMap(directory_path, key_uppercase_first, extension, force_realm, files_override)
+function GNIL.Loader.DirectoryMap(directory_path, key_uppercase_first, extension, force_realm)
 
     -- Map file return values to cleaned filename.
     local out = {}
 
     -- Allow files to be overridden.
-    local files = files_override
-    if not files then files, _ = file.Find(directory_path .. "/*." .. (extension or "lua"), "LUA") end
+    local files, _ = file.Find(directory_path .. "/*." .. (extension or "lua"), "LUA")
+    if files == nil then return nil end
     for _, f in ipairs(files) do
         if not force_realm and not GNIL.Utils.IsFilenameForCurrentRealm(f) then
             continue

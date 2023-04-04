@@ -17,7 +17,7 @@ return {
     LoadDirectory = function(classname, directory_path)
 
         -- Load realm init file and shared if it exists.
-        local out = GNIL.Loader.ConstWrap("ENT", function()
+        local out = GNIL.Loader.ConstWrap("ENT", defaultEnt, function()
             if SERVER then GNIL.Utils.Include(directory_path .. "/init.lua") end
             for _, v in ipairs({"cl_init.lua", "shared.lua"}) do
                 GNIL.Utils.Include(directory_path .. "/" .. v)
@@ -36,7 +36,7 @@ return {
     LoadFile = function(classname, filepath)
 
         -- Wrap the file include in ENT const.
-        local out = GNIL.Loader.ConstWrap("ENT", function()
+        local out = GNIL.Loader.ConstWrap("ENT", defaultEnt, function()
             GNIL.Utils.Include(filepath)
         end)
         if out == nil || out == false then
