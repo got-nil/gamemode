@@ -1,5 +1,5 @@
 GNIL.Fixes["_originalHooks"] = GNIL.Fixes["_originalHooks"] or {}
-local hooks = {
+local laggy_hooks = {
     
     {"Think", "DOFThink"},
     {"PlayerTick", "TickWidgets"},
@@ -23,16 +23,16 @@ local hooks = {
 return {
     name = "hooks",
     enable = function()
-        local hooks = hook.GetTable()
-        for _, v in ipairs(hooks) do
-            if not hooks[v[1]] then continue end
-            if not hooks[v[1]][v[2]] then continue end
+        local player_hooks = hook.GetTable()
+        for _, v in ipairs(laggy_hooks) do
+            if not player_hooks[v[1]] then continue end
+            if not player_hooks[v[1]][v[2]] then continue end
 
-            if not GILL.Optimizer["_originalHooks"][v[1]] then
-                GILL.Optimizer["_originalHooks"][v[1]] = {}
+            if not GNIL.Optimizer["_originalHooks"][v[1]] then
+                GNIL.Optimizer["_originalHooks"][v[1]] = {}
             end
             if not GNIL.Fixes["_originalHooks"][v[1]][v[2]] then
-                GNIL.Fixes["_originalHooks"][v[1]][v[2]] = hooks[v[1]][v[2]]
+                GNIL.Fixes["_originalHooks"][v[1]][v[2]] = player_hooks[v[1]][v[2]]
             end
             hook.Remove(v[1], v[2])
         end
