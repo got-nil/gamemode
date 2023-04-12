@@ -1,3 +1,4 @@
+if not GNIL.Fixes.Config["Modules"]["Entities"] then return end -- Allow these fixes to be disabled.
 GNIL.Fixes = GNIL.Fixes or {
     ["setup"] = false,
     ["_entities"] = {}
@@ -49,10 +50,8 @@ end
 
 -- Load the config if not already setup.
 if not GNIL.Fixes["setup"] then
-    GNIL.Fixes = {
-        ["setup"] = true,
-        ["_entities"] = GNIL.Fixes.FromConfig()
-    }
+    GNIL.Fixes["setup"] = true
+    GNIL.Fixes["_entities"] = GNIL.Fixes.FromConfig()
 
     -- Once config has been loaded, setup the check hooks.
     MODULE:log("Loaded config, setting up check hooks.", "debug")
