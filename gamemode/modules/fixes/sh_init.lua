@@ -11,8 +11,13 @@ GNIL.Fixes = GNIL.Fixes or {
 -- When the module has finished loading all the base files
 -- we should start loading the optimizer files.
 MODULE.OnLoadFinished = function()
-    MODULE:log("Finished loading module, starting to load optimizers.", "debug")
 
+    if not GNIL.Fixes.Config["Modules"]["Optimizers"] then
+        MODULE:log("Optimizers have been disabled.", "debug")
+        return
+    end
+
+    MODULE:log("Finished loading module, starting to load optimizers.", "debug")
     local files, _ = MODULE:Find("optimizers/*.lua")
     for _, v in ipairs(files) do
 
