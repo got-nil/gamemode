@@ -35,10 +35,9 @@ local function setupHooks()
             return false
         end
     end)
-    hook.Add("ShouldCollide", "GNIL.Fixes.AntiCollision", function(ent1, ent2)
-        if (IsValid(ent1) and IsValid(ent2)) and (GNIL.Fixes["_entities"][GNIL_FIXES_ENT_NOCOLIDE][ent1:GetClass()] and GNIL.Fixes["_entities"][GNIL_FIXES_ENT_NOCOLIDE][ent2:GetClass()]) then
-                return false
-            end
+    hook.Add("ShouldCollide", "GNIL.Fixes.AntiCollision", function(ent1, ent2) 
+        if ((IsValid(ent1) and IsValid(ent2)) and (GNIL.Fixes["_entities"][GNIL_FIXES_ENT_NOCOLIDE][ent1:GetClass()] and GNIL.Fixes["_entities"][GNIL_FIXES_ENT_NOCOLIDE][ent2:GetClass()])) then
+            return false
         end
     end)
     hook.Add("PhysgunPickup", "GNIL.Fixes.AntiPhysgun", function(_, ent)
