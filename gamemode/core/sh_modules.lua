@@ -118,8 +118,8 @@ function GNIL.Modules.Load(name, _dependency_chain)
 
         -- Load all of the directories that were gathered above. Ensure that
         -- the module init file is not included on the base directory as it will
-        -- always be first.
-        local ignored_root_files, base_ignored_files = {"init.lua", "sv_init.lua", "sh_init.lua", "cl_init.lua"}, {}
+        -- always be first. Ignore any files already included.
+        local ignored_root_files, base_ignored_files = {"init.lua", "sv_init.lua", "sh_init.lua", "cl_init.lua"}, moduleInstance._ignored_files
 
         -- Remove any other restricted files (developer files + ignored files).
         -- Since this runs on the root it should only be ran once.

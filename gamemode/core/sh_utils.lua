@@ -199,6 +199,6 @@ local suffix = ({"osx64", "osx", "linux64", "linux", "win64", "win32"})[(system.
 local fmt = "lua/bin/gm" .. (CLIENT and "cl" or "sv") .. "_%s_%s.dll"
 function GNIL.Utils.IsInstalled(name)
     if file.Exists(string.format(fmt, name, suffix), "GAME") then return true end
-    if jit.versionnum ~= 20004 and jit.arch == "x86" and system.IsLinux() then return file.Exists(string.format(fmt, name, "linux32"), "GAME") end
+    if jit.versionnum != 20004 and jit.arch == "x86" and system.IsLinux() then return file.Exists(string.format(fmt, name, "linux32"), "GAME") end
     return false
 end

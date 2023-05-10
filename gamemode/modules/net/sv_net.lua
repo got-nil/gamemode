@@ -2,11 +2,14 @@
 -- Net message queue
 GNIL.Net["_q"] = GNIL.Net["_q"] or {}
 
--- Send the network message to all players (+ NetMessage passthrough.)
+-- Send the network message to all players.
+-- If a netmessage is provided, write it to stream and use the default
+-- broadcast instead of sending each message individually.
 function GNIL.Net.Broadcast(_nm)
-    for _, v in ipairs(player.GetAll()) do
-        GNIL.Net.Send(v, _nm)
+    if _nm then
+        _nm:_WriteToStream()
     end
+    net.Broadcast()
 end
 
 -- Send the net message to a given player. Like the
@@ -23,6 +26,7 @@ function GNIL.Net.Send(ply, _nm, _allowqueue)
         -- the players that apply to the filter, and iteratively send the message
         -- to each of them.
         for _, v in ipairs(ply:GetPlayers()) do
+            GNIL.log("Player in recipient filter for '" .. _nm.name .. "': " .. ply:ToString(), "debug")
             GNIL.Net.Send(v, _nm)
         end
 
