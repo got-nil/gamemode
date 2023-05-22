@@ -28,8 +28,8 @@ return {
             if not player_hooks[v[1]] then continue end
             if not player_hooks[v[1]][v[2]] then continue end
 
-            if not GNIL.Optimizer["_originalHooks"][v[1]] then
-                GNIL.Optimizer["_originalHooks"][v[1]] = {}
+            if not GNIL.Fixes["_originalHooks"][v[1]] then
+                GNIL.Fixes["_originalHooks"][v[1]] = {}
             end
             if not GNIL.Fixes["_originalHooks"][v[1]][v[2]] then
                 GNIL.Fixes["_originalHooks"][v[1]][v[2]] = player_hooks[v[1]][v[2]]
