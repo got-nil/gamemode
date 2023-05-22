@@ -133,8 +133,9 @@ net.Receive("gnilc", function()
 
                 -- Call the callback reciever. If there is multiple strings recieved
                 -- we should call them each as individual arguments.
-                GNIL.Net["_c"][mstr][2](output)
-                success = true
+                local out = GNIL.Net["_c"][mstr][2](output)
+                if not isbool(out) then out = true end
+                success = out
             end
         end
 
