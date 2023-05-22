@@ -8,7 +8,6 @@ function Config:Initialize(name, struct)
 end
 
 function Config:Setup()
-
     if SERVER then
         
         -- If there is no check function the config
@@ -19,8 +18,12 @@ function Config:Setup()
             end
         end
     end
-
     return self
+end
+
+-- Return the raw config data instead of using Get.
+function Config:ToTable()
+    return self.struct.config
 end
 
 function Config:Get(key, default)
@@ -40,7 +43,7 @@ function Config:Gets(struct)
 end
 
 function Config:ShouldSend(ply)
-    if CLIENT or self.realm == "server" then return false end
+    if CLIENT or self.struct.realm == "server" then return false end
     return self.struct.check and self.struct.check(ply)
 end
 
