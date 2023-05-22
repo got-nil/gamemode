@@ -22,6 +22,7 @@ function GNIL.Modules.LoadAll()
         end
         GNIL.Modules.Load(name)
     end
+    hook.Run("GNIL.Modules.LoadedAll")
 end
 
 -- Get all modules. If associative is true the return table is a key value
@@ -89,6 +90,12 @@ function GNIL.Modules.Load(name, _dependency_chain)
             return false
         end
 
+        -- Allow for other utilities etc to process the init file output.
+        if hook.Run("GNIL.Modules.Init", name, moduleInstance) == false then
+            moduleInstance:log("Module load was prevented by init hook.", "debug")
+            return false
+        end
+ 
         -- Ensure that any dependencies that have not yet been resolved are resolved
         -- once the init file has finished. Essentially delayed module dependencies.
         if moduleInstance.dependencies then
@@ -97,8 +104,7 @@ function GNIL.Modules.Load(name, _dependency_chain)
                 if moduleInstance._loaded_dependencies[k] then continue end
                 moduleInstance:_ResolveRequirement(k)
             end
-        end
-    
+        end  
     else
         if initFile then moduleInstance:log("Init file '" .. initFile .. "' is not suitable for the current realm.", "debug")
         else moduleInstance:log("Init file could not be found, skipping.", "debug") end
