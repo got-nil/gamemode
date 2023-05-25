@@ -1,3 +1,4 @@
+local MODULE = MODULE
 
 -- Receive ID pool sync from the server and store it.
 -- Pretty simple really, although it should be remembered
@@ -15,7 +16,7 @@ net.Receive("gnils", function()
         network_strings[i] = network_string
         network_ids[network_string] = i
     end
-    GNIL.log("Read " .. #network_strings .. " network strings from server.", "debug")
+    MODULE:log("Read " .. #network_strings .. " network strings from server.", "debug")
 
     -- Overwrite current cached values in place of new ones.
     GNIL.Net["_r"] = network_strings
@@ -51,12 +52,12 @@ net.Receive("gnilc", function()
             -- (Sanity check, make sure the ID is actually valid although this
             -- should've been validated on the server before sending anyway).
             if mstr == nil then
-                GNIL.log("The server somehow sent an unpooled messageid as the chunk target", "error")
+                MODULE:log("The server somehow sent an unpooled messageid as the chunk target", "error")
                 return
             end
 
             if GNIL.Net["_c"][mstr] == nil or GNIL.Net["_c"][mstr][2] == nil then
-                GNIL.log("The server is sending chunked data for message '" .. mstr .. "' however there are no chunked recievers for it.", "debug")
+                MODULE:log("The server is sending chunked data for message '" .. mstr .. "' however there are no chunked recievers for it.", "debug")
 
                 -- If there are no chunked recievers, then we should send the
                 -- termination message back to the server to prevent it from
@@ -78,7 +79,7 @@ net.Receive("gnilc", function()
 
         -- (Sanity check, make sure theres actually an existing buffer for id)
         if GNIL.Net.recv_chunks[data.id] == nil then
-            GNIL.log("Somehow the server sent a last/terminating packet with an invalid id.", "error")
+            MODULE:log("Somehow the server sent a last/terminating packet with an invalid id.", "error")
             return
         end
 
@@ -95,7 +96,7 @@ net.Receive("gnilc", function()
         -- used to verify that all the chunks were received correctly.
         -- CHECKSUM VERIFICATION CAN BE DISABLED, HENCE THE READBOOL HERE.
         if net.ReadBool() and net.ReadString() != util.CRC(output) then
-            GNIL.log("Checksum validation failed when combining chunks for '" .. data.id .. "'", "error")
+            MODULE:log("Checksum validation failed when combining chunks for '" .. data.id .. "'", "error")
             errmessage = "Checksum validation failed"
         else
 

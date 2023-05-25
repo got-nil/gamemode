@@ -1,3 +1,4 @@
+local MODULE = MODULE
 
 -- The NetworkMessage is an OOP interface for writing network data
 -- to a write buffer instead of directly to the write stream. This
@@ -5,7 +6,13 @@
 local NetworkMessage = GNIL.Thirdparty.middleclass("NetworkMessage")
 function NetworkMessage:Initialize(name)
     self.name = name
+    self.unreliable = false
     self._write_buffer = {}
+
+    self._reply = {
+        callback = nil,
+        timeout = nil
+    }
 end
 
 -- This is pretty ugly, but its the result of having to alias
@@ -36,9 +43,23 @@ function NetworkMessage:_WriteBufferToStream()
 end
 
 -- Start the netmessage (writing the header id) and the buffer.
-function NetworkMessage:_WriteToStream()
-    GNIL.log("Writing message '" .. self.name .. "' to stream.", "debug")
-    GNIL.Net.Start(self.name)
+function NetworkMessage:_WriteToStream(targets)
+    MODULE:log("Writing message '" .. self.name .. "' to stream.", "debug")
+
+    -- If there is a reply callback set, a reply header is added.
+    local has_reply = self._reply.callback != nil
+    GNIL.Net.Start(self.name, self.unreliable, has_reply)
+    
+    -- If the message has a reply callback, also add the
+    -- reply header to the start of the message.
+    if has_reply then
+        GNIL.Net.Reply.WriteHeader(
+            targets,
+            self._reply.callback,
+            self._reply.timeout
+        )
+    end
+
     self:_WriteBufferToStream()
 end
 
@@ -47,7 +68,7 @@ end
 -- **Send can be used by both server and client (client realm aliasing SendToServer)
 function NetworkMessage:Send(ply) if SERVER then GNIL.Net.Send(ply, self) else self:SendToServer() end end
 function NetworkMessage:Broadcast() assert(SERVER, "This function may only be used by the server.") GNIL.Net.Broadcast(self) end
-function NetworkMessage:SendToServer() assert(CLIENT, "This function may only be used by a client.") GNIL.Net.SendToServer(self) end
+function NetworkMessage:SendToServer() assert(CLIENT, "This function may only be used by a client.") self:_WriteToStream() net.SendToServer() end
 
 -- Again, no idea why someone would use this, but if they are we might
 -- aswell try to make it as efficient as possible.
@@ -85,18 +106,17 @@ end
 function NetworkMessage:SendPAS(pos) assert(SERVER and isvector(pos), "Provided argument must be a vector, and from the server.") local rf = RecipientFilter() rf:AddPAS(pos) self:Send(rf) end
 function NetworkMessage:SendPVS(pos) assert(SERVER and isvector(pos), "Provided argument must be a vector, and from the server.") local rf = RecipientFilter() rf:AddPVS(pos) self:Send(rf) end
 
--- Basically just an alias to the default, but the buffer is also written.
-function NetworkMessage:SendToServer() assert(CLIENT, "This function may only be used by a client.") self:_WriteToStream() net.SendToServer() end
-
 -- Send the current net message as a chunked message to the client.
 -- **Please read the module README before you use this, it does
 -- not use the standard recievers on the client.**
 -- **Requires ALL WRITES to be DATA ONLY**
 function NetworkMessage:SendChunked(ply, verify_checksum, callback)
+    assert(SERVER, "This function may only be used by the server.")
+
     local data = {}
     for _, v in ipairs(self._write_buffer) do
         if v[2] != net.WriteData then
-            GNIL.log("To send as chunks, all writes MUST be written with WriteData, cannot send message.", "error")
+            MODULE:log("To send as chunks, all writes MUST be written with WriteData, cannot send message.", "error")
             return
         end
         table.insert(data, v[1][1])
@@ -113,8 +133,12 @@ function NetworkMessage:SendChunked(ply, verify_checksum, callback)
     GNIL.Net.Chunks.Send(ply, self.name, data, verify_checksum, callback)
 end
 
+-- Reply interface.
+function NetworkMessage:OnReply(callback) assert(isfunction(callback), "Provided callback argument must be a function.") self._reply.callback = callback return self end
+function NetworkMessage:SetReplyTimeout(timeout) assert(isnumber(timeout) and timeout > 0, "Provided timeout argument must be a number greater than 0.") self._reply.timeout = timeout return self end
+
 function NetworkMessage:__tostring()
-    return "NetMessage " .. self.name
+    return "<NetworkMessage '" .. self.name .. "'>"
 end
 
-GNIL.Net.NetworkMessage = NetworkMessage
+return NetworkMessage

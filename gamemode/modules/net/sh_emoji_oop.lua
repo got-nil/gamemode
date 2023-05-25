@@ -1,7 +1,7 @@
 
 
-local 🚢 = GNIL.Thirdparty.middleclass("🚢", GNIL.Net.NetworkMessage)
-local 🏠 = GNIL.Net.NetworkMessage
+local 🚢 = GNIL.Thirdparty.middleclass("🚢", GNIL.Net.Classes.Message)
+local 🏠 = GNIL.Net.Classes.Message
 
 function 🚢:Initialize(...) 🏠.Initialize(self, ...) end
 function 🚢:✏️📐(...)  return 🏠.WriteAngle(self, ...)  end
