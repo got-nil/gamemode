@@ -1,5 +1,5 @@
 
-GNIL.Commands.DiscoveredCommands = GNIL.Commands.DiscoveredCommands or {}
+MODULE, GNIL.Commands.DiscoveredCommands = MODULE, GNIL.Commands.DiscoveredCommands or {}
 
 -- Cache the hashed plaintext result so I can at least
 -- pretend that this isn't terribly inefficient.
@@ -24,7 +24,7 @@ function GNIL.Commands.Discover(plaintext)
 
     local hash = hashCache(plaintext)
     if GNIL.Commands["_r"][hash] then
-        GNIL.log("Discovered concommand '" .. plaintext .. "' (" .. hash .. ")", "debug")
+        MODULE:log("Discovered concommand '" .. plaintext .. "' (" .. hash .. ")", "debug")
         GNIL.Commands.DiscoveredCommands[plaintext] = hash
     end
 end
@@ -38,7 +38,7 @@ end
 
 -- Called when the concommand is actually sent.
 function GNIL.Commands.Process(ply, _, args, argstr)
-    if GNIL.Commands["_r"] == nil then GNIL.log("The server has not yet sent a command manifest.", "error") return end
+    if GNIL.Commands["_r"] == nil then MODULE:log("The server has not yet sent a command manifest.", "error") return end
 
     if #args == 0 then
         GNIL.Commands.print_logo()
@@ -82,7 +82,7 @@ function GNIL.Commands.Process(ply, _, args, argstr)
     -- actual validation takes place serverside, this is just to reduce net messages
     -- for commands that are obviously invalid.
     local c = GNIL.Commands.GetCommandArgumentsByPlaintext(args[1])
-    if c == nil then GNIL.log("The command '" .. args[1] .. "' is unrecognised by the client.", "error") return end
+    if c == nil then MODULE:log("The command '" .. args[1] .. "' is unrecognised by the client.", "error") return end
 
     GNIL.Net.Create("module_commands_executed")
         :WriteString(argstr)

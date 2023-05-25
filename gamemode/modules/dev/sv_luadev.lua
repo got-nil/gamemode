@@ -1,3 +1,4 @@
+local MODULE = MODULE
 
 -- Ensure that only developers are attempting to use luadev.
 -- Also show some logging for other developers (snitch).
@@ -14,7 +15,7 @@ hook.Add("CanLuaDev", "gnil.developer_only", function(ply, script, _, target, ta
             "the server",
             "all clients and the server"
         }
-        GNIL.log(ply:Nick() .. " is running the following code on " .. target_names[target] .. ".", "warning")
+        MODULE:log(ply:Nick() .. " is running the following code on " .. target_names[target] .. ".", "warning")
         for _, v in ipairs(string.Explode("\n", script)) do Msg(v .. "\n") end
     end
 end)

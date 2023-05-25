@@ -192,7 +192,6 @@ function GNIL.Commands.EntParser.Plus(remove_duplicates, argstr, ply)
         -- the result into a single output table.
         local rtrn = {}
         for _, v in ipairs(string.Explode("|", argstr)) do
-            GNIL.log(v)
 
             if v[1] == "+" then continue end
             local macroOutput = GNIL.Commands.EntParser.Execute(v, ply)
