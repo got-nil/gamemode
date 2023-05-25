@@ -4,6 +4,9 @@
 
 	Alexander Grist-Hucker
     https://github.com/alexgrist/GLua-MySQL-Wrapper/
+
+	*Modified to ensure QUERY_CLASS returns itself
+	 for chained function calls. 
 --]]
 
 mysql = mysql or {
@@ -66,40 +69,49 @@ end
 
 function QUERY_CLASS:Where(key, value)
 	self:WhereEqual(key, value)
+	return self
 end
 
 function QUERY_CLASS:WhereEqual(key, value)
 	self.whereList[#self.whereList + 1] = "`"..key.."` = '"..self:Escape(value).."'"
+	return self
 end
 
 function QUERY_CLASS:WhereNotEqual(key, value)
 	self.whereList[#self.whereList + 1] = "`"..key.."` != '"..self:Escape(value).."'"
+	return self
 end
 
 function QUERY_CLASS:WhereLike(key, value, format)
 	format = format or "%%%s%%"
 	self.whereList[#self.whereList + 1] = "`"..key.."` LIKE '"..string.format(format, self:Escape(value)).."'"
+	return self
 end
 
 function QUERY_CLASS:WhereNotLike(key, value, format)
 	format = format or "%%%s%%"
 	self.whereList[#self.whereList + 1] = "`"..key.."` NOT LIKE '"..string.format(format, self:Escape(value)).."'"
+	return self
 end
 
 function QUERY_CLASS:WhereGT(key, value)
 	self.whereList[#self.whereList + 1] = "`"..key.."` > '"..self:Escape(value).."'"
+	return self
 end
 
 function QUERY_CLASS:WhereLT(key, value)
 	self.whereList[#self.whereList + 1] = "`"..key.."` < '"..self:Escape(value).."'"
+	return self
 end
 
 function QUERY_CLASS:WhereGTE(key, value)
 	self.whereList[#self.whereList + 1] = "`"..key.."` >= '"..self:Escape(value).."'"
+	return self
 end
 
 function QUERY_CLASS:WhereLTE(key, value)
 	self.whereList[#self.whereList + 1] = "`"..key.."` <= '"..self:Escape(value).."'"
+	return self
 end
 
 function QUERY_CLASS:WhereIn(key, value)
@@ -114,54 +126,67 @@ function QUERY_CLASS:WhereIn(key, value)
 	end
 
 	self.whereList[#self.whereList + 1] = "`"..key.."` IN ("..values..")"
+	return self
 end
 
 function QUERY_CLASS:OrderByDesc(key)
 	self.orderByList[#self.orderByList + 1] = "`"..key.."` DESC"
+	return self
 end
 
 function QUERY_CLASS:OrderByAsc(key)
 	self.orderByList[#self.orderByList + 1] = "`"..key.."` ASC"
+	return self
 end
 
 function QUERY_CLASS:Callback(queryCallback)
 	self.callback = queryCallback
+	return self
 end
 
 function QUERY_CLASS:Select(fieldName)
 	self.selectList[#self.selectList + 1] = "`"..fieldName.."`"
+	return self
 end
 
 function QUERY_CLASS:Insert(key, value)
 	self.insertList[#self.insertList + 1] = {"`"..key.."`", "'"..self:Escape(value).."'"}
+	return self
 end
 
 function QUERY_CLASS:Update(key, value)
 	self.updateList[#self.updateList + 1] = {"`"..key.."`", "'"..self:Escape(value).."'"}
+	return self
 end
 
 function QUERY_CLASS:Create(key, value)
 	self.createList[#self.createList + 1] = {"`"..key.."`", value}
+	return self
 end
 
 function QUERY_CLASS:Add(key, value)
 	self.add = {"`"..key.."`", value}
+	return self
 end
 
 function QUERY_CLASS:Drop(key)
 	self.drop = "`"..key.."`"
+	return self
 end
 
 function QUERY_CLASS:PrimaryKey(key)
 	self.primaryKey = "`"..key.."`"
+	return self
 end
 
 function QUERY_CLASS:Limit(value)
 	self.limit = value
+	return self
 end
 
 function QUERY_CLASS:Offset(value)
 	self.offset = value
+	return self
 end
 
 local function ApplyQueryReplacements(mode, query)
