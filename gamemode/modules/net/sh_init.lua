@@ -11,11 +11,25 @@ GNIL.Net = GNIL.Net or {
 
     -- This is the size of the network ID that is used for reading/writing the
     -- ID header uint. Default 10 means a max of 1023 individual net messages.
-    ["_idsize"] = 10
+    ["_idsize"] = 10,
+
+    -- Initialize empty classes set.
+    ["Classes"] = {
+        ["_loaded"] = false
+    }
 }
 
 -- As the server, we should load the sv_setup file as
 -- it defines all the underlying messsage names etc.
 if SERVER then
     MODULE:Include("sv_setup.lua")
+end
+
+-- Load required classes. Each must be stored globally before the next as
+-- the message is used as a baseclass.
+if not GNIL.Net.Classes["_loaded"] then
+    for k, v in pairs({["Message"] = "sh_message.lua", ["Reply"] = "sh_reply.lua"}) do
+        GNIL.Net.Classes[k] = MODULE:Include("classes/" .. v)
+    end
+    GNIL.Net.Classes["_loaded"] = true
 end

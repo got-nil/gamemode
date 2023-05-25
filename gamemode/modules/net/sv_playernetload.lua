@@ -1,3 +1,4 @@
+local MODULE = MODULE
 
 -- The PlayerNetLoad is a serverside hook that is called similar
 -- to PlayerInitialSpawn (in that its only called once per player connection)
@@ -16,7 +17,7 @@ end
 local function _playerNetLoaded(ply)
     local sid = ply:SteamID()
     if sid != "BOT" and GNIL.Net["_pnl"][sid] == true then return end
-    GNIL.log("Player '" .. ply:Nick() .. "' has netloaded.", "debug")
+    MODULE:log("Player '" .. ply:Nick() .. "' has netloaded.", "debug")
 
     -- If the player has not yet netloaded, then we should run the hook
     -- with the player as the only argument. (Then store the steamid).

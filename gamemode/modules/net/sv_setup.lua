@@ -1,9 +1,10 @@
 
 -- Add the core required network strings.
-local netstrings = {
+local MODULE, netstrings = MODULE, {
     "gnil",   -- GNIL Network (default message entrypoint)
     "gnilc",  -- GNIL Chunked (chunked messages for large datasets)
-    "gnils"   -- GNIL Sync (sync pooled netstrings between client and server)
+    "gnils",  -- GNIL Sync (sync pooled netstrings between client and server)
+    "gnilr"   -- GNIL Reply (message reply system)
 }
 for _, v in ipairs(netstrings) do
     util.AddNetworkString(v)
@@ -37,7 +38,7 @@ function GNIL.Net.AddNetworkString(str, _d)
     -- delayed pool addition (really bad for optimisation since we have to
     -- now re-broadcast the network ids to all players), so we complain.
     if _d != false and GNIL.Net["_sent_netids"] then
-        GNIL.log("Network string '" .. str .. "' has been pooled late, which is VERY bad for optimisation.", "warning")
+        MODULE:log("Network string '" .. str .. "' has been pooled late, which is VERY bad for optimisation.", "warning")
         GNIL.Net._SyncNetworkIDs()
     end
 

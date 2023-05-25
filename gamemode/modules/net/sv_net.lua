@@ -1,3 +1,4 @@
+local MODULE = MODULE
 
 -- Net message queue
 GNIL.Net["_q"] = GNIL.Net["_q"] or {}
@@ -7,7 +8,7 @@ GNIL.Net["_q"] = GNIL.Net["_q"] or {}
 -- broadcast instead of sending each message individually.
 function GNIL.Net.Broadcast(_nm)
     if _nm then
-        _nm:_WriteToStream()
+        _nm:_WriteToStream(player.GetAll())
     end
     net.Broadcast()
 end
@@ -26,7 +27,7 @@ function GNIL.Net.Send(ply, _nm, _allowqueue)
         -- the players that apply to the filter, and iteratively send the message
         -- to each of them.
         for _, v in ipairs(ply:GetPlayers()) do
-            GNIL.log("Player in recipient filter for '" .. _nm.name .. "': " .. ply:ToString(), "debug")
+            MODULE:log("Player in recipient filter for '" .. _nm.name .. "': " .. ply:ToString(), "debug")
             GNIL.Net.Send(v, _nm)
         end
 
@@ -55,14 +56,14 @@ function GNIL.Net.Send(ply, _nm, _allowqueue)
             end
             table.insert(GNIL.Net["_q"][sid], {ply, _nm})
 
-            GNIL.log("Message '" .. _nm.name .. "' to player '" .. ply:Nick() .. "' has been queued ", "debug")
+            MODULE:log("Message '" .. _nm.name .. "' to player '" .. ply:Nick() .. "' has been queued ", "debug")
             return
         end
 
         -- If there is a netmessage provided, then we should actually write the
         -- network header and write buffer to the started net stream.
         if _nm then
-            _nm:_WriteToStream()
+            _nm:_WriteToStream({ply})
         end
 
         -- Actually send the message.
@@ -83,7 +84,7 @@ hook.Add("PlayerNetLoad", "gnil_net_send_queue", function(ply)
     local messages = GNIL.Net["_q"][sid]
     if messages == nil then return end
 
-    GNIL.log("Client '" .. ply:Nick() .. "' has netloaded, with messages queued. Sending now.", "debug")
+    MODULE:log("Client '" .. ply:Nick() .. "' has netloaded, with messages queued. Sending now.", "debug")
 
     -- Send all of the messages within the queue.
     -- If the message still somehow fails to send, it
