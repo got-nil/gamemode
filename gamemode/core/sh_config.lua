@@ -122,7 +122,9 @@ if SERVER then
             util.TableToJSON(conf),
             true,
             function(success, output)
-                GNIL.log(success && "SUCCESSFULLY SENT CONF AND RECV ON CLIENT" || "FAILED OH NOOOO!!!", success && "success" || "error")
+                if not success then
+                    GNIL.log("Failed to send '" .. ply:ToString() .. "' partial config with error: " .. output, "warning")
+                end
             end
         )
     end)

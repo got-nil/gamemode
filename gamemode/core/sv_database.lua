@@ -35,9 +35,13 @@ setmetatable(GNIL.Database, {
 if not GNIL.Database["_db"] then
     local conf, db = GNIL.Config("database"), GNIL.Thirdparty.mysql
 
-    db.OnConnectionFailed = function(err) GNIL.log("Failed to connect to the database with error: " .. err, "error") end
+    db.OnConnectionFailed = function(_, errorText)
+        GNIL.log("Failed to connect to the database with error: " .. errorText, "error")
+        hook.Run("GNIL.Database.ConnectionFailed", db, errorText)
+    end
     db.OnConnected = function()
         GNIL.log("Successfully connected to database!", "debug")
+        hook.Run("GNIL.Database.Connected", db)
         if GNIL.Database["_modules_loaded"] then
             createAllTables()
         end
