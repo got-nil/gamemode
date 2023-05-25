@@ -4,6 +4,6 @@ function IsPlayer(ply)
 end
 
 function IsClass(obj, name)
-    if not obj or not obj.name then return false end
-    return obj.name == name
+    if not obj or not obj.class or not obj.class.name then return false end
+    return obj.class.name == name
 end
