@@ -1,4 +1,4 @@
-MODULE, GNIL.Dev = MODULE, GNIL.Dev or {
+GNIL.Dev = GNIL.Dev or {
     ["_files"] = {},
     ["_scripts"] = {
         ["_enabled"] = {},
@@ -9,12 +9,12 @@ MODULE, GNIL.Dev = MODULE, GNIL.Dev or {
 -- Toggle developer script states.
 function command_callback(_, __, args)
     if #args == 0 then
-        MODULE:log("Missing arguments, use: <scriptname> [?state (enable/disable)]", "warning")
+        GNIL.log("Missing arguments, use: <scriptname> [?state (enable/disable)]", "warning")
         return
     end
     local script = GNIL.Dev["_scripts"]["_out"][args[1]]
     if script == nil then
-       MODULE:log("Invalid/Unknown provided developer scriptname.", "warning")
+       GNIL.log("Invalid/Unknown provided developer scriptname.", "warning")
        return
     end
 
@@ -22,25 +22,25 @@ function command_callback(_, __, args)
     -- (is it enabled). If theres multiple then it must 
     -- setting its state (enabled/disabled).
     if #args == 1 then
-        MODULE:log("Developer script '" .. script.name .. "' is currently " .. (GNIL.Dev["_scripts"]["_enabled"][script.name] == true && "enabled" || "disabled") .. ".")
+        GNIL.log("Developer script '" .. script.name .. "' is currently " .. (GNIL.Dev["_scripts"]["_enabled"][script.name] == true && "enabled" || "disabled") .. ".")
     else
 
         -- The second argument must either be enable or disable.
         if args[2] != "enable" && args[2] != "disable" then
-            MODULE:log("Invalid script state argument. Must be either 'enable' or 'disable'.", "warning")
+            GNIL.log("Invalid script state argument. Must be either 'enable' or 'disable'.", "warning")
         end
 
         -- Show a warning if the script state is already as requested.
         local target_state = args[2] == "enable"
         if target_state == (GNIL.Dev["_scripts"]["_enabled"][script.name] == true) then
-            MODULE:log("Developer script '" .. script.name .. "' is already " .. (target_state && "enabled" || "disabled") .. "!", "warning")
+            GNIL.log("Developer script '" .. script.name .. "' is already " .. (target_state && "enabled" || "disabled") .. "!", "warning")
             return
         end
         
         -- Actually enable/disable the script and store its state.
         GNIL.Dev["_scripts"]["_out"][script.name][target_state && "enable" || "disable"]()
         GNIL.Dev["_scripts"]["_enabled"][script.name] = target_state
-        MODULE:log("Successfully " .. (target_state && "enabled" || "disabled") .. " developer script '" .. script.name .. "'!", "success")
+        GNIL.log("Successfully " .. (target_state && "enabled" || "disabled") .. " developer script '" .. script.name .. "'!", "success")
     end
     return
 end
@@ -87,7 +87,7 @@ GNIL.Net.ReceiveChunked("dev_files", function(data)
 
         -- Execute the filecontent on localplayer and get output (or error).
         local success, out = GNIL.Utils.Execute(out[2][i], "gnil_dev_include")
-        MODULE:log((success && "Successfully included" || "Failed to include") .. " developer file '" .. v .. "'" .. (success && "" || (" with error:" .. out)), success && "success" || "error")
+        GNIL.log((success && "Successfully included" || "Failed to include") .. " developer file '" .. v .. "'" .. (success && "" || (" with error:" .. out)), success && "success" || "error")
         if not success then has_errored = true end
 
         -- If the return value is a table with a name parameter then its probably
@@ -104,13 +104,13 @@ GNIL.Net.ReceiveChunked("dev_files", function(data)
 
             -- If the script table validation failed, show the error.
             if not success then
-                MODULE:log("Failed to validate developer script '" .. v .. "' with error: " .. out, "error")
+                GNIL.log("Failed to validate developer script '" .. v .. "' with error: " .. out, "error")
                 continue
             end
 
             -- The script must have a suitable scriptname. 
             if not isSuitableScriptName(out.name) then
-                MODULE:log("Unsuitable scriptname '" .. out.name .. "' for developer file '" .. v .. "', skipping.", "warning")
+                GNIL.log("Unsuitable scriptname '" .. out.name .. "' for developer file '" .. v .. "', skipping.", "warning")
                 continue
             end
             
@@ -121,7 +121,7 @@ GNIL.Net.ReceiveChunked("dev_files", function(data)
                 
                 -- Check if the module is actually enabled.
                 local is_enabled = GNIL.Dev["_scripts"]["_enabled"][GNIL.Dev["_files"][v][2].name] == true
-                MODULE:log((is_enabled && "Currently enabled developer script" || "Disabled developer script") .. " '" .. GNIL.Dev["_files"][v][2].name .. "' is being reloaded.", is_loaded && "warning" || "info")
+                GNIL.log((is_enabled && "Currently enabled developer script" || "Disabled developer script") .. " '" .. GNIL.Dev["_files"][v][2].name .. "' is being reloaded.", is_loaded && "warning" || "info")
 
                 -- If it actually is currently enabled, then disable it.
                 if is_enabled then
