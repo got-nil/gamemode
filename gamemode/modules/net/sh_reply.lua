@@ -4,12 +4,20 @@ GNIL.Net.Reply = GNIL.Net.Reply or {
     ["_default_timeout"] = 5
 }
 
-function GNIL.Net.Reply._StartReplyMessage(reply_id, reply_success)
+function GNIL.Net.Reply._StartReplyMessage(reply_id, reply_success, error_enum, error_int)
     MODULE:log("Writing reply message '" .. reply_id .. "', state: " .. (reply_success && "success" || "unsuccessful"), "debug")
     
     net.Start("gnilr")
     net.WriteUInt(tonumber(reply_id), 15)
     net.WriteBool(reply_success)
+
+    -- If the reply was unsuccessful, also write the error enum. If
+    -- there is an error_int provided, also write that (with signal).
+    if not reply_success then
+        net.WriteUInt(error_enum, 3)
+        net.WriteBool(error_int != nil)
+        if error_int != nil then net.WriteUInt(error_int, 16) end
+    end
 end
 
 function GNIL.Net.Reply.IsValidReplyID(reply_id)
@@ -26,9 +34,22 @@ function GNIL.Net.Reply.ReceiverWrap(reply_id, reciever_out, ply)
         return
     end
 
+    -- If theres a reply provided, check it for errors.
+    local error_enum, error_int = false, 0
+    if reciever_out != false then
+        reply_success = reciever_out._error.enum == false
+        
+        -- If the reply was unsuccesful get the enum and int
+        -- to write in the reply header.
+        if not reply_success then
+            error_enum = reciever_out._error.enum
+            error_int = reciever_out._error.int
+        end
+    end
+
     -- The reply is only successful when a valid
     -- NetworkReply object is returned from the reciever.
-    GNIL.Net.Reply._StartReplyMessage(reply_id, reply_success)
+    GNIL.Net.Reply._StartReplyMessage(reply_id, reply_success, error_enum, error_int)
     if reply_success then
         reciever_out:_WriteBufferToStream()
     end
@@ -75,6 +96,7 @@ function GNIL.Net.Reply.WriteHeader(targets, callback, timeout)
 
     -- Write the reply_id as a uint.
     net.WriteUInt(tonumber(reply_id), 15)
+    return reply_id
 end
 
 net.Receive("gnilr", function(len, ply)
@@ -85,6 +107,23 @@ net.Receive("gnilr", function(len, ply)
         return
     end
 
+    -- Read error enum data and error int for reply errors.
+    local error_enum, error_int = false, 0, false
+    if not reply_success then
+        error_enum, has_error_int = net.ReadUInt(3), net.ReadBool()
+        if has_error_int then
+            error_int = net.ReadUInt(16)
+        end
+
+        -- Validate the recieved error enum.
+        if error_enum == 0 or error_enum > GNIL_NET_ERRORS_COUNT then
+            MODULE:log("Recieved unsuccessful reply with an invalid error_enum.", "warning")
+            
+            -- Fallback to an error failure state.
+            error_enum = GNIL_NET_ERRORS_FAIL
+        end
+    end
+    
     local reply_data = GNIL.Net.Reply["_waiting"][reply_id]
     local should_delete = true
 
@@ -115,7 +154,10 @@ net.Receive("gnilr", function(len, ply)
 
     -- Finally call the reply callback and delete reply_id
     -- if required (always on client, or when all have replied for server).
-    reply_data.callback(reply_success, len, ply)
+    reply_data.callback(reply_success, len, ply, {
+        enum = error_enum,
+        int = error_int
+    })
     if should_delete then
         MODULE:log("Removing reply_id: " .. reply_id, "debug")
         GNIL.Net.Reply["_waiting"][reply_id] = nil
@@ -128,17 +170,28 @@ GNIL.Net.CreateReply = GNIL.Net.Reply.Create
 
 timer.Create("gnil_net_reply_gc", 1, 0, function()
 
+    -- Timeout error object provided to callback.
+    local timeout_error = {
+        enum = GNIL_NET_ERRORS_TIMEOUT,
+        int = 0
+    }
+
     local toDelete = {}
     for k, v in pairs(GNIL.Net.Reply["_waiting"]) do
         if os.time() > (v.time + v.timeout) then
             MODULE:log("NetworkReply '" .. k .. "' has timedout.", "warning")
             
-            -- Run the callback with each player that is
-            -- still being waited for as unsuccesful.
-            for ply, waiting in pairs(v.targets) do
-                if waiting then
-                    v.callback(false, 0, ply)
+            if SERVER then
+
+                -- Run the callback with each player that is
+                -- still being waited for as unsuccesful.
+                for ply, waiting in pairs(v.targets) do
+                    if waiting then
+                        v.callback(false, 0, ply, timeout_error)
+                    end
                 end
+            else
+                v.callback(false, 0, nil, timeout_error)
             end
             table.insert(toDelete, k)
         end
@@ -150,5 +203,4 @@ timer.Create("gnil_net_reply_gc", 1, 0, function()
             GNIL.Net.Reply["_waiting"][v] = nil
         end
     end
-
 end)
