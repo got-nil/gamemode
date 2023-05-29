@@ -13,6 +13,12 @@ function NetworkMessage:Initialize(name)
         callback = nil,
         timeout = nil
     }
+    self._errors = {
+        callback = nil,
+        timeout = nil,
+        ratelimited = nil,
+        _set = false
+    }
 end
 
 -- This is pretty ugly, but its the result of having to alias
@@ -47,15 +53,34 @@ function NetworkMessage:_WriteToStream(targets)
     MODULE:log("Writing message '" .. self.name .. "' to stream.", "debug")
 
     -- If there is a reply callback set, a reply header is added.
-    local has_reply = self._reply.callback != nil
+    local has_reply, reply_id = self._reply.callback != nil or self._errors._set, false
     GNIL.Net.Start(self.name, self.unreliable, has_reply)
-    
+
     -- If the message has a reply callback, also add the
     -- reply header to the start of the message.
     if has_reply then
+
+        -- If there are error callbacks set, wrap the reply callback.
+        local reply_callback = self._reply.callback
+        if self._errors._set then
+
+            -- Wrap the actual reply_callback to handle inline errors.
+            reply_callback = function(success, len, ply, err)     
+                if not success then
+                    if self._errors.callback then self._errors.callback(err.enum, err.int) end
+
+                    -- Error specific callback handlers.
+                    if err.enum == GNIL_NET_ERRORS_TIMEOUT and self._errors.timeout then self._errors.timeout(err.enum, err.int) end
+                    if err.enum == GNIL_NET_ERRORS_RATELIMITED and self._errors.ratelimited then self._errors.ratelimited(err.enum, err.int) end
+                end
+                if self._reply.callback != nil then
+                    return self._reply.callback(success, len, ply, err)
+                end
+            end
+        end
         GNIL.Net.Reply.WriteHeader(
             targets,
-            self._reply.callback,
+            reply_callback,
             self._reply.timeout
         )
     end
@@ -136,6 +161,11 @@ end
 -- Reply interface.
 function NetworkMessage:OnReply(callback) assert(isfunction(callback), "Provided callback argument must be a function.") self._reply.callback = callback return self end
 function NetworkMessage:SetReplyTimeout(timeout) assert(isnumber(timeout) and timeout > 0, "Provided timeout argument must be a number greater than 0.") self._reply.timeout = timeout return self end
+
+-- Error interface.
+function NetworkMessage:OnError(callback) assert(isfunction(callback), "Provided callback argument must be a function.") self._errors.callback = callback self._errors._set = true return self end
+function NetworkMessage:OnTimeout(callback) assert(isfunction(callback), "Provided callback argument must be a function.") self._errors.timeout = callback self._errors._set = true return self end
+function NetworkMessage:OnRatelimited(callback) assert(isfunction(callback), "Provided callback argument must be a function.") self._errors.ratelimited = callback self._errors._set = true return self end
 
 function NetworkMessage:__tostring()
     return "<NetworkMessage '" .. self.name .. "'>"
