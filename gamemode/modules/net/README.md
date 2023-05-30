@@ -15,7 +15,8 @@ This documentation was created by morgverd, and therefore I've used the PHP form
 ![Shared](https://cdn.morgverd.com/static/github/gmod/realms/shared.png) `GNIL.Net.Receive(string messageName, callable fn)` - Same usage as [net.Receive](https://wiki.facepunch.com/gmod/net.Receive). <br/>
 ![Client](https://cdn.morgverd.com/static/github/gmod/realms/client.png) `GNIL.Net.ReceiveChunked(string messageName, callable fn)` - See [chunking](#chunking) for more info. <br/>
 
-![Shared](https://cdn.morgverd.com/static/github/gmod/realms/shared.png) `GNIL.Net.Create(string messageName, callable fn):` [NetworkMessage](#networkmessage). <br/>
+![Shared](https://cdn.morgverd.com/static/github/gmod/realms/shared.png) `GNIL.Net.Create(string messageName):` [NetworkMessage](#networkmessage). <br/>
+![Shared](https://cdn.morgverd.com/static/github/gmod/realms/shared.png) `GNIL.Net.CreateReply():` [NetworkReply](#networkreply). <br/>
 ![Shared](https://cdn.morgverd.com/static/github/gmod/realms/shared.png) `GNIL.Net.Start(string messageName, ?boolean unreliable)` - Start/Open a stream with pooled name.  <br/>
 
 ![Server](https://cdn.morgverd.com/static/github/gmod/realms/server.png) ![Internal](https://cdn.morgverd.com/static/github/gmod/realms/internal.png) `GNIL.Net._SyncNetworkIDs(?Entity ply)` - Sync the network ids between server and client. <br/>
@@ -46,7 +47,8 @@ me:Include(files)
 
 ## <a name="networkmessage"></a>Network Message
 
-A NetworkMessage instance is created using the `GNIL.Net.Create(messageName, fn)` constructor function (above). It allows for written data to be buffered, meaning that the network stream is not actually opened until the message is being sent.  This allows the NetworkMessage to be reusable across mutliple users which could be used for cache/optimisation.
+A `NetworkMessage` instance is created using the `GNIL.Net.Create(messageName, fn)` constructor function (above). It allows for written data to be buffered, meaning that the network stream is not actually opened until the message is being sent.  This allows the `NetworkMessage` to be reusable across mutliple users which could be used for cache/optimisation.
+
 
 **Buffer writters**, The following are the exact same as you would use with `net.Whatever()`. All the arguments are the exact same, so the [official documentation](https://wiki.facepunch.com/gmod/~search:net.Write) applies. Please note that **`net.WriteTable` DOES NOT EXIST**, as it promotes poor network design. **All writers return self, allowing for method chaining**.
 
@@ -73,8 +75,8 @@ A NetworkMessage instance is created using the `GNIL.Net.Create(messageName, fn)
 ![Shared](https://cdn.morgverd.com/static/github/gmod/realms/shared.png) ![Internal](https://cdn.morgverd.com/static/github/gmod/realms/internal.png) `nm:_WriteBufferToStream()` - Actually write the the buffered data into an open stream. <br/>
 ![Shared](https://cdn.morgverd.com/static/github/gmod/realms/shared.png) ![Internal](https://cdn.morgverd.com/static/github/gmod/realms/internal.png) `nm:_WriteToStream()` - Open a network stream with message name and write stream. <br/>
 
-**Standard Message Sending**, is obviously for when the message has finished being written to. Once its ready to send to players sending the messages is (almost entirely) the same as the [official documentation](https://wiki.facepunch.com/gmod/~search:net.Send).
 
+**Standard Message Sending**, is obviously for when the message has finished being written to. Once its ready to send to players sending the messages is (almost entirely) the same as the [official documentation](https://wiki.facepunch.com/gmod/~search:net.Send).
 
 ![Shared](https://cdn.morgverd.com/static/github/gmod/realms/shared.png) `nm:Send(table|CRecipientFilter|Entity ply)` - When called from client this acts as `nm:SendToServer`. <br/>
 ![Server](https://cdn.morgverd.com/static/github/gmod/realms/server.png) `nm:Broadcast()` - Broadcast the message to all connected players. <br/>
@@ -83,9 +85,36 @@ A NetworkMessage instance is created using the `GNIL.Net.Create(messageName, fn)
 ![Server](https://cdn.morgverd.com/static/github/gmod/realms/server.png) `nm:SendOmit(table|Entity ply)` - Send to all players, excluding the one(s) provided. <br/>
 ![Client](https://cdn.morgverd.com/static/github/gmod/realms/client.png) `nm:SendToServer()` - Send the message to the server. <br/>
 
+
 The **Chunking interface**  allows for buffered write data to be sent [chunked](#chunking). **This requires all buffered write data to be written using `WriteData`**.
 
 ![Server](https://cdn.morgverd.com/static/github/gmod/realms/server.png) `nm:SendChunked(Entity ply, ?boolean verify_checksum, ?callable fn)`
+
+
+**Reply Interface**, allows for messages to be replied to with arbitrary data after being recieved. [See more here](#replies).
+
+![Shared](https://cdn.morgverd.com/static/github/gmod/realms/shared.png) `nm:OnReply(callable fn)` - Called when a message has been replied to. <br/>
+![Shared](https://cdn.morgverd.com/static/github/gmod/realms/shared.png) `nm:SetReplyTimeout(number timeout)` - Set reply timeout in seconds. <br/>
+
+
+**Error Interface**, allows for messages to recieve error states after being sent. The `OnError` callback is used for all recieved errors, and is called before the other alias callbacks (`OnTimeout`, `OnRatelimited`). [See more here](#errors).
+
+![Shared](https://cdn.morgverd.com/static/github/gmod/realms/shared.png) `nm:OnError(callable fn)` - Called for all recieved errors. <br/>
+![Shared](https://cdn.morgverd.com/static/github/gmod/realms/shared.png) `nm:OnTimeout(callable fn)` - Only called when error is `TIMEOUT`. <br/>
+![Shared](https://cdn.morgverd.com/static/github/gmod/realms/shared.png) `nm:OnRatelimited(callable fn)` - Only called when the error is `RATELIMITED`. <br/>
+
+
+## <a name="networkreply"></a>Network Reply
+
+A `NetworkReply` is essentially a `NetworkMessage` that can't be sent normally. It contains all the same write functions found in the original message class.
+
+> ⚠️ Only replies provided in the `GNIL.Net.Recieve` callback can be sent directly.
+> This is because generic created replies using `GNIL.Net.CreateReply` are not reply_id aware.
+
+![Shared](https://cdn.morgverd.com/static/github/gmod/realms/shared.png) `reply:SetError(GNIL_NET_ERROR error_enum, ?number error_int)` - Set an error state on reply. <br/>
+![Shared](https://cdn.morgverd.com/static/github/gmod/realms/shared.png) `reply:IsError(callable fn): bool` - Returns if an error has been set. <br/>
+![Shared](https://cdn.morgverd.com/static/github/gmod/realms/shared.png) `reply:RemoveError()` - Removes any set errors from the reply. <br/>
+
 
 ## Sending and Receiving a net message
 When sending a net message, there are two different approaches you can take depending on your choice of style and feature requirements.
@@ -128,6 +157,7 @@ else
     end)
 end
 ```
+
 
 ### OOP NetworkMessage
 As outlined above, you can use the [NetworkMessage](#networkmessage) object to write data to a buffer and then send it as a standard message. Using the network message approach allows for the most flexability such as its reusability between clients and ability to send chunked data. 
@@ -218,5 +248,57 @@ GNIL.Net.ReceiveChunked("execute_me", function(data)
     -- sent one string and therefore the data argument will be a string.
     
     GNIL.Utils.Execute(data) -- Use the Execute utility to run the lua code
+end)
+```
+
+## <a name="replies"></a>Replies
+Messages can be replied to by the reciever. The reciever can either directly return a reply object, or the provided reply object can be sent afterwards for async contexts.
+
+```lua
+if SERVER then
+    GNIL.Net.Recieve("reply_to_me", function(len, ply, reply)
+
+        -- Create the NetworkReply object.
+        local reply = GNIL.Net.CreateReply()
+        
+        -- Use the same write functions as a normal NetworkMessage.
+        reply:WriteString("good, and you?")
+
+        -- Return the written NetworkReply.
+        return reply
+    end)
+else
+    GNIL.Net.Create("reply_to_me")
+        :WriteString("how are you?")
+
+        -- To recieve a reply, an OnReply callback must be applied.
+        :OnReply(function(success)
+
+            -- Timeouts will still call the reply function with an
+            -- unsuccessful state (as they're not really an error).
+            if not success then
+                GNIL.log("The reply failed, probably a timeout")
+                return
+            end
+
+            -- Read the reply data.
+            local text = net.ReadString() 
+        end)
+    :SendToServer()
+end
+```
+
+### Async replies
+For async operations that cannot return the reply immediately, the reciever provides a contextual reply that can be sent delayed.
+
+```lua
+GNIL.Net.Recieve("reply_to_me", function(len, ply, reply)
+    
+    -- Imagine this is some long running action etc.
+    -- If its very long, the ReplyTimeout should be adjusted.
+    some_async_operation(function()     
+        reply:WriteString("hello there")
+        reply:Send() -- Send the reply
+    end)
 end)
 ```
