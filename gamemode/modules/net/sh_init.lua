@@ -19,10 +19,14 @@ GNIL.Net = GNIL.Net or {
     }
 }
 
--- As the server, we should load the sv_setup file as
--- it defines all the underlying messsage names etc.
 if SERVER then
-    MODULE:Include("sv_setup.lua")
+    MODULE:Include("sv_network.lua")
+
+    -- Cache the maximum amount of netmessages for the above _idsize.
+    MODULE.OnLoadFinished = function()
+        GNIL.Net["_max_messages"] = GNIL.Net.Helpers.GetBitcountMaxValue(GNIL.Net["_idsize"], true)
+        MODULE:log("Configured idsize supports a maximum of " .. tostring(GNIL.Net["_max_messages"]) .. " individual messages.", "debug")
+    end
 end
 
 -- Load required classes. Each must be stored globally before the next as
