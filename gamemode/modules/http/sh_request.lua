@@ -1,4 +1,4 @@
-local Request = GNIL.Thirdparty.middleclass("Request")
+local MODULE, Request = MODULE, GNIL.Thirdparty.middleclass("Request")
 
 -- method, url, body, headers, callback
 function Request:Initialize(...)
@@ -45,7 +45,7 @@ end
 function Request:IsValid()
     for k, v in pairs(self.requestProperties) do
         if self[k] == nil && v then
-            GNIL.log("Required request key '" .. k .. "' cannot be unset.", "warning")
+            MODULE:log("Required request key '" .. k .. "' cannot be unset.", "warning")
             return false
         end
     end

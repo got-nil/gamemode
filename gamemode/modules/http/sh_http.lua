@@ -1,4 +1,4 @@
-GNIL.Http = GNIL.Http or {
+MODULE, GNIL.Http = MODULE, GNIL.Http or {
     ["_driver"] = http,
     ["_loaded"] = false
 }
@@ -18,14 +18,14 @@ if SERVER then
             
             -- Verify that the driver was loaded correctly.
             if not _G[const] then
-                GNIL.log("Despite HTTP driver '" .. possible_driver .. "' existing, it failed to load.", "error")
+                MODULE:log("Despite HTTP driver '" .. possible_driver .. "' existing, it failed to load.", "error")
             else
                 GNIL.Http._driver = _G[const]
-                GNIL.log("Successfully loaded HTTP driver '" .. possible_driver .. "'.", "success")
+                MODULE:log("Successfully loaded HTTP driver '" .. possible_driver .. "'.", "debug")
                 break
             end
         else
-            GNIL.log("Missing optional HTTP driver '" .. possible_driver .. "'", "debug")
+            MODULE:log("Missing optional HTTP driver '" .. possible_driver .. "'", "debug")
         end
     end
 end
@@ -88,7 +88,7 @@ local function _getArgumentsAsTable(...)
         if isfunction(validatorFn) then
             local success, v = validatorFn(arguments[k])
             if not success then
-                GNIL.log("Parameter validator function for '" .. k .. "' marked the request as invalid.", "warning")
+                MODULE:log("Parameter validator function for '" .. k .. "' marked the request as invalid.", "warning")
                 return nil
             end
             
@@ -100,7 +100,7 @@ local function _getArgumentsAsTable(...)
             -- the parameter should also accept nil types.
             if arguments[k] == nil then continue end
             if TypeID(arguments[k]) != v then
-                GNIL.log("Parameter '" .. k .. "' requires type '" .. v .. "' whereas the provided type for the parameter is '" .. TypeID(arguments[k]) .. "'", "warning")
+                MODULE:log("Parameter '" .. k .. "' requires type '" .. v .. "' whereas the provided type for the parameter is '" .. TypeID(arguments[k]) .. "'", "warning")
                 return nil
             end
         end
