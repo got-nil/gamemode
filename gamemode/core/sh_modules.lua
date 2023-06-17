@@ -1,10 +1,14 @@
 GNIL.Modules = GNIL.Modules or {
     ["_loaded"] = {},
     ["_cached_modules"] = {},
-    ["_tmp_dev_files"] = {}
+    ["_tmp_dev_files"] = {},
+    ["_first_loaded"] = {}
 }
 
-GNIL.Modules["_loaded"] = {} -- REMOVE THIS
+-- Clear all loaded modules each time theres a LUA refresh.
+if GNIL._ENVIRONMENT == "dev" then
+    GNIL.Modules["_loaded"] = {}
+end
 
 -- A helper function for the shared gamemode file to use when loading
 -- all modules at once. It constantly checks to ensure that the module
@@ -18,6 +22,7 @@ function GNIL.Modules.LoadAll()
         end
         GNIL.Modules.Load(name)
     end
+    hook.Run("GNIL.Modules.LoadedAll")
 end
 
 -- Get all modules. If associative is true the return table is a key value
@@ -85,6 +90,12 @@ function GNIL.Modules.Load(name, _dependency_chain)
             return false
         end
 
+        -- Allow for other utilities etc to process the init file output.
+        if hook.Run("GNIL.Modules.Init", name, moduleInstance) == false then
+            moduleInstance:log("Module load was prevented by init hook.", "debug")
+            return false
+        end
+ 
         -- Ensure that any dependencies that have not yet been resolved are resolved
         -- once the init file has finished. Essentially delayed module dependencies.
         if moduleInstance.dependencies then
@@ -93,8 +104,7 @@ function GNIL.Modules.Load(name, _dependency_chain)
                 if moduleInstance._loaded_dependencies[k] then continue end
                 moduleInstance:_ResolveRequirement(k)
             end
-        end
-    
+        end  
     else
         if initFile then moduleInstance:log("Init file '" .. initFile .. "' is not suitable for the current realm.", "debug")
         else moduleInstance:log("Init file could not be found, skipping.", "debug") end
@@ -181,6 +191,13 @@ function GNIL.Modules.Load(name, _dependency_chain)
     -- Once everything has finished loading, we should call the OnLoadFinished hook function.
     hook.Run("GNIL.Modules.Loaded", name, moduleInstance)
     moduleInstance:OnLoadFinished()
+
+    -- Call the FirstLoaded hook once per module load, even if the modules loaded have been
+    -- cleared on refresh the hook should still be called at most once per server runtime.
+    if not GNIL.Modules["_first_loaded"][name] then
+        hook.Run("GNIL.Modules.FirstLoaded", name, moduleInstance)
+        GNIL.Modules["_first_loaded"][name] = true
+    end
 
     -- Once finished, restore the MODULE const to the previous, or nil.
     -- Allows other modules to load modules without losing their const.
