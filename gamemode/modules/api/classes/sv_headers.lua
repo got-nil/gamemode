@@ -79,42 +79,4 @@ function Headers:__tostring()
     return table.concat(self:ToLines(), "\r\n")
 end
 
--- Read the headerline and seperate header name from value.
-local function parseHeaderline(headerline)
-
-    -- Ensure that header values with a colon are preserved. If there
-    -- is only one part then the header is malformed (missing seperator).
-    local parts = string.Explode(":", headerline)
-    if #parts == 1 then
-        return nil, nil
-    end
-
-    -- Preserve colon characters in header value.
-    local v = {}
-    for i = 1, #parts - 1 do
-        table.insert(v, parts[i + 1])
-    end
-
-    v = string.TrimLeft(#v == 1 && v[1] || table.concat(v, ":"))
-    return parts[1], v
-end
-
--- Parse a list of headerlines (strings) into a Headers instance. 
-function Headers.FromHeaderlines(headerlines)
-
-    local headers = {}
-    for i, line in ipairs(headerlines) do
-        local k, v = parseHeaderline(line)
-
-        -- Ingore invalid header lines
-        if k != nil then
-            headers[k] = v
-        end
-    end
-
-    -- Return an instance of Headers initialised with the collected
-    -- headers from the headerlines.
-    return Headers:New(headers)
-end
-
 GNIL.API.Classes.Headers = Headers
