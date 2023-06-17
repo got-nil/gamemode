@@ -57,7 +57,10 @@ GM.Author = "GotNil Development Team & FPtje Falco et al."
 -- essentially for core tools that the utils themselves rely on.
 local requiredSharedUtilities = {
     "sh_utils.lua",
-    "sh_logging.lua"
+    "sh_logging.lua",
+    "sh_validation.lua",
+    "sh_loader.lua",
+    "sh_config.lua"
 }
 for _, f in ipairs(requiredSharedUtilities) do
     local path = "core/" .. f
