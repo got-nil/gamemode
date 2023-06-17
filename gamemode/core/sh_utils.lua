@@ -179,19 +179,45 @@ end
 
 -- Precache character set, skipping certain punctuation.
 local charset = {}  do
-    for c = 48, 57  do table.insert(charset, string.char(c)) end
     for c = 65, 90  do table.insert(charset, string.char(c)) end
     for c = 97, 122 do table.insert(charset, string.char(c)) end
 end
+
+math.randomseed(os.clock()^5)
 function GNIL.Utils.Random(len)
     if not len or len <= 0 then len = 28 end -- default to 28 length
-    math.randomseed(os.clock()^5)
-    
+
     local s = {}
     for i = 1, len do
-        table.insert(s, charset[math.random(1, #charset)])
+        s[i] = charset[math.random(1, #charset)]
     end
     return table.concat(s)
+end
+
+-- Replace multiple instances of a needle with different values.
+function GNIL.Utils.RecursiveReplace(haystack, needle, callback)
+
+    -- Find all occurances and store its positions.
+    local p, r = 0, {}
+    while true do
+        local startPos, endPos = string.find(haystack, needle, p, true)
+        if startPos == nil then break end
+        table.insert(r, startPos)
+        p = endPos + 1
+    end
+    if #r == 0 then
+        return haystack
+    end
+
+    -- Reverse the table of positions, since if we started modifying
+    -- the string from the start all the other positions would change too.
+    for i, v in ipairs(table.Reverse(r)) do
+        local before = string.sub(haystack, 1, v - 1)
+        local after = string.sub(haystack, v + #needle)
+
+        haystack = before .. callback(#r - i + 1) .. after
+    end
+    return haystack
 end
 
 -- Check if a lua bin module is installed.

@@ -1,4 +1,4 @@
-
+local MODULE = MODULE
 GNIL.Net.Chunks = GNIL.Net.Chunks or {
     ["return_codes"] = {},
     ["max_chunk_size"] = 65500,
@@ -16,7 +16,7 @@ function GNIL.Net.Chunks.Send(ply, message, data, verify_checksum, callback)
     -- that it actually exists (this id is also sent in some chunks)
     local messageid = GNIL.Net.NetworkStringToID(message)
     if messageid == 0 then
-        GNIL.log("Unknown/Unpooled message '" .. message .. "', refusing to send chunked data.", "error")
+        MODULE:log("Unknown/Unpooled message '" .. message .. "', refusing to send chunked data.", "error")
         return
     end
 
@@ -60,7 +60,7 @@ function GNIL.Net.Chunks.Send(ply, message, data, verify_checksum, callback)
 
     -- Calculate the amount of chunks that are required to send all data.
     local chunk_count = math.ceil(string.len(data) / GNIL.Net.Chunks["max_chunk_size"])
-    GNIL.log("Sending " .. chunk_count .. " chunks to " .. ply:Nick() .. ", targetting message '" .. message .. "' with return code '" .. return_code .. "'", "debug")
+    MODULE:log("Sending " .. chunk_count .. " chunks to " .. ply:Nick() .. ", targetting message '" .. message .. "' with return code '" .. return_code .. "'", "debug")
 
     -- Iterate over all chunks sending each in a timer to ensure that
     -- the client isn't overwhelmed.
@@ -128,14 +128,14 @@ net.Receive("gnilc", function(len, ply)
     -- Validate that the calling player matches the specified
     -- return code original player (verify ownership)
     if return_data[1] != ply:SteamID64() then
-        GNIL.log("Player '" .. ply:Nick() .. "' attempted to use a chunk returnid that does not belong to them.", "warning")
+        MODULE:log("Player '" .. ply:Nick() .. "' attempted to use a chunk returnid that does not belong to them.", "warning")
         return
     end
 
     -- Read the success bool (and if unsuccessful also read the error message)
     local success, error_message = net.ReadBool(), nil
     if not success then error_message = net.ReadString() end
-    GNIL.log("Player '" .. ply:Nick() .. "' sent a " .. (success and "successful response" or "unsuccessful response ('" .. error_message .. "')") .. " to returnid '" .. return_code .. "'", "debug")
+    MODULE:log("Player '" .. ply:Nick() .. "' sent a " .. (success and "successful response" or "unsuccessful response ('" .. error_message .. "')") .. " to returnid '" .. return_code .. "'", "debug")
 
     -- If there is a callback associated with the return code
     -- then we should call that now with the return values.

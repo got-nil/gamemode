@@ -14,6 +14,7 @@ function Module:Initialize(name)
     self.dependencies = nil
     self._loaded_dependencies = {}
     self._disabled = false
+    self.config = false
 
     self._hooks = {
         {}, --seq
@@ -36,6 +37,9 @@ end
 function Module:IsLoaded() return GNIL.Modules.IsLoaded(self._module_name) end
 function Module:Load() return GNIL.Modules.Load(self._module_name) end
 function Module:Unload() return GNIL.Modules.Unload(self._module_name) end
+
+-- Get module config, set from config attribute.
+function Module:Config() return GNIL.Config.Get(self.config) end
 
 -- A functional way to set the autoload if you want to be fancy.
 -- (Although you could just change the class var directly)
@@ -316,5 +320,6 @@ function Module:OnLoadFinished() end  -- Called once the module has finished loa
 function Module:__tostring()
     return "Module " .. self._module_name .. " by " .. self.author
 end
+
 
 return Module

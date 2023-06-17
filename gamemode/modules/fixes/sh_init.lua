@@ -3,6 +3,7 @@ local MODULE = MODULE
 MODULE.name = "Fixes"
 MODULE.author = "morgverd"
 MODULE.description = "A set of fixes and optimisations for the server and clients."
+MODULE.config = "fixes"
 
 GNIL.Fixes = GNIL.Fixes or {
     ["_optimizers"] = {}
@@ -12,7 +13,7 @@ GNIL.Fixes = GNIL.Fixes or {
 -- we should start loading the optimizer files.
 MODULE.OnLoadFinished = function()
 
-    if not GNIL.Fixes.Config["Modules"]["Optimizers"] then
+    if SERVER and not GNIL.Config("fixes"):Get("Modules", {Optimizers = false}).Optimizers then
         MODULE:log("Optimizers have been disabled.", "debug")
         return
     end
@@ -30,7 +31,7 @@ MODULE.OnLoadFinished = function()
         end
 
         -- Validate optimizer return structure.
-        if optimizer and not (isstring(optimizer.name) and isfunction(optimizer.enable) and isfunction(optimizer.disable)) then
+        if not (istable(optimizer) and isstring(optimizer.name) and isfunction(optimizer.enable) and isfunction(optimizer.disable)) then
             MODULE:log("Failed to load optimizer '" .. v .. "' as return value wasn't an optimizer.", "warning")
             continue
         end
@@ -42,7 +43,5 @@ MODULE.OnLoadFinished = function()
 end
 
 if SERVER then
-    for _, v in ipairs({"sv_enums.lua", "sv_config.lua"}) do
-        MODULE:Include(v)
-    end
+    MODULE:Include("sv_enums.lua")
 end

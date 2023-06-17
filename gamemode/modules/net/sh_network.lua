@@ -1,3 +1,4 @@
+local MODULE = MODULE
 
 -- These functions are the exact same as the default net functions
 -- in terms of input arguments and return values.
@@ -34,19 +35,19 @@ function GNIL.Net.ReceiveChunked(messageName, callback) assert(CLIENT, "Only the
 -- Create a network message instance with the given
 -- message name (class constructor alias basically).
 function GNIL.Net.Create(messageName)
-    return GNIL.Net.NetworkMessage:New(messageName)
+    return GNIL.Net.Classes.Message:New(messageName)
 end
-
+ 
 -- Start a net message, inserting the message id
 -- header and using the blanket gnil message name.
-function GNIL.Net.Start(messageName, unreliable)
+function GNIL.Net.Start(messageName, unreliable, _has_reply)
     local mid = GNIL.Net.NetworkStringToID(messageName)
     if mid == 0 then error("The provided message name '" .. messageName .. "' is unpooled. Ensure you're using GNIL.Net.AddNetworkString beforehand.") end
-
-    if unreliable then GNIL.log("Net message '" .. messageName .. "' is being sent unreliably.", "debug") end
+    if unreliable then MODULE:log("Net message '" .. messageName .. "' is being sent unreliably.", "debug") end
 
     net.Start("gnil", unreliable)
     net.WriteUInt(mid, GNIL.Net["_idsize"]) -- Write the network ID.
+    net.WriteBool(_has_reply == true) -- Write reply signal.
 end
 
 ------------------------------------------------
@@ -57,8 +58,34 @@ net.Receive("gnil", function(len, ply)
     -- message id in the header. (Double headers)
     local mstr = GNIL.Net.NetworkIDToString(net.ReadUInt(GNIL.Net["_idsize"]))
     if mstr == nil or GNIL.Net["_c"][mstr] == nil or GNIL.Net["_c"][mstr][1] == nil then return end
+    local offset = GNIL.Net["_idsize"] -- Base id size.
 
+    -- If the message has a reply signal, read the
+    -- reply_id for the reciever callback.
+    offset = offset + 1 -- Has reply header bool.
+    local has_reply, reply_id, reply = net.ReadBool(), false, nil
+    if has_reply then
+        reply_id = net.ReadUInt(15)
+        if not GNIL.Net.Reply.IsValidReplyID(reply_id) then
+            MODULE:log((SERVER && "Player " .. ply:ToString() || "The server") .. " sent message '" .. mstr .. "' with a reply signal, yet an invalid reply_id.", "error")
+            return
+        end
+        reply = GNIL.Net.CreateReply(reply_id, ply)
+        offset = offset + 15 -- Reply ID size.
+    end
+
+    -- Check for network abuse patterns.
+    if SERVER then
+        if not GNIL.Net.AntiAbuse.Check(mstr, ply, reply) then
+            MODULE:log("Rejecting player " .. ply:ToString() .. " message '" .. mstr .. "' as abuse was detected.", "debug")
+            return
+        end
+    end
+    
     -- Call the associated network receiver with the
-    -- provided length (- idsize) and the calling ply
-    GNIL.Net["_c"][mstr][1](len - GNIL.Net["_idsize"], ply)
+    -- provided length (- idsize) and the calling ply.
+    local out = GNIL.Net["_c"][mstr][1](len - offset, ply, reply)
+    if has_reply then
+        GNIL.Net.Reply.ReceiverWrap(reply_id, out, ply)
+    end
 end)
