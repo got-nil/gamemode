@@ -3,6 +3,7 @@
 -- file content in chunks to the player, and once all have
 -- been sent the client executes each file.
 
+local MODULE = MODULE
 if SERVER then
 
     -- Server setup stuff.
@@ -18,7 +19,7 @@ if SERVER then
         end
         nm:SendChunked(self, true, function(success, output)
             if not success then
-                GNIL.log("Failed to include files on player '" .. self:Nick() .. "' with error: " .. output, "error")
+                MODULE:log("Failed to include files on player '" .. self:Nick() .. "' with error: " .. output, "error")
             end
         end)
     end
@@ -34,14 +35,14 @@ if SERVER then
             if not allow_server_files then
                 local realm_prefix = GNIL.Utils.GetFilepathRealmPrefix(filepath)
                 if realm_prefix == "sv_" then
-                    GNIL.log("Refusing to include file '" .. filepath .. "' on player '" .. self:Nick() .. "' as it is a server file.", "error")
+                    MODULE:log("Refusing to include file '" .. filepath .. "' on player '" .. self:Nick() .. "' as it is a server file.", "error")
                     return false
                 end
             end
 
             local code = file.Read(filepath, "LUA")
             if code == nil then return false
-            else GNIL.log("Read file '" .. filepath .. "' to send to player '" .. self:Nick() .. "'", "debug") end
+            else MODULE:log("Read file '" .. filepath .. "' to send to player '" .. self:Nick() .. "'", "debug") end
             table.insert(codes, code)
         end
 
@@ -57,7 +58,7 @@ else
         for _, v in ipairs(data) do
             local success, out = GNIL.Utils.Execute(v, "gnil_include")
             if not success then
-                GNIL.log("Net include error: " .. out, "error")
+                MODULE:log("Net include error: " .. out, "error")
             end
         end
     end)

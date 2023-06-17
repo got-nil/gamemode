@@ -1,14 +1,11 @@
 
 -- Add the core required network strings.
-<<<<<<< Updated upstream:gamemode/modules/net/sv_setup.lua
-local netstrings = {
-=======
 GNIL.Net["_q"] = GNIL.Net["_q"] or {}
 local MODULE, netstrings = MODULE, {
->>>>>>> Stashed changes:gamemode/modules/net/sv_network.lua
     "gnil",   -- GNIL Network (default message entrypoint)
     "gnilc",  -- GNIL Chunked (chunked messages for large datasets)
-    "gnils"   -- GNIL Sync (sync pooled netstrings between client and server)
+    "gnils",  -- GNIL Sync (sync pooled netstrings between client and server)
+    "gnilr"   -- GNIL Reply (message reply system)
 }
 for _, v in ipairs(netstrings) do
     util.AddNetworkString(v)
@@ -35,11 +32,9 @@ function GNIL.Net.AddNetworkString(str, ratelimits, _d)
     assert(isstring(str), "The provided network string... must be a string.")
     assert(ratelimits == nil or istable(ratelimits), "The provided ratelimits must be nil or a ratelimits config table.")
 
+    -- Ensure that the idsize uint is always big enough to be able to send
+    -- the newly created networkid. Cached in init file.
     local l = #GNIL.Net["_r"] + 1
-<<<<<<< Updated upstream:gamemode/modules/net/sv_setup.lua
-    GNIL.Net["_r"][l] = str
-    GNIL.Net["_i"][str] = l
-=======
     if GNIL.Net["_max_messages"] != nil and l > GNIL.Net["_max_messages"] then
         error("The configured network _idsize supports a maximum of " .. tostring(GNIL.Net["_max_messages"]) .. " messages!")
     else
@@ -51,13 +46,12 @@ function GNIL.Net.AddNetworkString(str, ratelimits, _d)
             GNIL.Net.AntiAbuse.SetLimits(str, ratelimits)
         end
     end
->>>>>>> Stashed changes:gamemode/modules/net/sv_network.lua
 
     -- If the netids have already been sent to a player, then this is a
     -- delayed pool addition (really bad for optimisation since we have to
     -- now re-broadcast the network ids to all players), so we complain.
     if _d != false and GNIL.Net["_sent_netids"] then
-        GNIL.log("Network string '" .. str .. "' has been pooled late, which is VERY bad for optimisation.", "warning")
+        MODULE:log("Network string '" .. str .. "' has been pooled late, which is VERY bad for optimisation.", "warning")
         GNIL.Net._SyncNetworkIDs()
     end
 
