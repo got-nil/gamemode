@@ -1,0 +1,4 @@
+
+-- Route argument ENUMs
+GNIL_API_ARGUMENT_STR = 1
+GNIL_API_ARGUMENT_ARG = 2

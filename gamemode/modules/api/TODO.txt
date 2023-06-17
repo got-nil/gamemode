@@ -1,0 +1,24 @@
+Allow for all classes to be chainable where possible. (Request:SetMethod("POST"):SetPath("example"))
+
+Eventually:
+    - Middleware
+    - Automatic route registering for other modules:
+        - Modules can have a "api" directory.
+
+        - "api/routes.lua" - Loadable routes.
+        - "api/request.lua" - Request middleware.
+        - "api/response.lua" - Response middleware.
+
+        - Module routes base default to "/modules/<name>/..."
+
+    - Routes:
+        
+        - "/darkrp/<player>/...":
+            - (GET) "/" : Overview of the players DarkRP data.
+            - (GET|POST) "/money" : View/Modify the players current money.
+
+        - "/moderation/<player>/...":
+            - (POST) "/kick" : Kick the player from the server (optional reason).
+            - (POST) "/ban" : Ban the player from the server (optional reason).
+            - (GET) "/warns" : Get all of the players current warnings.
+            - (GET) "/note" : Get the players moderation notes.
