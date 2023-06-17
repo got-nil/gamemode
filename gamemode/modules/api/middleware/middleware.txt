@@ -1,0 +1,5 @@
+
+Implement two middleware layers for route groups:
+  request    - Can modify request for handler, or return response
+  response   - Can modify response
+
