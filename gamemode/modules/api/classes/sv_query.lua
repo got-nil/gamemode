@@ -77,7 +77,7 @@ function Query.BuildQuery(tab, sep, key)
 			query[#query+1] = GNIL.API.Classes.Query.BuildQuery(value, sep, name)
 		else
 			local value = GNIL.API.URL.Encode(tostring(value), GNIL.API.Parser.QueryOptions.legal_in_query)
-			if value ~= "" then
+			if value != "" then
 				query[#query+1] = string.format("%s=%s", name, value)
 			else
 				query[#query+1] = name

@@ -54,7 +54,7 @@ function GNIL.API.Parser.Query(str, sep)
 		if not values[key] then
 			values[key] = {}
 		end
-		if #keys > 0 and type(values[key]) ~= "table" then
+		if #keys > 0 and type(values[key]) != "table" then
 			values[key] = {}
 		elseif #keys == 0 and type(values[key]) == "table" then
 			values[key] = decodeValue(val)
@@ -65,7 +65,7 @@ function GNIL.API.Parser.Query(str, sep)
 
 		local t = values[key]
 		for i,k in ipairs(keys) do
-			if type(t) ~= "table" then
+			if type(t) != "table" then
 				t = {}
 			end
 			if k == "" then
