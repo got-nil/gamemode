@@ -107,7 +107,7 @@ function GNIL.API.Parser.Route(raw_route)
 	for i, v in ipairs(string.Explode("/", raw_route)) do
 		
 		local frag_type, arg_type = GNIL_API_ARGUMENT_STR, nil
-		if (v[1] == "{" && v[#v] == "}") then
+		if (v[1] == "{" and v[#v] == "}") then
 			frag_type = GNIL_API_ARGUMENT_ARG
 			v = string.sub(v, 2, #v - 1)
 

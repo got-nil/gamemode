@@ -4,7 +4,7 @@
 
 local Query = GNIL.Thirdparty.middleclass("Query")
 function Query._From(query)
-    if (isstring(query) || (istable(query) && not table.IsSequential(query))) then
+    if (isstring(query) or (istable(query) and not table.IsSequential(query))) then
 		return Query:New(query)
 	end
 end

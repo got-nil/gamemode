@@ -12,7 +12,7 @@ function Request:Initialize(method, path, query, body, headers, remote_addr)
     })
 
     -- Parse the request body if there is one (although there should be).
-    if self.body && self.headers:Exists("Content-Type") then
+    if self.body and self.headers:Exists("Content-Type") then
         self.body:Parse(self.headers:Get("Content-Type"))
     end
 end

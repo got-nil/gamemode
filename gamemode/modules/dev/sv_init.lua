@@ -173,7 +173,7 @@ if not GNIL.Dev["_setup"] then
     local files, _ = file.Find(module_base .. "/*.lua", "LUA")
 
     for _, v in ipairs(files) do
-        if setupFiles[v] || v == "sv_init.lua" then continue end
+        if setupFiles[v] or v == "sv_init.lua" then continue end
         local absolute = module_base .. "/" .. v
 
         -- Ensure the file isn't a server file or unprefixed.

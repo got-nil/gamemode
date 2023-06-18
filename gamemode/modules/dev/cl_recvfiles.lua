@@ -26,7 +26,7 @@ function command_callback(_, __, args)
     else
 
         -- The second argument must either be enable or disable.
-        if args[2] != "enable" && args[2] != "disable" then
+        if args[2] != "enable" and args[2] != "disable" then
             GNIL.log("Invalid script state argument. Must be either 'enable' or 'disable'.", "warning")
         end
 
@@ -117,7 +117,7 @@ GNIL.Net.ReceiveChunked("dev_files", function(data)
             -- If the filepath is already stored and its a script
             -- then it should be unloaded as its about to be overwritten.
             -- The script is stored as the file output and can be accessed there.
-            if GNIL.Dev["_files"][v] && GNIL.Dev["_files"][v][1] then
+            if GNIL.Dev["_files"][v] and GNIL.Dev["_files"][v][1] then
                 
                 -- Check if the module is actually enabled.
                 local is_enabled = GNIL.Dev["_scripts"]["_enabled"][GNIL.Dev["_files"][v][2].name] == true

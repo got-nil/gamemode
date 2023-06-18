@@ -4,7 +4,7 @@
 
 local Headers = GNIL.Thirdparty.middleclass("Headers")
 function Headers._From(headers)
-    if istable(headers) && not table.IsSequential(headers) then
+    if istable(headers) and not table.IsSequential(headers) then
         return Headers:New(headers)
     end
 end
@@ -13,7 +13,7 @@ function Headers:Initialize(headers)
 
     -- If a Headers instance is being passed into
     -- the constructor, just copy the headers across.
-    if headers != nil && headers.class && headers.class.name == "Headers" then
+    if headers != nil and headers.class and headers.class.name == "Headers" then
         self._headers = headers._headers
         return
     end

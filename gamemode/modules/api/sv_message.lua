@@ -24,8 +24,8 @@ Message._attributes = {
     ["status"]      = TYPE_NUMBER,
     
     -- Shared
-    ["body"]        = function(v) return isstring(v) || GNIL.API.Classes.Is(v, "Body") end,
-    ["method"]      = function(v) return isstring(v) && Message._validMethods[string.upper(v)] == true end,
+    ["body"]        = function(v) return isstring(v) or GNIL.API.Classes.Is(v, "Body") end,
+    ["method"]      = function(v) return isstring(v) and Message._validMethods[string.upper(v)] == true end,
     ["headers"]     = function(v) return GNIL.API.Classes.Is(v, "Headers") end
 }
 
@@ -44,7 +44,7 @@ function Message:Set(attribute, value)
             return false
         end
     else
-        if expected == nil || TypeID(value) != expected then
+        if expected == nil or TypeID(value) != expected then
             MODULE:log("Message attribute '" .. attribute .. "' was rejected due to invalid type.", "warning")
             return false
         end

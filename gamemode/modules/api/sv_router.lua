@@ -73,7 +73,7 @@ function Router:Call(request)
     -- Get all routes with a matching from the request.
     local validMethodRoutes = {}
     for _, v in ipairs(routes) do
-        if v[1]._methods == nil || v[1]._methods[request.method] then
+        if v[1]._methods == nil or v[1]._methods[request.method] then
             table.insert(validMethodRoutes, v)
         end
     end

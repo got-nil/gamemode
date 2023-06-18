@@ -23,7 +23,7 @@ return {
                 GNIL.Utils.Include(directory_path .. "/" .. v)
             end
         end)
-        if out == nil || out == false then
+        if out == nil or out == false then
             GNIL.log("Failed to load entity '" .. classname .. "' " .. (out == nil && "with an error state" || "as it does not have any files for this realm."), out == nil && "error" || "debug")
             return false
         end
@@ -39,7 +39,7 @@ return {
         local out = GNIL.Loader.ConstWrap("ENT", defaultEnt, function()
             GNIL.Utils.Include(filepath)
         end)
-        if out == nil || out == false then
+        if out == nil or out == false then
             GNIL.log("Failed to load entity '" .. classname .. "' " .. (out == nil && "with an error state" || "as it does not have any files for this realm."), out == nil && "error" || "debug")
         end
 
