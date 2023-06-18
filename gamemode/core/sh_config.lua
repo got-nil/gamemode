@@ -140,7 +140,7 @@ hook.Add("GNIL.Modules.Init", "gnil_config_module_validation", function(name, pa
     end
 end)
 
-hook.Add("GNIL.Modules.FirstLoaded", "gnil_config_net_loaded", function(name)
+hook.Add("GNIL.Modules.FirstLoaded", "gnil_config_net_loaded", function(name, module)
     if name != "net" then return end
     
     if SERVER then
