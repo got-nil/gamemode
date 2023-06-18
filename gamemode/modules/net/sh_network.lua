@@ -75,11 +75,9 @@ net.Receive("gnil", function(len, ply)
     end
 
     -- Check for network abuse patterns.
-    if SERVER then
-        if not GNIL.Net.AntiAbuse.Check(mstr, ply, reply) then
-            MODULE:log("Rejecting player " .. ply:ToString() .. " message '" .. mstr .. "' as abuse was detected.", "debug")
-            return
-        end
+    if SERVER and not GNIL.Net.AntiAbuse.Check(mstr, ply, reply) then
+        MODULE:log("Rejecting player " .. ply:ToString() .. " message '" .. mstr .. "' as abuse was detected.", "debug")
+        return
     end
     
     -- Call the associated network receiver with the

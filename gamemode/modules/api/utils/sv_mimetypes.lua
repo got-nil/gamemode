@@ -115,10 +115,10 @@ application/x-lua lua
 ]]
 
 -- Parse mimetypes
-function GNIL.API.Mimetypes.Parse(mimetypes)
+function GNIL.API.Mimetypes.Parse(in_mimetypes)
     local out_mimetypes, out_extensions = {}, {}
 
-    for line in string.gmatch(mimetypes, "[^\n\r]+") do
+    for line in string.gmatch(in_mimetypes, "[^\n\r]+") do
         if line[1] == "#" then continue end
         local parts = string.Explode(" ", line)
         
@@ -141,8 +141,8 @@ function GNIL.API.Mimetypes.Parse(mimetypes)
 end
 
 -- Getters for cached mimetypes.
-function GNIL.API.Mimetypes.GetExtensions(mimetype) return GNIL.API.Mimetypes["_mime"][extension] end
-function GNIL.API.Mimetypes.GetExtension(mimetype) return GNIL.API.Mimetypes["_mime"][extension] != nil && GNIL.API.Mimetypes["_mime"][extension][1] || nil end
+function GNIL.API.Mimetypes.GetExtensions(mimetype) return GNIL.API.Mimetypes["_mime"][mimetype] end
+function GNIL.API.Mimetypes.GetExtension(mimetype) return GNIL.API.Mimetypes["_mime"][mimetype] != nil && GNIL.API.Mimetypes["_mime"][mimetype][1] || nil end
 function GNIL.API.Mimetypes.GetMimetype(extension) return GNIL.API.Mimetypes["_exts"][extension] end
 
 -- If the mimetypes text has not yet been parsed, do so now.

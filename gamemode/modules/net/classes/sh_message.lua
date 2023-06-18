@@ -53,7 +53,7 @@ function NetworkMessage:_WriteToStream(targets)
     MODULE:log("Writing message '" .. self.name .. "' to stream.", "debug")
 
     -- If there is a reply callback set, a reply header is added.
-    local has_reply, reply_id = self._reply.callback != nil or self._errors._set, false
+    local has_reply = self._reply.callback != nil or self._errors._set
     GNIL.Net.Start(self.name, self.unreliable, has_reply)
 
     -- If the message has a reply callback, also add the
