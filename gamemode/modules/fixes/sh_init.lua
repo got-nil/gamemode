@@ -13,7 +13,7 @@ GNIL.Fixes = GNIL.Fixes or {
 -- we should start loading the optimizer files.
 MODULE.OnLoadFinished = function()
 
-    if SERVER and not GNIL.Config("fixes"):Get("Modules", {Optimizers = false}).Optimizers then
+    if SERVER and not MODULE:Config():Get("Modules", {Optimizers = false}).Optimizers then
         MODULE:log("Optimizers have been disabled.", "debug")
         return
     end

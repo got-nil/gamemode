@@ -12,7 +12,7 @@ local MODULE, config_options = MODULE, {
 }
 
 -- Validate / Fill default config values.
-local conf = GNIL.Config("api"):ToTable()
+local conf = MODULE:Config():ToTable()
 for k, v in pairs(config_options) do
     if conf[k] == nil then
         if v[1] then

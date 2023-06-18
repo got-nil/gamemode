@@ -153,7 +153,7 @@ function Websocket:Open()
         return
     end
 
-    local conf = GNIL.Config("api")
+    local conf = MODULE:Config()
     local socket = GWSockets.createWebSocket(
         conf:Get("ws_host"),
         conf:Get("ws_verify_cert", true)
