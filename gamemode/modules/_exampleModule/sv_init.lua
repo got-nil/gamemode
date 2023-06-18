@@ -20,13 +20,25 @@
 -- for not doing it. All it does is creates a local reference to the current MODULE global.
 local MODULE = MODULE
 
-MODULE.name = "Example Module" -- A simple and short module name.
-MODULE.author = "morgverd" -- The author of the module. This is used for error logs so ALWAYS put your real username to make it easier.
-MODULE.description = "This module is never actually loaded, and does nothing." -- A brief description of the module and what it does.
+------------------------ HEADER ------------------------
+
+MODULE.name = "Example Module" -- [REQUIRED] A simple and short module name.
+MODULE.author = "morgverd" -- [REQUIRED] The author of the module. This is used for error logs so ALWAYS put your real username to make it easier.
+MODULE.description = "This module is never actually loaded, and does nothing." -- [REQUIRED] A brief description of the module and what it does.
+MODULE.config = "example" -- [OPTIONAL] The name of a required configuration file.
+
+------------------------ GENERAL ------------------------
 
 -- When logging something from the module, you can use the log builtin to the module. This
 -- will automatically add the current module name to the log prefix to make debugging easier.
 MODULE:log("Woah look at this", "debug")
+
+-- Allows for a module to be disabled in its init file. This prevents the autoload from continuing
+-- and should be used only when a module is unable to function (missing dependencies etc).
+MODULE:SetDisabled(false)
+
+-- Returns a Config object for the module if the 'MODULE.config' attribute is set, or nil.
+MODULE:Config()
 
 -- Once the init file has been executed, the default MODULE behaviour is to autoload all correctly
 -- prefixed files in the module base directory. If you want the init file to directly handle all
@@ -49,6 +61,19 @@ MODULE:Require("OtherModule")
 -- Iterative over the require function above.
 MODULE:Requires({"ModuleTwo", "ModuleThree"})
 
+-- Get all module dependencies (requirements).
+-- Returns a sequential table of required module names.
+MODULE:GetDependencies()
+
+-- Load a directory in base, calling each file with handler.
+-- handler: 'core/loadears' 
+MODULE:LoadDirectory(base, directory, handler)
+
+-- This is used for loading 'entities' directories etc.
+-- A directory that contains other files/directories that
+-- should be loaded with the given handler (see above).
+MODULE:LoadDirectories(directory, handler)
+
 -- ** BY NEW DESIGN (MODULE FILE IGNORING) YOU SHOULD ALWAYS USE THE MODULE VERSIONS OF
 -- INCLUDE AND INCLUDEDIRECTORY OVER ITS GLOBAL. THE MODULE VERSION WILL HANDLE THE IGNORED
 -- FILES FOR YOU, BUT USING THE GLOBAL UTILITY WILL NOT. ** 
@@ -62,7 +87,30 @@ MODULE:IncludeDirectory("other_shit")       -- Will include the directory immidi
 MODULE:IncludeDirectory("other_shit", true) -- Will include the directory when the root directory files are being loaded.
 MODULE:Include(path, ignoredFiles, delayed) -- The same functionality as IncludeDirectory with the last argument being the delayed flag.
 
--- The module class also exposes two functional hooks that can be used when loading and unloading
--- the current module. This allows for connections (etc) to be established/destroyed appropriately.
-function MODULE:OnLoad() self:log("Look we're being called!") end
-function MODULE:OnUnload() self:log("We could clean up connections etc here!") end
+------------------------- FILES -------------------------
+
+-- file.Find in LUA path relative to module base.
+MODULE:Find(path, sorting)
+
+-- Resolves a relative filepath to an absolute LUA path.
+-- Out: "gnil/gamemode/modules/example/nestedDirectory/sh_whatever.lua"
+MODULE:ResolvePath("nestedDirectory/sh_whatever.lua")
+
+------------------------- HOOKS ---------------------------
+
+-- Hooks can be given identifiers allowing them to be specifically removed,
+-- alternatively no identifier can be provided giving it a sequentially generated
+-- hook name. It can then be cleared using ClearHooks() if needed.
+
+MODULE:AddHook("Think", function() ... end) -- Anonymous hook
+MODULE:AddHook("Think", "identifier", function() ... end) -- Named hook
+
+MODULE:RemoveHook("Think", "identifier") -- Remove a named hook.
+MODULE:ClearHooks() -- Clear all hooks within module.
+MODULE:GetHooks() -- Returns hook table similar to hook.GetTable
+
+----------------------- FUNCTIONS -------------------------
+
+function MODULE:OnLoad() self:log("The module load has started!") end
+function MODULE:OnUnload() self:log("The module is being unloaded!") end
+function MODULE:OnLoadFinished() self:log("The module has finished loading!") end
