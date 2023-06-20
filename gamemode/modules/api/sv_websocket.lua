@@ -79,8 +79,8 @@ end
 
 -- Connection state.
 function Websocket:IsConnected() return self._connected end
-function Websocket:_OnConnected() self:_Callback(true) self._connected = true end
-function Websocket:_OnDisconnected() self:_Callback(false) self._connected = false end
+function Websocket:_OnConnected() self:_Callback(true) end
+function Websocket:_OnDisconnected() self:_Callback(false) end
 
 function Websocket:_OnError(err)
     MODULE:log("Server '" .. self._server._name .. "' websocket error: " .. err, "error")
@@ -151,6 +151,7 @@ function Websocket:_Callback(state)
     for _, v in ipairs(self._connect_callbacks) do
         v(state)
     end
+    self._connected = state
     self._connect_callbacks = {}
 end
 

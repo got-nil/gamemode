@@ -65,9 +65,17 @@ end
 -- Call the router with a given request. This will find the most suitable
 -- route and then call it with the request and argument data to return a response.
 function Router:Call(request, callback)
+
+    -- Return the respond wrapper to ensure that responses
+    -- are sent if there is a callback set or not.
+    local respond = function(response)
+        if callback then callback(response) else return response end
+    end
+
+    -- Parse provided path to find valid request routes.
     local routes = self:GetRoutes(request.path)
     if routes == nil then
-        return GNIL.API.Responses.Empty(404)
+        return respond(GNIL.API.Responses.Empty(404))
     end
 
     -- Get all routes with a matching from the request.
@@ -81,7 +89,7 @@ function Router:Call(request, callback)
     -- If there are no valid method routes we should return a 405
     -- method not allowed error instead, since the route does exist.
     if #validMethodRoutes == 0 then
-        return GNIL.API.Responses.Empty(405)
+        return respond(GNIL.API.Responses.Empty(405))
     end
     
     -- Call the first (most suitable) found route to get response/promise.
@@ -95,7 +103,7 @@ function Router:Call(request, callback)
         -- a callback provided otherwise there's no way to get the response.
         if not callback then
             MODULE:log("The requested route '" .. route:GetPath() .. "' returned a function, but the router was not called with a callback.", "error")
-            return GNIL.API.Responses.Empty(500)
+            return respond(GNIL.API.Responses.Empty(500))
         end
 
         -- Provide the request promise with the callback.
@@ -105,7 +113,7 @@ function Router:Call(request, callback)
 
     -- If a callback is set, provide it with the request instead of returning
     -- to ensure that the interface remains the same irregardless of request out.
-    if callback then callback(out) else return out end
+    return respond(out)
 end
 
 -- Routes is a reference to the global server router.
