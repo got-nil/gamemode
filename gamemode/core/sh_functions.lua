@@ -1,6 +1,6 @@
 
 function IsPlayer(ply)
-    return IsValid(ply) && IsEntity(ply) && ply:IsPlayer()
+    return IsValid(ply) and IsEntity(ply) and ply:IsPlayer()
 end
 
 function IsClass(obj, name)

@@ -135,7 +135,7 @@ function GNIL.Modules.Load(name, _dependency_chain)
         -- Since this runs on the root it should only be ran once.
         local files, _ = file.Find(GNIL.GamemodeBasePath .. "/modules/" .. name .. "/*.lua", "LUA")
         for _, v in ipairs(files) do
-            if v[1] == "_" || v[1] == "~" then
+            if v[1] == "_" or v[1] == "~" then
                 local path = GNIL.GamemodeBasePath .. "/modules/" .. name .. "/" .. v
                 base_ignored_files[path] = true
 

@@ -1,4 +1,6 @@
-if not GNIL.Config("fixes"):Get("Modules", {Entities = false}).Entities then return end
+local MODULE = MODULE
+if not MODULE:Config():Get("Modules", {Entities = false}).Entities then return end
+
 GNIL.Fixes = GNIL.Fixes or {
     ["setup"] = false,
     ["_entities"] = {}
@@ -11,7 +13,8 @@ function GNIL.Fixes.FromConfig()
     for i = 1, GNIL_FIXES_ENT_COUNT do
         out[i] = {}
     end
-    for classname, enums in pairs(GNIL.Config("fixes"):Get("Entities", {})) do
+  
+    for classname, enums in pairs(MODULE:Config():Get("Entities", {})) do
         for _, enum in ipairs(istable(enums) && enums || {enums}) do
             out[enum][classname] = true         
         end

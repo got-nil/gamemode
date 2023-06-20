@@ -80,7 +80,7 @@ local function _getArgumentsAsTable(...)
             return true, lower_header_keys
         end,
         ["callback"] = function(callback) return isfunction(callback), callback end, -- nil or a function
-        ["type"] = function(ctype) return ctype == nil || isstring(ctype), ctype end
+        ["type"] = function(ctype) return ctype == nil or isstring(ctype), ctype end
     }
 
     for k, v in pairs(parameterValidators) do
@@ -153,7 +153,7 @@ function GNIL.Http.SendRequest(...)
     end
 
     -- If there is a content type provided and no type, use that.
-    if arguments["type"] == nil && arguments["headers"]["content-type"] != nil then
+    if arguments["type"] == nil and arguments["headers"]["content-type"] != nil then
         arguments["type"] = arguments["headers"]["content-type"]
     end
 
