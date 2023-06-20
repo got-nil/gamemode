@@ -16,8 +16,6 @@ function Server:Connect(callback)
 end
 
 -- Alias to router call, returns response.
-function Server:Call(request)
-    return self._router:Call(request)
-end
+function Server:Call(...) return self._router:Call(...) end
 
 GNIL.API.Server = Server

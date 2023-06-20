@@ -1,6 +1,6 @@
 -- Router
 
-local Router = GNIL.Thirdparty.middleclass("Router")
+local MODULE, Router = MODULE, GNIL.Thirdparty.middleclass("Router")
 
 function Router:Initialize()
     self._routes = {}
@@ -64,7 +64,7 @@ end
 
 -- Call the router with a given request. This will find the most suitable
 -- route and then call it with the request and argument data to return a response.
-function Router:Call(request)
+function Router:Call(request, callback)
     local routes = self:GetRoutes(request.path)
     if routes == nil then
         return GNIL.API.Responses.Empty(404)
@@ -84,7 +84,28 @@ function Router:Call(request)
         return GNIL.API.Responses.Empty(405)
     end
     
-    return validMethodRoutes[1][1]:_Call(request, validMethodRoutes[1][2])
+    -- Call the first (most suitable) found route to get response/promise.
+    local route = validMethodRoutes[1][1]
+    local out = route:_Call(request, validMethodRoutes[1][2])
+
+    -- Is route callback/promise?
+    if isfunction(out) then
+
+        -- If the route returns a function (delayed response) there must be
+        -- a callback provided otherwise there's no way to get the response.
+        if not callback then
+            MODULE:log("The requested route '" .. route:GetPath() .. "' returned a function, but the router was not called with a callback.", "error")
+            return GNIL.API.Responses.Empty(500)
+        end
+
+        -- Provide the request promise with the callback.
+        out(callback)
+        return
+    end
+
+    -- If a callback is set, provide it with the request instead of returning
+    -- to ensure that the interface remains the same irregardless of request out.
+    if callback then callback(out) else return out end
 end
 
 -- Routes is a reference to the global server router.

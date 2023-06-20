@@ -39,10 +39,10 @@ local operations = {
 
         -- Call the request on the server router, writing
         -- the returned response back to the websocket connection.
-        ws:_WriteResponse(
-            header["i"],
-            ws._server:Call(request)
-        )
+        -- Use promise/callback interface for delayed responses.
+        ws._server:Call(request, function(response)
+            ws:_WriteResponse(header["i"], response)
+        end)
     end
 }
 
@@ -67,7 +67,13 @@ function Websocket:_WriteResponse(request_id, response)
     -- If there is a response body, write it as a seperate
     -- message with the body message prefix '@'
     if #data.body > 0 then
-        self._socket:write("@" .. request_id .. data.body)
+
+        -- TODO: Only b64 encode responses that have to be encoded.
+        local b64_encoded = true
+        local body = Either(b64_encoded, util.Base64Encode(data.body), data.body)
+
+        -- Send the body message.
+        self._socket:write("@" .. (b64_encoded && "1" || "0") .. request_id .. body)
     end
 end
 
@@ -104,9 +110,13 @@ function Websocket:_OnMessage(msg)
     else
         
         -- Read message request_id and body.
-        local request_id = string.sub(msg, 2, 9)
-        local body = string.sub(msg, 10)
-        MODULE:log("Recieved request body for '" .. request_id .. "', length: '" .. #body .. "'", "debug")
+        local b64_encoded = Either(string.sub(msg, 2, 2) == "1", true, false)
+        local request_id = string.sub(msg, 3, 10)
+        local body = string.sub(msg, 11)
+
+        -- If the body is base64 encoded, decode it.
+        if b64_encoded then body = util.Base64Decode(body) end
+        MODULE:log("Recieved " .. (b64_encoded && "base64 encoded" || "plaintext") .. " request body for '" .. request_id .. "', length: '" .. #body .. "'", "debug")
     
         -- Get the original request header from partials.
         local header = self._request_partials[request_id]
