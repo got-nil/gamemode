@@ -14,9 +14,24 @@ GNIL.API.Validators._argumentValidators = {
         return nil
     end,
     ["ply"] = function(v)
-        for _, getter in pairs({player.GetBySteamID, player.GetBySteamID64}) do
-            local ply = getter(v)
-            if ply then return ply end
+        for _, p in ipairs(player.GetAll()) do
+            if p:SteamID64() == v or p:SteamID() == v then
+                return p
+            end
+        end
+        return nil
+    end,
+    
+    -- Patterns provided by Virtualraptor.
+    ["steamid64"] = function(v)
+        if string.find(v, "(7656119%d+)") then
+            return v
+        end
+        return nil
+    end,
+    ["steamid"] = function(v)
+        if string.find(v, "(STEAM_[0-3]:[01]:%d+)") then
+            return v
         end
         return nil
     end
