@@ -90,16 +90,20 @@ function GNIL.Modules.Load(name, _dependency_chain)
             return false
         end
 
+        -- Call the module hook before anything.
+        if moduleInstance:OnInit() == false then
+            moduleInstance:log("Module refused to initialize.", "warning")
+        end
+
         -- Allow for other utilities etc to process the init file output.
         if hook.Run("GNIL.Modules.Init", name, moduleInstance) == false then
             moduleInstance:log("Module load was prevented by init hook.", "debug")
             return false
         end
  
-        -- Ensure that any dependencies that have not yet been resolved are resolved
-        -- once the init file has finished. Essentially delayed module dependencies.
+        -- Load all required module dependencies.
         if moduleInstance.dependencies then
-            moduleInstance:log("Resolving delayed dependencies.", "debug")
+            moduleInstance:log("Resolving dependencies.", "debug")
             for k, _ in pairs(moduleInstance.dependencies) do
                 if moduleInstance._loaded_dependencies[k] then continue end
                 moduleInstance:_ResolveRequirement(k)
@@ -111,7 +115,11 @@ function GNIL.Modules.Load(name, _dependency_chain)
     end
 
     -- Include the rest of the module directory without any of the init files.
-    moduleInstance:OnLoad() -- Call the load function/hook.
+    -- Also call OnLoad hook, allowing a final chance to reject a load.
+    if moduleInstance:OnLoad() == false then
+        moduleInstance:log("Module refused to load.", "warning")
+        return false
+    end
 
     -- Allow modules to disable autoloading. Allows init file to essentially "disable" modules.
     if moduleInstance.autoload then

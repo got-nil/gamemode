@@ -78,29 +78,21 @@ end
 -- Return a table of all other modules this module needs to operate.
 function Module:GetDependencies() return self.dependencies and table.GetKeys(self.dependencies) or {} end
 
--- Require a module. If the delayed argument is true the required
--- module is only loaded at the end of the init file execution. If
--- ommitted or false, the required module is immidiately loaded,
--- and fully executed before continuing with the current module. 
-function Module:Require(requirement, delayed)
+-- Require a module. These modules are loaded before OnLoad.
+function Module:Require(requirement)
 
     -- Retard dectection (raptor is a dumbass) just incase someone
     -- tries to use this as Requires and they give a table despite
     -- me making it very clear that theres a seperate function for it.
-    if istable(requirement) then self:Requires(requirement) return end
+    if istable(requirement) then return self:Requires(requirement) end
 
     if not GNIL.Modules.Exists(requirement) then self:log("Required module '" .. requirement .. "' is Missing/Invalid.", "error") end
     if self.dependencies == nil then self.dependencies = {} end
     self.dependencies[requirement] = true
-
-    -- If we're not delayed, then we should attempt to
-    -- "resolve" the requirement immidiately instead of
-    -- doing it at the end of the init file load.
-    if not delayed then self:_ResolveRequirement(requirement) end
 end
 
 -- Allow for multiple dependencies to be given at once.
-function Module:Requires(requirements, delayed)
+function Module:Requires(requirements)
     assert(not table.IsSequential(requirements), "Requirements should be given as a sequential array of module names.")
     for _, v in ipairs(requirements) do
         if not self:Require(v, delayed) then return false end
@@ -112,7 +104,7 @@ end
 -- Either pass event name and callback for a non-unique name hook
 -- or pass event name, unique id, and callback for a removeable hook
 function Module:AddHook(eventName, idOrCallback, callback)
-    assert((callback == nil or isfunction(idOrCallback)) or (callback != nil and isstring(idOrCallback) and isfunction(callback)), "Arugments must be string, function or string, string, function")
+    assert((callback == nil or isfunction(idOrCallback)) or (callback != nil and isstring(idOrCallback) and isfunction(callback)), "Arguments must be string, function or string, string, function")
 
     local hookId = self._module_name .. "." .. eventName
     local hookCallback = callback or idOrCallback
@@ -311,9 +303,10 @@ end
 function Module:log(log, logtype) GNIL.log(log, logtype, self._module_name) end
 
 -- Class hook functions
-function Module:OnUnload() end        -- Called when the module is being unloaded.
-function Module:OnLoad() end          -- Called while the module is being loaded.
-function Module:OnLoadFinished() end  -- Called once the module has finished loading everything.
+function Module:OnInit() end          -- 1. Called when a module has been initialized, before dependencies. [false=(Module load halted before dependencies)] 
+function Module:OnLoad() end          -- 2. Called while the module is being loaded, after dependencies.    [false=(Module load halted before main autoload)]
+function Module:OnLoadFinished() end  -- 3. Called once the module has finished loading everything. 
+function Module:OnUnload() end        -- 4. Called when the module is being unloaded.
 
 -- Middleclass allows us to directly overwrite the default tostring handler,
 -- allowing us to insert the module name and author if one is defined.
