@@ -32,16 +32,27 @@ local operations = {
             method      = header["m"],
             path        = header["p"],
             query       = header["q"],
-            body        = body,
             headers     = header["h"],
-            remote_addr = header["r"]
+            remote_addr = header["r"],
+            body        = body,
         })
 
         -- Call the request on the server router, writing
         -- the returned response back to the websocket connection.
         -- Use promise/callback interface for delayed responses.
+        local response_sent = false
         ws._server:Call(request, function(response)
+
+            -- Prevent the callback from being ran more than once.
+            -- Once the response is sent, its sent.
+            if response_sent then
+                MODULE:log("Request '" .. header["i"] .. "' response already sent, can't send again.", "error")
+                return
+            end
+
+            -- Send constructed response.
             ws:_WriteResponse(header["i"], response)
+            response_sent = true
         end)
     end
 }
