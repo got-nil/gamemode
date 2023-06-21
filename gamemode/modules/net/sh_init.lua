@@ -19,29 +19,34 @@ GNIL.Net = GNIL.Net or {
     }
 }
 
-if SERVER then
+-- Ensure the configured idsize isn't too big.
+if SERVER and GNIL.Net["_idsize"] > 32 then
+    MODULE:log("The configured idsize is too large! (Current: " .. tostring(GNIL.Net["_idsize"]) .. ", Maximum: 32)", "error")
+    MODULE:SetDisabled(true)
+    return
+end
 
-    -- Ensure the configured idsize isn't too big.
-    if GNIL.Net["_idsize"] > 32 then
-        MODULE:log("The configured idsize is too large! (Current: " .. tostring(GNIL.Net["_idsize"]) .. ", Maximum: 32)", "error")
-        MODULE:SetDisabled(true)
-        return
+MODULE.OnLoad = function()
+    if SERVER then
+
+        -- Required server base.
+        MODULE:Include("sv_network.lua")
     end
-    MODULE:Include("sv_network.lua")
 
-    -- Cache the maximum amount of netmessages for the above _idsize.
-    MODULE.OnLoadFinished = function()
-        GNIL.Net["_max_messages"] = GNIL.Net.Helpers.GetBitcountMaxValue(GNIL.Net["_idsize"], true)
-        MODULE:log("Configured idsize supports a maximum of " .. tostring(GNIL.Net["_max_messages"]) .. " individual messages.", "debug")
+    -- Load required classes. Each must be stored globally before the next as
+    -- the message is used as a baseclass.
+    if not GNIL.Net.Classes["_loaded"] then
+        for _, v in ipairs({{"Message", "sh_message.lua"}, {"Reply", "sh_reply.lua"}, {"Bucket", "sv_bucket.lua"}}) do
+            if not GNIL.Utils.IsFilenameForCurrentRealm(v[2]) then GNIL.log("NO LOAD " .. v[2], "error") continue end
+            GNIL.Net.Classes[v[1]] = MODULE:Include("classes/" .. v[2])
+        end
+        GNIL.Net.Classes["_loaded"] = true
     end
 end
 
--- Load required classes. Each must be stored globally before the next as
--- the message is used as a baseclass.
-if not GNIL.Net.Classes["_loaded"] then
-    for _, v in ipairs({{"Message", "sh_message.lua"}, {"Reply", "sh_reply.lua"}, {"Bucket", "sv_bucket.lua"}}) do
-        if not GNIL.Utils.IsFilenameForCurrentRealm(v[2]) then GNIL.log("NO LOAD " .. v[2], "error") continue end
-        GNIL.Net.Classes[v[1]] = MODULE:Include("classes/" .. v[2])
-    end
-    GNIL.Net.Classes["_loaded"] = true
-end
+MODULE.OnLoadFinished = function()
+
+    -- Cache max net messages for warning.
+    GNIL.Net["_max_messages"] = GNIL.Net.Helpers.GetBitcountMaxValue(GNIL.Net["_idsize"], true)
+    MODULE:log("Configured idsize supports a maximum of " .. tostring(GNIL.Net["_max_messages"]) .. " individual messages.", "debug")
+end 
