@@ -6,21 +6,17 @@ GNIL.Modules = GNIL.Modules or {
 }
 
 -- Clear all loaded modules each time theres a LUA refresh.
-if GNIL._ENVIRONMENT == "dev" then
+if GNIL.ENV.MODULES_RESET then
     GNIL.Modules["_loaded"] = {}
 end
 
 -- A helper function for the shared gamemode file to use when loading
 -- all modules at once. It constantly checks to ensure that the module
 -- isnt loaded incase of dependency loading.
-function GNIL.Modules.LoadAll()
+function GNIL.Modules.LoadAll(_reload)
     GNIL.log("Loading all modules", "debug")
     for name, _ in pairs(GNIL.Modules.GetAll(true, true)) do
-        if GNIL.Modules.IsLoaded(name) then
-            GNIL.log("Module '" .. name .. "' is already loaded, ignoring autoload.", "debug")
-            continue
-        end
-        GNIL.Modules.Load(name)
+        GNIL.Modules.Load(name, nil, _reload)
     end
     hook.Run("GNIL.Modules.LoadedAll")
 end
@@ -47,8 +43,8 @@ function GNIL.Modules.IsLoaded(name) return GNIL.Modules._loaded[name] == true e
 -- Load a module by its name.
 --  name: The directory name of the module.
 --  _dependency_chain: Internally used to prevent dependency recursion.
-function GNIL.Modules.Load(name, _dependency_chain)
-    if GNIL.Modules.IsLoaded(name) then GNIL.log("Refusing to load module '" .. name .. "' as it is already loaded.", "debug") return false end
+function GNIL.Modules.Load(name, _dependency_chain, _reload)
+    if not _reload and GNIL.Modules.IsLoaded(name) then GNIL.log("Refusing to load module '" .. name .. "' as it is already loaded.", "debug") return false end
     if not GNIL.Modules.Exists(name) then GNIL.log("Refusing to load module '" .. name .. "' as it does not exist.", "warning") return false end
 
     -- Find the module init file to allow it to setup other things.
@@ -72,6 +68,12 @@ function GNIL.Modules.Load(name, _dependency_chain)
     local moduleInstance = GNIL.Modules.Get(name, {
         ["_dependency_chain"] = _dependency_chain
     })
+
+    -- If we're reloading the module we should re-initialize it to ensure
+    -- any previous loads don't conflict (_ignored_files etc).
+    if _reload then
+        moduleInstance:Initialize(name)
+    end
 
     -- Set the MODULE const for the module to access its local instance.
     local lastModule = _G["MODULE"] or nil

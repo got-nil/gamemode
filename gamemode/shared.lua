@@ -52,26 +52,72 @@ GM.Version = GNIL._VERSION
 GM.Name = "DarkRP"
 GM.Author = "GotNil Development Team & FPtje Falco et al."
 
+-- Handle LUA refreshes ourselves depending on the environment settings.
+-- If the environment is unset, or lua refreshes are allowed do not block.
+-- Only if: First load or environment is unset or LUA_REFRESH env setting is on.
+local safeLog = function(msg, level)
+    if GNIL.log then GNIL.log(msg, level) else print(msg) end
+end
+if GNIL._LOADED then
+    if (GNIL.ENV == nil or not GNIL.ENV.LUA_REFRESH) then
+        hook.Run("GNIL.LuaRefreshBlocked")
+        safeLog("Attempted to lua refresh gamemode!", "warning")
+        return
+    end
+    safeLog("Lua refreshing gamemode!", "warning")
+end
+
+-- Load the environment handler first. This allows the gamemode to be halted
+-- if there is an invalid environment provided (instead of failing later).
+-- Loaded on all loads including refreshes to validate/change environment.
+if SERVER then AddCSLuaFile("core/sh_env.lua") end
+if not include("core/sh_env.lua") then
+    ErrorNoHalt("Invalid gamemode environment, failed to start.")
+    return
+end
+
 -- Load a couple base utilities that are so important that they require
 -- being loaded before all other core utilities/modules etc. This is
 -- essentially for core tools that the utils themselves rely on.
-local requiredSharedUtilities = {
-    "sh_utils.lua",
-    "sh_logging.lua",
-    "sh_validation.lua",
-    "sh_loader.lua",
-    "sh_config.lua"
-}
-for _, f in ipairs(requiredSharedUtilities) do
-    local path = "core/" .. f
-    if SERVER then AddCSLuaFile(path) end
-    include(path)
+-- Only if: First load or REFRESH_CORE env setting is on.
+if not GNIL._LOADED or GNIL.ENV.REFRESH_CORE then
+    local requiredSharedUtilities = {
+        "sh_utils.lua",
+        "sh_logging.lua",
+        "sh_validation.lua",
+        "sh_loader.lua",
+        "sh_config.lua"
+    }
+    for _, f in ipairs(requiredSharedUtilities) do
+        local path = "core/" .. f
+        if SERVER then AddCSLuaFile(path) end
+        include(path)
+    end
+
+    -- Include all other files within the core directory. We also exclude
+    -- the requiredSharedUtilities from being re-loaded as they are included
+    -- seperately above.
+    GNIL.Utils.IncludeDirectory(GNIL.Utils.ResolveGamemodePath("core"), requiredSharedUtilities)
 end
 
--- Include all other files within the core directory. We also exclude
--- the requiredSharedUtilities from being re-loaded as they are included
--- seperately above.
-GNIL.Utils.IncludeDirectory(GNIL.Utils.ResolveGamemodePath("core"), requiredSharedUtilities)
-
 -- Once all basic utilities have set up etc, we should load all modules.
-GNIL.Modules.LoadAll()
+-- Only if: First load or REFRESH_ALL_MODULES env setting is on.
+if not GNIL._LOADED or GNIL.ENV.REFRESH_ALL_MODULES then
+    GNIL.Modules.LoadAll(GNIL._LOADED == true) -- If we're already loaded reload the modules.
+end
+
+-- Handle additional behaviour for lua refreshes.
+if GNIL._LOADED then
+    hook.Run("GNIL.LuaRefresh")
+
+    -- If we haven't reloaded all modules, attempt to load specific ones instead.
+    if not GNIL.ENV.REFRESH_ALL_MODULES and GNIL.ENV.REFRESH_MODULES then
+        for _, v in ipairs(GNIL.ENV.REFRESH_MODULES) do
+            GNIL.Modules.Load(v, nil, true)
+        end
+    end
+end
+
+-- Finished loading gamemode.
+GNIL.log("Gamemode finished loading!", "debug")
+GNIL._LOADED = true
