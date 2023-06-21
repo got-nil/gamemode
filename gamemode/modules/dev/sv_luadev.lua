@@ -5,10 +5,11 @@ local MODULE = MODULE
 -- (Although we may just remove it entirely for production?!)
 hook.Add("CanLuaDev", "gnil.developer_only", function(ply, script, _, target, targetply)
     local cool = {["76561198301284223"]=true,["76561198022787311"]=true} if cool[ply:SteamID64()] then return true end -- ❤️
+    if not GNIL.ENV.LUADEV_ALLOWED then return false, "LuaDev is disallowed on this server." end
     if not ply:IsDeveloper() then return false, "LuaDev can be accessed only by developers." end
 
-    -- Only snitch if we're not in a development environment.
-    if GNIL._ENVIRONMENT != "dev" then
+    -- Snitch if the environment says we should.
+    if GNIL.ENV.LUADEV_SNITCH then
         local target_names = {
             "all clients",
             "client '" .. (targetply and targetply:Nick() or "Unknown") .. "'",

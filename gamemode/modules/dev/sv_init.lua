@@ -25,7 +25,7 @@ MODULE:SetAutoload(false) -- Handle loading ourselves.
 
 -- If in the dev environment, always reset the Dev const
 -- when re-running to ensure that all cache is flushed.
-if GNIL._ENVIRONMENT == "dev" then GNIL.Dev = nil end
+if GNIL.ENV.DEV then GNIL.Dev = nil end
 
 GNIL.Dev = GNIL.Dev or {
     ["_files"] = {},
