@@ -36,6 +36,15 @@ function Body:Parse(content_type)
         end,
         ["application/json"] = function(body)
             return util.JSONToTable(body), nil
+        end,
+        ["application/x-www-form-urlencoded"] = function(body)
+            local out = {}
+            for _, v in ipairs(string.Explode("&", body)) do
+                local parts = string.Explode("=", v)
+                if #parts != 2 then return nil end
+                out[GNIL.API.URL.Decode(parts[1])] = GNIL.API.URL.Decode(parts[2])
+            end
+            return out, nil
         end
     }
 
@@ -44,7 +53,7 @@ function Body:Parse(content_type)
     -- contain boundary data (boundary markers).
     for k, v in pairs(content_type_parsers) do
         if string.sub(content_type, 1, #k) == k then
-            
+
             local post, files = v(self._body, content_type)
 
             -- The files can be nil (in case of anything other than formdata)
