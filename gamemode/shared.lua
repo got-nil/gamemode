@@ -33,13 +33,16 @@ GNIL = GNIL or {
             ["id64"] = "76561198306789611",
             ["title"] = "Web Lead + Backend Developer"
         }
-    },
-
-    -- Used for when we eventually have a production environment, allowing us to
-    -- push code that will not run on production environment servers etc.
-    -- Either 'dev' or 'prod' ('prod' only being for the server actively hosting players)
-    _ENVIRONMENT = "dev"
+    }
 }
+
+-- The gamemode environment controls certain behaviours such as lua refresh
+-- handling etc. The value can be a string preset name, or a table of env settings.
+-- If using table, each env setting must be full caps as key. The 'preset' can be
+-- used to inherit an environment preset, with the additional settings being overrides.
+GNIL._ENVIRONMENT = "dev"
+
+--------------------------------------------------------------------------------------------
 
 -- Store a global version of the folder name for luadev.
 if not GNIL.GamemodeFolderName then
@@ -52,28 +55,30 @@ GM.Version = GNIL._VERSION
 GM.Name = "DarkRP"
 GM.Author = "GotNil Development Team & FPtje Falco et al."
 
--- Handle LUA refreshes ourselves depending on the environment settings.
--- If the environment is unset, or lua refreshes are allowed do not block.
--- Only if: First load or environment is unset or LUA_REFRESH env setting is on.
-local safeLog = function(msg, level)
-    if GNIL.log then GNIL.log(msg, level) else print(msg) end
-end
-if GNIL._LOADED then
-    if (GNIL.ENV == nil or not GNIL.ENV.LUA_REFRESH) then
-        hook.Run("GNIL.LuaRefreshBlocked")
-        safeLog("Attempted to lua refresh gamemode!", "warning")
-        return
-    end
-    safeLog("Lua refreshing gamemode!", "warning")
+-- A safe logging alias.
+GNIL._safeLog = function(msg, level)
+    if GNIL.log then GNIL.log(msg, level) else print("GNIL - " .. msg) end
 end
 
 -- Load the environment handler first. This allows the gamemode to be halted
 -- if there is an invalid environment provided (instead of failing later).
 -- Loaded on all loads including refreshes to validate/change environment.
-if SERVER then AddCSLuaFile("core/sh_env.lua") end
+if SERVER and not GNIL._LOADED then AddCSLuaFile("core/sh_env.lua") end
 if not include("core/sh_env.lua") then
-    ErrorNoHalt("Invalid gamemode environment, failed to start.")
+    ErrorNoHalt("GNIL - Invalid gamemode environment, failed to start.\n")
     return
+end
+
+-- Handle LUA refreshes ourselves depending on the environment settings.
+-- If the environment is unset, or lua refreshes are allowed do not block.
+-- Only if: First load or environment is unset or LUA_REFRESH env setting is on.
+if GNIL._LOADED then
+    if (GNIL.ENV == nil or not GNIL.ENV.LUA_REFRESH) then
+        hook.Run("GNIL.LuaRefreshBlocked")
+        GNIL._safeLog("Lua refresh blocked due to environment settings.", "warning")
+        return
+    end
+    GNIL._safeLog("Lua refreshing gamemode!", "warning")
 end
 
 -- Load a couple base utilities that are so important that they require
@@ -108,7 +113,6 @@ end
 
 -- Handle additional behaviour for lua refreshes.
 if GNIL._LOADED then
-    hook.Run("GNIL.LuaRefresh")
 
     -- If we haven't reloaded all modules, attempt to load specific ones instead.
     if not GNIL.ENV.REFRESH_ALL_MODULES and GNIL.ENV.REFRESH_MODULES then
@@ -116,6 +120,7 @@ if GNIL._LOADED then
             GNIL.Modules.Load(v, nil, true)
         end
     end
+    hook.Run("GNIL.LuaRefresh")
 end
 
 -- Finished loading gamemode.
