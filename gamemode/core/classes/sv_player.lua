@@ -18,3 +18,8 @@ function PlayerMeta:ToString(quotes, steamid)
     return (quotes == false && "" || "'") .. self:Nick() .. (quotes == false && "" || "'") ..
            (steamid == false && "" || (" (" .. self:SteamID() .. ")"))
 end
+
+function PlayerMeta:IsFamilyShared()
+    if self:IsBot() then return false end
+    return self:SteamID64() != self:OwnerSteamID64()
+end
