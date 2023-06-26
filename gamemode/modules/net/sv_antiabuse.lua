@@ -44,7 +44,7 @@ function GNIL.Net.AntiAbuse.Check(messageName, ply, reply)
     return false
 end
 
-hook.Add("PlayerDisconnected", "gnil_net_antiabuse_gc", function(ply)
+MODULE:AddHook("PlayerDisconnected", "antiAbuseGc", function(ply)
     local steamid = tostring(ply:SteamID64())
     for _, v in pairs(GNIL.Net.AntiAbuse["_r"]) do
         v:Remove(steamid)

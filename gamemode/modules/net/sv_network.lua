@@ -152,7 +152,7 @@ end
 
 -- When a player has loaded to the point where they can send/recieve
 -- network messages, then we should send any messages that are queued.
-hook.Add("PlayerNetLoad", "gnil_net_send_queue", function(ply)
+MODULE:AddHook("PlayerNetLoad", "sendQueue", function(ply)
 
     -- Ensure that there actually are queued net
     -- messages for the loaded player's steamid.

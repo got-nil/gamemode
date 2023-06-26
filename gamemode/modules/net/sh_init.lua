@@ -37,7 +37,7 @@ MODULE.OnLoad = function()
     -- the message is used as a baseclass.
     if not GNIL.Net.Classes["_loaded"] then
         for _, v in ipairs({{"Message", "sh_message.lua"}, {"Reply", "sh_reply.lua"}, {"Bucket", "sv_bucket.lua"}}) do
-            if not GNIL.Utils.IsFilenameForCurrentRealm(v[2]) then GNIL.log("NO LOAD " .. v[2], "error") continue end
+            if not GNIL.Utils.IsFilenameForCurrentRealm(v[2]) then continue end
             GNIL.Net.Classes[v[1]] = MODULE:Include("classes/" .. v[2])
         end
         GNIL.Net.Classes["_loaded"] = true

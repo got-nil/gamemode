@@ -1,4 +1,5 @@
-MODULE, GNIL.Http = MODULE, GNIL.Http or {
+local MODULE = MODULE
+GNIL.Http = GNIL.Http or {
     ["_driver"] = http,
     ["_loaded"] = false
 }
@@ -188,10 +189,10 @@ if not GNIL.Http["_loaded"] then
 
     -- Since ISteamHTTP loads relatively late in the cycle, this hook should
     -- allow us to send requests as soon as its loaded (on the first think).
-    hook.Add("Think", "GNIL.Http.HTTPLoaded", function()
+    MODULE:AddHook("Think", "HTTPLoaded", function()
         hook.Run("FirstThink") -- Alias for non HTTP things.
         hook.Run("HTTPLoaded")
-        hook.Remove("Think", "GNIL.Http.HTTPLoaded")
+        MODULE:RemoveHook("Think", "HTTPLoaded")
 
         GNIL.Http["_loaded"] = true
     end)
