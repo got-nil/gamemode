@@ -17,6 +17,12 @@ if SERVER then
     end
 end
 
+-- The config file is only required on the server, since its
+-- not used by the client (since config isn't sent to client).
+MODULE.IsConfigRequired = function()
+    return SERVER
+end
+
 -- When the module has finished loading all the base files
 -- we should start loading the optimizer files.
 MODULE.OnLoadFinished = function()
