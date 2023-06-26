@@ -127,8 +127,7 @@ function Websocket:_OnMessage(msg)
 
         -- If the body is base64 encoded, decode it.
         if b64_encoded then body = util.Base64Decode(body) end
-        MODULE:log("Recieved " .. (b64_encoded && "base64 encoded" || "plaintext") .. " request body for '" .. request_id .. "', length: '" .. #body .. "'", "debug")
-    
+        
         -- Get the original request header from partials.
         local header = self._request_partials[request_id]
         if not header then

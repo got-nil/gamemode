@@ -3,6 +3,7 @@
 local MODULE, Router = MODULE, GNIL.Thirdparty.middleclass("Router")
 
 function Router:Initialize()
+    self._id = GNIL.Utils.Random(8)
     self._routes = {}
 end
 
@@ -11,8 +12,31 @@ function Router:AddRoute(route)
     if not GNIL.API.Classes.Is(route, "Route") then
         return false
     end
+
+    -- Add the router as a parent to the route. This allows
+    -- it to be automatically removed from the routers when
+    -- the route is removed/disabled.
+    if not route._parents[self._id] then
+        route._parents[self._id] = self
+    end
+    
     table.insert(self._routes, route)
     return true
+end
+
+-- Remove the provided route instance from the router.
+function Router:RemoveRoute(route)
+    local out, removed = {}, false
+    for _, v in ipairs(self._routes) do
+        if v._id == route._id then
+            MODULE:log("Router '" .. self._id .. "' removed route '" .. route._path .. "'.", "debug")
+            removed = true
+        else
+            table.insert(out, v)
+        end
+    end
+    self._routes = out
+    return removed
 end
 
 -- Create a route and add it to the router (by default).
