@@ -133,8 +133,12 @@ end
 hook.Add("GNIL.Modules.Init", "gnil_config_module_validation", function(name, partialModule)
     if not isstring(partialModule.config) then return end
     
+    -- Is the config file required hook. Default to required.
+    local is_config_required = partialModule:IsConfigRequired()
+    if not isbool(is_config_required) then is_config_required = true end
+    
     -- Ensure that the config required by the module exists.
-    if GNIL.Config.Get(partialModule.config) == nil then
+    if GNIL.Config.Get(partialModule.config) == nil and is_config_required then
         partialModule:log("Required configuration file '" .. partialModule.config .. "' is missing! Disabling module.", "error")
         return false
     end

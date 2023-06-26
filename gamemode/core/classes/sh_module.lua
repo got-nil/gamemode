@@ -11,10 +11,14 @@ function Module:Initialize(name)
     -- Should the rest of the root directory files within the module
     -- be loaded once the init file has been ran. SetAutoload(...)
     self.autoload = true
-    self.dependencies = nil
+    self.dependencies = false
     self._loaded_dependencies = {}
     self._disabled = false
+
+    -- If config is set, config_required determines if the module should
+    -- be automatically disabled if the config is not found.
     self.config = false
+    self.config_required = true
 
     self._hooks = {
         {}, --seq
@@ -87,7 +91,7 @@ function Module:Require(requirement)
     if istable(requirement) then return self:Requires(requirement) end
 
     if not GNIL.Modules.Exists(requirement) then self:log("Required module '" .. requirement .. "' is Missing/Invalid.", "error") end
-    if self.dependencies == nil then self.dependencies = {} end
+    if self.dependencies == false then self.dependencies = {} end
     self.dependencies[requirement] = true
 end
 
@@ -302,11 +306,14 @@ end
 -- Logging passthrough with module name as prefix.
 function Module:log(log, logtype) GNIL.log(log, logtype, self._module_name) end
 
--- Class hook functions
+-- Load hooks (in order of call).
 function Module:OnInit() end          -- 1. Called when a module has been initialized, before dependencies. [false=(Module load halted before dependencies)] 
 function Module:OnLoad() end          -- 2. Called while the module is being loaded, after dependencies.    [false=(Module load halted before main autoload)]
 function Module:OnLoadFinished() end  -- 3. Called once the module has finished loading everything. 
 function Module:OnUnload() end        -- 4. Called when the module is being unloaded.
+
+-- Additional module hooks.
+function Module:IsConfigRequired() end -- If a config is set, is it required? Default: true.                [true=(Module is disabled if config missing)]
 
 -- Middleclass allows us to directly overwrite the default tostring handler,
 -- allowing us to insert the module name and author if one is defined.

@@ -118,7 +118,7 @@ function GNIL.Modules.Load(name, _dependency_chain, _reload)
 
     -- Include the rest of the module directory without any of the init files.
     -- Also call OnLoad hook, allowing a final chance to reject a load.
-    if moduleInstance:OnLoad() == false then
+    if moduleInstance:OnLoad() == false or hook.Run("GNIL.Modules.Load", moduleInstance) == false then
         moduleInstance:log("Module refused to load.", "warning")
         return false
     end
