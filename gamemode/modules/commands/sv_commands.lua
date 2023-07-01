@@ -212,8 +212,8 @@ function GNIL.Commands.Add(name, callback, arguments, access_check, public, flag
 end
 
 -- Send the command structure to clients when possible.
-hook.Add("Initialize", "gnil_cmds_init_send", function() broadcastCommandsStructure() SHOULD_BROADCAST_NEW_COMMANDS = true end)
-hook.Add("PlayerNetLoad", "gnil_cmds_load_send", function(ply) sendPlayerCommandStructure(ply) end)
+MODULE:AddHook("Initialize", "init_send", function() broadcastCommandsStructure() SHOULD_BROADCAST_NEW_COMMANDS = true end)
+MODULE:AddHook("PlayerNetLoad", "load_send", function(ply) sendPlayerCommandStructure(ply) end)
 
 -- Broadcast the command structure whenever theres a lua refresh.
 if _broadcastLuaRefresh then
@@ -239,7 +239,7 @@ end
 
 */
 
-hook.Add("CAMI.PlayerUsergroupChanged", "gnil_cmds_refresh", function(ply)
+MODULE:AddHook("CAMI.PlayerUsergroupChanged", "cmds_refresh", function(ply)
     GNIL.log(ply:Nick() .. "'s usergroup has changed, re-sending command structure to them.", "debug")
     sendPlayerCommandStructure(ply, nil, true) -- no specific command, flush
 end)
