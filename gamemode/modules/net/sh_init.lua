@@ -31,6 +31,7 @@ MODULE.OnLoad = function()
 
         -- Required server base.
         MODULE:Include("sv_network.lua")
+        MODULE:Include("sv_antiabuse.lua")
     end
 
     -- Load required classes. Each must be stored globally before the next as
