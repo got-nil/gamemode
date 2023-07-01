@@ -27,8 +27,8 @@ GNIL.API.Routes.Get("/darkrp/{target:steamid64}", function(request)
 
                 -- If there were no results returned in the query then
                 -- the player must not exist (or its an invalid steamid).
-                if #data == 0 then
-                    respond(
+                if data == nil or #data == 0 then
+                    return respond(
                         GNIL.API.Responses.JSON({
                             success = true,
                             found = false
