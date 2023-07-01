@@ -31,10 +31,6 @@ net.Incoming = function(len, ply)
     local reciever = net.Receivers[messageName:lower()]
     if not reciever then return end
 
-    -- Default message header is sent as 16 bit uint, should
-    -- be removed from total message length to keep offset.
-    len = len - 16
-
     -- If its not an internal message (meaning its not using the
     -- GNIL net libary) we should apply a generic ratelimit.
     if not internal_messages[messageName] and not GNIL.Net.AntiAbuse.Check(messageName, ply, nil, true) then
@@ -42,5 +38,7 @@ net.Incoming = function(len, ply)
     end
     
     -- Call the original reciever if the bucket passed.
+    -- Default message header is sent as 16 bit uint, should
+    -- be removed from total message length to keep offset.
     reciever(len - 16, ply)
 end
