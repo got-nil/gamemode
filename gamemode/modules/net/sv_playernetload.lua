@@ -31,21 +31,21 @@ end
 
 -- Use the dirty setupmove check to make sure that the client cant just block the
 -- ready message and remain in a state of never recieving net messages.
-hook.Add("PlayerInitialSpawn", "gnil_net_pnl_initialspawn", function(ply)
-    local setup_move_id = "gnil_net_pnl_setupmove_" .. ply:SteamID64()
-    hook.Add("SetupMove", setup_move_id, function(pl, _, cmd)
+MODULE:AddHook("PlayerInitialSpawn", "playerNetLoadedInit", function(ply)
+    local setup_move_id = "pnl_" .. ply:SteamID64()
+    MODULE:AddHook("SetupMove", setup_move_id, function(pl, _, cmd)
         if ply == pl and not cmd:IsForced() then
             _playerNetLoaded(pl)
-            hook.Remove("SetupMove", setup_move_id)
+            MODULE:RemoveHook("SetupMove", setup_move_id)
         end
     end)
 end)
 
 -- When a player disconnects, we should ensure that their steamid is removed
 -- from the PlayerNetLoad table (so when they rejoin they can re-send the ready event)
-hook.Add("PlayerDisconnected", "gnil_net_pnl_disconnect", function(ply)
+MODULE:AddHook("PlayerDisconnected", "playerNetLoadedGc", function(ply)
     GNIL.Net["_pnl"][ply:SteamID()] = nil
 
     -- Remove the waiting setup move hook if there is one.
-    hook.Remove("SetupMove", "gnil_net_pnl_setupmove_" .. ply:SteamID64())
+    MODULE:RemoveHook("SetupMove", "pnl_" .. ply:SteamID64())
 end)
