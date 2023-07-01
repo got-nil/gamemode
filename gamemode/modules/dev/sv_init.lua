@@ -23,12 +23,8 @@ MODULE:SetAutoload(false) -- Handle loading ourselves.
     
 --]]
 
--- If in the dev environment, always reset the Dev const
--- when re-running to ensure that all cache is flushed.
-if GNIL._ENVIRONMENT == "dev" then GNIL.Dev = nil end
-
-GNIL.Net.AddNetworkString("dev_files")
 GNIL.Dev = GNIL.Dev or {
+    ["_dirs"] = {},
     ["_files"] = {},
     ["_setup_nm"] = false,
     ["_devfiles_nm"] = false,
@@ -42,15 +38,46 @@ local setupFiles = {
     ["cl_recvfiles.lua"] = true
 }
 
+-- AddDeveloperOnlyFile directory iterator.
+function GNIL.Dev.AddDeveloperDirectory(filepath)
+    if GNIL.Dev["_dirs"][filepath] then return end
+    if not file.IsDir(filepath, "LUA") then
+        MODULE:log("Supplied developer directory does not exist '" .. filepath .. "'", "warning")
+        return false
+    end
+    GNIL.Dev["_dirs"][filepath] = true
+
+    -- Individually add each file as a developer file
+    -- within the directory. Return true if all passed.
+    local success = true
+    local files, _ = file.Find(filepath .. "/*.lua", "LUA")
+    for _, v in ipairs(files) do
+        if not GNIL.Dev.AddDeveloperOnlyFile(filepath .. "/" .. v) then
+            MODULE:log("Failed to add developer file '" .. v .. "' within directory '" .. filepath .. "'", "warning")
+            success = false
+        end
+    end
+    return success
+end
+
 -- Add a filepath to be sent to developers only.
 -- filepath: Absolute LUA path.
 function GNIL.Dev.AddDeveloperOnlyFile(filepath)
-    if GNIL.Dev["_files"][filepath] then return end
     if not file.Exists(filepath, "LUA") then
         MODULE:log("Supplied developer only file does not exist '" .. filepath .. "'", "warning")
         return false
     end
+    
+    -- Prevent server files from being sent to the client.
+    local realm = GNIL.Utils.GetFilepathRealmPrefix(filepath)
+    if realm == nil then return false end 
+    if realm == "sv_" then
+        return GNIL.Utils.Include(filepath)
+    end
 
+    -- Make sure server files are reloaded when called.
+    if GNIL.Dev["_files"][filepath] then return end
+    
     -- Read the file contents to cache.
     local content = file.Read(filepath, "LUA")
     if content == nil then
@@ -60,6 +87,7 @@ function GNIL.Dev.AddDeveloperOnlyFile(filepath)
 
     -- Cache the filepath and its file content to be sent to devs.
     GNIL.Dev["_files"][filepath] = content
+    MODULE:log("Added developer only file '" .. filepath .. "'", "debug")
 
     -- If there is already a cached netmessage, then we can simply
     -- write the file data directly to it (which is pretty cool).
@@ -71,10 +99,12 @@ function GNIL.Dev.AddDeveloperOnlyFile(filepath)
     -- "blacklist" the file to ensure that it isn't included
     -- using the Include utility (avoid directory includes).
     GNIL.Utils["blacklisted_files"][filepath] = true 
+    return true
 end
 
+
 local function sendDeveloperFilesToPlayer(ply, is_first_join)
-    
+        
     -- If the netmessage has not yet been cached then we should create it.
     if not GNIL.Dev["_devfiles_nm"] then
 
@@ -133,81 +163,86 @@ local function sendDeveloperFilesToPlayer(ply, is_first_join)
         -- immidiately send the developer files! No waiting for setup netmessage!
         sendDeveloperFiles(ply)
     end
-
 end
 
--- Create/cache the setup netmessage. This is sent first to developers once they connect
--- as is used to actually send the handlers required to load the other developer scripts.
-if not GNIL.Dev["_setup_nm"] then
-    
-    -- Use the existing 'file_include' net handler to recieve and execute the setup file
-    -- content. The handler is provided in net module and already exists for all players.
-    local setup_nm = GNIL.Net.Create("file_include")
-    for k, _ in pairs(setupFiles) do
-        local content = file.Read(GNIL.Utils.ResolveGamemodePath("modules/dev") .. "/" .. k, "LUA")
-        if content == nil then
-            MODULE:log("Setup file '" .. k .. "' does not exist within dev module, or is invalid. Skipping.", "warning")
-            continue
-        end
+-- I wouldn't usually suggest designing a module like this, but I wanted
+-- to make sure wouldn't accidentally delete the core as a dev script.
+MODULE.OnLoad = function()
+
+    -- Create/cache the setup netmessage. This is sent first to developers once they connect
+    -- as is used to actually send the handlers required to load the other developer scripts.
+    GNIL.Net.AddNetworkString("dev_files")
+    if not GNIL.Dev["_setup_nm"] then
         
-        -- Write the setup script data directly.
-        setup_nm:WriteData(content, #content)
-    end
-
-    GNIL.Dev["_setup_nm"] = setup_nm
-    MODULE:log("Generated setup netmessage.", "debug")
-end 
-
--- Only run this code once (to protect against lua refreshes somehow on a prod server).
-if not GNIL.Dev["_setup"] then
-
-    -- Load all temporary developer files from the modules loader. These are from modules
-    -- that were loaded before this one (stored as a temp cache). 
-    for _, v in ipairs(GNIL.Modules["_tmp_dev_files"]) do
-        GNIL.Dev.AddDeveloperOnlyFile(v)
-    end
-    GNIL.Modules["_tmp_dev_files"] = {}
-    
-    -- Load files within the dev module as dev files.
-    local module_base = GNIL.Utils.ResolveGamemodePath("modules/dev")
-    local files, _ = file.Find(module_base .. "/*.lua", "LUA")
-
-    for _, v in ipairs(files) do
-        if setupFiles[v] or v == "sv_init.lua" then continue end
-        local absolute = module_base .. "/" .. v
-
-        -- Ensure the file isn't a server file or unprefixed.
-        local prefix = GNIL.Utils.GetFilepathRealmPrefix(v)
-        if prefix == nil then continue end
-
-        -- If the file is shared or serverside, it should still be included
-        -- by the server on intial load (like standard autoload).
-        if prefix == "sh_" or prefix == "sv_" then
-            include(absolute)
+        -- Use the existing 'file_include' net handler to recieve and execute the setup file
+        -- content. The handler is provided in net module and already exists for all players.
+        local setup_nm = GNIL.Net.Create("file_include")
+        for k, _ in pairs(setupFiles) do
+            local content = file.Read(GNIL.Utils.ResolveGamemodePath("modules/dev") .. "/" .. k, "LUA")
+            if content == nil then
+                MODULE:log("Setup file '" .. k .. "' does not exist within dev module, or is invalid. Skipping.", "warning")
+                continue
+            end
+            
+            -- Write the setup script data directly.
+            setup_nm:WriteData(content, #content)
         end
 
-        -- If the prefix isnt serverside then we should add it as a file that
-        -- should be sent to all developers on load (shared and client files).
-        if prefix != "sv_" then
+        GNIL.Dev["_setup_nm"] = setup_nm
+        MODULE:log("Generated setup netmessage.", "debug")
+    end 
 
-            -- Finally, add it as a developer only file that should be
-            -- sent to connecting developers.
-            GNIL.Dev.AddDeveloperOnlyFile(absolute)
+    -- Only run this code once (to protect against lua refreshes somehow on a prod server).
+    if not GNIL.Dev["_setup"] then
+
+        -- Load all temporary developer files from the modules loader. These are from modules
+        -- that were loaded before this one (stored as a temp cache). 
+        for _, v in ipairs(GNIL.Modules["_tmp_dev_files"]) do
+            GNIL.Dev.AddDeveloperOnlyFile(v)
         end
-    end
+        GNIL.Modules["_tmp_dev_files"] = {}
+        
+        -- Load files within the dev module as dev files.
+        local module_base = GNIL.Utils.ResolveGamemodePath("modules/dev")
+        local files, _ = file.Find(module_base .. "/*.lua", "LUA")
 
-    -- If there are currently connected developers send the files out.
-    for _, v in ipairs(player.GetAll()) do
-        if v:IsDeveloper() then
-            sendDeveloperFilesToPlayer(v, true)
+        for _, v in ipairs(files) do
+            if setupFiles[v] or v == "sv_init.lua" then continue end
+            local absolute = module_base .. "/" .. v
+
+            -- Ensure the file isn't a server file or unprefixed.
+            local prefix = GNIL.Utils.GetFilepathRealmPrefix(v)
+            if prefix == nil then continue end
+
+            -- If the file is shared or serverside, it should still be included
+            -- by the server on intial load (like standard autoload).
+            if prefix == "sh_" or prefix == "sv_" then
+                include(absolute)
+            end
+
+            -- If the prefix isnt serverside then we should add it as a file that
+            -- should be sent to all developers on load (shared and client files).
+            if prefix != "sv_" then
+
+                -- Finally, add it as a developer only file that should be
+                -- sent to connecting developers.
+                GNIL.Dev.AddDeveloperOnlyFile(absolute)
+            end
         end
-    end
 
-    GNIL.Dev["_setup"] = true
+        -- If there are currently connected developers send the files out.
+        for _, v in ipairs(player.GetAll()) do
+            if v:IsDeveloper() then
+                sendDeveloperFilesToPlayer(v, true)
+            end
+        end
+
+        GNIL.Dev["_setup"] = true
+    end
 end
 
 -- When a developer has finished connecting, send them all developer files.
-hook.Add("PlayerNetLoad", "gnil_dev_include", function(ply)
+MODULE:AddHook("PlayerNetLoad", "dev_include", function(ply)
     if ply:IsDeveloper() then
         MODULE:log("Developer '" .. ply:Nick() .. "' has connected. Sending developer files...", "debug")
         sendDeveloperFilesToPlayer(ply, true)
