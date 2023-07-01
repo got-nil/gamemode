@@ -1,4 +1,4 @@
-if GNIL._ENVIRONMENT == "dev" then GNIL.Loader = false end
+if GNIL.ENV.LOADER_RESET then GNIL.Loader = false end
 GNIL.Loader = GNIL.Loader or {
     ["_init"] = false,
     ["_loaders"] = {}
