@@ -9,6 +9,20 @@ GNIL.Fixes = GNIL.Fixes or {
     ["_optimizers"] = {}
 }
 
+
+-- Ensure the enums are loaded before other files.
+if SERVER then
+    MODULE.OnLoad = function()
+        MODULE:Include("sv_enums.lua")
+    end
+end
+
+-- The config file is only required on the server, since its
+-- not used by the client (since config isn't sent to client).
+MODULE.IsConfigRequired = function()
+    return SERVER
+end
+
 -- When the module has finished loading all the base files
 -- we should start loading the optimizer files.
 MODULE.OnLoadFinished = function()
@@ -39,8 +53,4 @@ MODULE.OnLoadFinished = function()
         GNIL.Fixes["_optimizers"][optimizer.name] = optimizer
         MODULE:log("Successfully loaded optimizer '" .. optimizer.name .. "' (" .. v .. ").", "debug")
     end
-end
-
-if SERVER then
-    MODULE:Include("sv_enums.lua")
 end

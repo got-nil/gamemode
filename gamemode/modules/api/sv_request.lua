@@ -55,4 +55,16 @@ function Request.FromTable(data)
     )
 end
 
+-- Convert the request to a table for class exporting?
+function Request:ToTable()
+    return {
+        method = self:Get("method", false),
+        path = self:Get("path", false),
+        remote_addr = self:Get("remote_addr", false),
+        query = self.query:ToTable(),
+        headers = self.headers:ToTable(),
+        body_len = #self.body:Raw()
+    }
+end
+
 GNIL.API.Request = Request

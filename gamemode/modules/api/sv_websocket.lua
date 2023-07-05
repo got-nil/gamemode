@@ -32,16 +32,27 @@ local operations = {
             method      = header["m"],
             path        = header["p"],
             query       = header["q"],
-            body        = body,
             headers     = header["h"],
-            remote_addr = header["r"]
+            remote_addr = header["r"],
+            body        = body,
         })
 
         -- Call the request on the server router, writing
         -- the returned response back to the websocket connection.
         -- Use promise/callback interface for delayed responses.
+        local response_sent = false
         ws._server:Call(request, function(response)
+
+            -- Prevent the callback from being ran more than once.
+            -- Once the response is sent, its sent.
+            if response_sent then
+                MODULE:log("Request '" .. header["i"] .. "' response already sent, can't send again.", "error")
+                return
+            end
+
+            -- Send constructed response.
             ws:_WriteResponse(header["i"], response)
+            response_sent = true
         end)
     end
 }
@@ -116,8 +127,7 @@ function Websocket:_OnMessage(msg)
 
         -- If the body is base64 encoded, decode it.
         if b64_encoded then body = util.Base64Decode(body) end
-        MODULE:log("Recieved " .. (b64_encoded && "base64 encoded" || "plaintext") .. " request body for '" .. request_id .. "', length: '" .. #body .. "'", "debug")
-    
+        
         -- Get the original request header from partials.
         local header = self._request_partials[request_id]
         if not header then

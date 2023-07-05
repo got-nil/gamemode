@@ -25,7 +25,7 @@ end
 -- Setup the actual check hooks. This should only be loaded
 -- once the config file has been parsed.
 local function setupHooks()
-    hook.Add("OnEntityCreated", "GNIL.Fixes.BannedEntities", function(ent)
+    MODULE:AddHook("OnEntityCreated", "bannedEntities", function(ent)
         if not IsValid(ent) then return end 
         local class = ent:GetClass()
 
@@ -34,17 +34,17 @@ local function setupHooks()
         if GNIL.Fixes["_entities"][GNIL_FIXES_ENT_BANNED][class] then return ent:Remove() end
         if GNIL.Fixes["_entities"][GNIL_FIXES_ENT_NOCOLIDE][class] then return ent:SetCustomCollisionCheck(true) end
     end)
-    hook.Add("PlayerShouldTakeDamage", "GNIL.Fixes.AntiDamage", function(ply, ent)
+    MODULE:AddHook("PlayerShouldTakeDamage", "antiDamage", function(ply, ent)
         if IsValid(ent) and GNIL.Fixes["_entities"][GNIL_FIXES_ENT_NODAMAGE][ent:GetClass()] or ent:IsVehicle() then
             return false
         end
     end)
-    hook.Add("ShouldCollide", "GNIL.Fixes.AntiCollision", function(ent1, ent2) 
+    MODULE:AddHook("ShouldCollide", "antiCollision", function(ent1, ent2) 
         if ((IsValid(ent1) and IsValid(ent2)) and (GNIL.Fixes["_entities"][GNIL_FIXES_ENT_NOCOLIDE][ent1:GetClass()] and GNIL.Fixes["_entities"][GNIL_FIXES_ENT_NOCOLIDE][ent2:GetClass()])) then
             return false
         end
     end)
-    hook.Add("PhysgunPickup", "GNIL.Fixes.AntiPhysgun", function(_, ent)
+    MODULE:AddHook("PhysgunPickup", "antiPhysgun", function(_, ent)
         if IsValid(ent) and GNIL.Fixes["_entities"][GNIL_FIXES_ENT_NOPICKUP][ent:GetClass()] then
             return false
         end

@@ -26,19 +26,18 @@ GNIL.Commands = GNIL.Commands or {
     end
 }
 
--- Ensure that the constants are loaded before
--- anything else since they're used a fair bit
--- as references in other files. Also load arguments
--- as it defines some shared functions.
-MODULE:Include("sh_const.lua")
-MODULE:Include("sh_arguments.lua")
+MODULE.OnLoad = function()
+
+    -- Ensure that the constants are loaded before
+    -- anything else since they're used a fair bit
+    -- as references in other files. Also load arguments
+    -- as it defines some shared functions.
+    MODULE:Include("sh_const.lua")
+    MODULE:Include("sh_arguments.lua")
+end
 
 if SERVER then
-
-    -- Once the module has finished loading all
-    -- its required files, we should load the default
-    -- command set.
-    function MODULE:OnLoadFinished()
-        self:IncludeDirectory("commands")
+    MODULE.OnLoadFinished = function()
+        MODULE:IncludeDirectory("commands")
     end
 end

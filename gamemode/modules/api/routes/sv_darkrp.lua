@@ -1,6 +1,14 @@
 
 GNIL.API.Routes.Get("/darkrp/{target:steamid64}", function(request)
 
+    -- Make sure DarkRP is loaded (it isn't in test environments).
+    if not DarkRP then
+        return GNIL.API.Responses.JSON({
+            success = false,
+            error_message = "Missing required DarkRP base gamemode."
+        }, 503)
+    end
+
     local ply = player.GetBySteamID64(request.args["target"])
     if ply then
         
@@ -27,8 +35,8 @@ GNIL.API.Routes.Get("/darkrp/{target:steamid64}", function(request)
 
                 -- If there were no results returned in the query then
                 -- the player must not exist (or its an invalid steamid).
-                if #data == 0 then
-                    respond(
+                if data == nil or #data == 0 then
+                    return respond(
                         GNIL.API.Responses.JSON({
                             success = true,
                             found = false

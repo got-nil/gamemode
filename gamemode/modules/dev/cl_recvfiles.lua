@@ -1,9 +1,7 @@
-GNIL.Dev = GNIL.Dev or {
-    ["_files"] = {},
-    ["_scripts"] = {
-        ["_enabled"] = {},
-        ["_out"] = {}
-    }
+GNIL.Dev = GNIL.Dev or {}
+GNIL.Dev["_scripts"] = GNIL.Dev["_scripts"] or {
+    ["_enabled"] = {},
+    ["_out"] = {}
 }
 
 -- Toggle developer script states.

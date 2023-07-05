@@ -3,7 +3,7 @@ return {
     config = {
             
         -- Possible drivers: sqlite, mysqloo
-        driver = "mysqloo",
+        driver = "sqlite",
 
         -- The following settings are only required when using the
         -- mysqloo connection. Ensure the host is the same as the

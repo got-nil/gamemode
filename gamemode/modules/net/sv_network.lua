@@ -1,13 +1,14 @@
 
 -- Add the core required network strings.
+local MODULE = MODULE
 GNIL.Net["_q"] = GNIL.Net["_q"] or {}
-local MODULE, netstrings = MODULE, {
+GNIL.Net["_netstrings"] = {
     "gnil",   -- GNIL Network (default message entrypoint)
     "gnilc",  -- GNIL Chunked (chunked messages for large datasets)
     "gnils",  -- GNIL Sync (sync pooled netstrings between client and server)
     "gnilr"   -- GNIL Reply (message reply system)
-}
-for _, v in ipairs(netstrings) do
+} 
+for _, v in ipairs(GNIL.Net["_netstrings"]) do
     util.AddNetworkString(v)
 end
 
@@ -32,6 +33,14 @@ function GNIL.Net.AddNetworkString(str, ratelimits, _d)
     assert(isstring(str), "The provided network string... must be a string.")
     assert(ratelimits == nil or istable(ratelimits), "The provided ratelimits must be nil or a ratelimits config table.")
 
+    -- Prevent messages from being re-synced to clients.
+    if GNIL.Net["_i"][str] then
+        
+        -- Allow ratelimits to be modified after the message creation.
+        GNIL.Net.AntiAbuse.SetLimits(str, ratelimits)
+        return false
+    end
+
     -- Ensure that the idsize uint is always big enough to be able to send
     -- the newly created networkid. Cached in init file.
     local l = #GNIL.Net["_r"] + 1
@@ -42,9 +51,7 @@ function GNIL.Net.AddNetworkString(str, ratelimits, _d)
         GNIL.Net["_i"][str] = l
         
         -- Set any provided ratelimits for the message.
-        if ratelimits != nil then
-            GNIL.Net.AntiAbuse.SetLimits(str, ratelimits)
-        end
+        GNIL.Net.AntiAbuse.SetLimits(str, ratelimits)
     end
 
     -- If the netids have already been sent to a player, then this is a
@@ -152,7 +159,7 @@ end
 
 -- When a player has loaded to the point where they can send/recieve
 -- network messages, then we should send any messages that are queued.
-hook.Add("PlayerNetLoad", "gnil_net_send_queue", function(ply)
+MODULE:AddHook("PlayerNetLoad", "sendQueue", function(ply)
 
     -- Ensure that there actually are queued net
     -- messages for the loaded player's steamid.

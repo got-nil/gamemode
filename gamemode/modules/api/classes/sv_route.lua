@@ -8,6 +8,7 @@
 local Route = GNIL.Thirdparty.middleclass("Route")
 
 function Route:Initialize(path, callback)
+    self._id = GNIL.Utils.Random(8)
     
     -- Routes must be constructed with a valid path. The callback
     -- is not necessarily required as it can be supplied afterwards.
@@ -20,9 +21,18 @@ function Route:Initialize(path, callback)
         error("Failed to parse Route path.")
     end
 
+    self._parents = {}
     self._path = path
     self._callback = callback
     self._methods = nil -- Default to allowing all methods
+end
+
+-- Remove the route from all of its router parents.
+function Route:Remove()
+    for _, v in pairs(self._parents) do
+        v:RemoveRoute(self)
+    end
+    self._parents = {}
 end
 
 function Route:ToTable() return {["path"] = self._path} end
