@@ -29,9 +29,8 @@ function GNIL.Modules.GetAll(associative, just_names)
     
     local _, directories = file.Find(GNIL.Utils.ResolveGamemodePath("modules/*"), "LUA")
     for i, name in ipairs(directories) do
-        GNIL.log("Found module directory: " .. name, "debug")
         if name[1] == "_" then continue end
-        modules[associative and name or i] = just_names and name or GNIL.Modules.Get(name)
+        modules[associative and name or (#modules + 1)] = just_names and name or GNIL.Modules.Get(name)
     end
     return modules
 end
@@ -40,12 +39,8 @@ end
 -- such as exist checks since this function is called quite a lot.
 function GNIL.Modules.IsLoaded(name) return GNIL.Modules._loaded[name] == true end
 
--- Load a module by its name.
---  name: The directory name of the module.
---  _dependency_chain: Internally used to prevent dependency recursion.
-function GNIL.Modules.Load(name, _dependency_chain, _reload)
-    if not _reload and GNIL.Modules.IsLoaded(name) then GNIL.log("Refusing to load module '" .. name .. "' as it is already loaded.", "debug") return false end
-    if not GNIL.Modules.Exists(name) then GNIL.log("Refusing to load module '" .. name .. "' as it does not exist.", "warning") return false end
+-- Returns an initialized module before it has been loaded.
+function GNIL.Modules._Initialize(name, _dependency_chain, _reload)
 
     -- Find the module init file to allow it to setup other things.
     local initFilesOrder, initFile = {
@@ -89,7 +84,7 @@ function GNIL.Modules.Load(name, _dependency_chain, _reload)
         -- Allow modules to be disabled, preventing loading.
         if moduleInstance._disabled then
             moduleInstance:log("Module is disabled.", "warning")
-            return false
+            return false, nil
         end
 
         -- Call the module hook before anything.
@@ -100,7 +95,7 @@ function GNIL.Modules.Load(name, _dependency_chain, _reload)
         -- Allow for other utilities etc to process the init file output.
         if hook.Run("GNIL.Modules.Init", name, moduleInstance) == false then
             moduleInstance:log("Module load was prevented by init hook.", "debug")
-            return false
+            return false, nil
         end
  
         -- Load all required module dependencies.
@@ -115,6 +110,19 @@ function GNIL.Modules.Load(name, _dependency_chain, _reload)
         if initFile then moduleInstance:log("Init file '" .. initFile .. "' is not suitable for the current realm.", "debug")
         else moduleInstance:log("Init file could not be found, skipping.", "debug") end
     end
+    return true, moduleInstance
+end
+
+-- Load a module by its name.
+--  name: The directory name of the module.
+--  _dependency_chain: Internally used to prevent dependency recursion.
+function GNIL.Modules.Load(name, _dependency_chain, _reload)
+    if not _reload and GNIL.Modules.IsLoaded(name) then GNIL.log("Refusing to load module '" .. name .. "' as it is already loaded.", "debug") return false end
+    if not GNIL.Modules.Exists(name) then GNIL.log("Refusing to load module '" .. name .. "' as it does not exist.", "warning") return false end
+
+    -- Initialize the module to get the moduleInstance ready to be loaded.
+    local initialized, moduleInstance = GNIL.Modules._Initialize(name, _dependency_chain, _reload)
+    if not initialized then return false end
 
     -- Include the rest of the module directory without any of the init files.
     -- Also call OnLoad hook, allowing a final chance to reject a load.
