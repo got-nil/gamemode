@@ -4,6 +4,7 @@ MODULE.name = "API"
 MODULE.description = "Provides a HTTP interface for external data access."
 MODULE.author = "morgverd"
 MODULE.config = "api"
+MODULE.tests = true
 
 -- Handle module fileloading manually to preserve load-order.
 MODULE:SetAutoload(false)
