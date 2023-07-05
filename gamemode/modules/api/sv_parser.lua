@@ -126,7 +126,7 @@ function GNIL.API.Parser.Route(raw_route)
 
 				-- Ensure the requested argument validator actually exists.
 				if not GNIL.API.Validators.Exists(arg_type) then
-					MODULE:log("Route '" .. raw_route .. "', argument '" .. v .. "' uses invalid/unknown type '" .. arg_parts .. "'. Defaulting to string.", "warning")
+					MODULE:log("Route '" .. raw_route .. "', argument '" .. v .. "' uses invalid/unknown type '" .. arg_type .. "'. Defaulting to string.", "warning")
 					arg_type = "str"
 				end
 			else
