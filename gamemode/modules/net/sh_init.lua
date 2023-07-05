@@ -3,6 +3,7 @@ local MODULE = MODULE
 MODULE.name = "Network Layer"
 MODULE.author = "morgverd"
 MODULE.description = "Just your standard Network Abstraction Layer."
+MODULE.tests = true
 
 GNIL.Net = GNIL.Net or {
     ["_r"] = {}, -- Network ID registry, mirrored between client and server.
