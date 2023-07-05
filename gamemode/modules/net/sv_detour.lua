@@ -12,18 +12,24 @@ end
 
 --]]
 
+-- Localisation, potentially an optimisation?
+local util_NetworkIDToString = util.NetworkIDToString
+local net_ReadHeader = net.ReadHeader
+local GNIL_Net_AntiAbuse_Abusing = GNIL.Net.AntiAbuse.Abusing
+local GNIL_Net_AntiAbuse_Check = GNIL.Net.AntiAbuse.Check
+
 -- Detour all incomming messages and read header.
 net.Incoming = function(len, ply)
     
     -- Get the original message name.
-    local messageName = util.NetworkIDToString(net.ReadHeader())
+    local messageName = util_NetworkIDToString(net_ReadHeader())
     if not messageName then
         
         -- If the player is requesting an invalid/unknown message
         -- we should assume that they're being abusive (as normal
         -- code shouldn't be trying to use non-existant messages).
         -- (Although im fairly sure that can't happen?)
-        GNIL.Net.AntiAbuse.Abusing(messageName, ply, true)
+        GNIL_Net_AntiAbuse_Abusing(messageName, ply, true)
         return
     end
 
@@ -33,7 +39,7 @@ net.Incoming = function(len, ply)
 
     -- If its not an internal message (meaning its not using the
     -- GNIL net libary) we should apply a generic ratelimit.
-    if not internal_messages[messageName] and not GNIL.Net.AntiAbuse.Check(messageName, ply, nil, true) then
+    if not internal_messages[messageName] and not GNIL_Net_AntiAbuse_Check(messageName, ply, nil, true) then
         return
     end
     
