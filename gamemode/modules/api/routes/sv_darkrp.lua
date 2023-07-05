@@ -1,6 +1,14 @@
 
 GNIL.API.Routes.Get("/darkrp/{target:steamid64}", function(request)
 
+    -- Make sure DarkRP is loaded (it isn't in test environments).
+    if not DarkRP then
+        return GNIL.API.Responses.JSON({
+            success = false,
+            error_message = "Missing required DarkRP base gamemode."
+        }, 503)
+    end
+
     local ply = player.GetBySteamID64(request.args["target"])
     if ply then
         
