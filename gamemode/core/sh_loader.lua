@@ -103,7 +103,8 @@ if not GNIL.Loader["_init"] then
     for k, _ in pairs(GNIL.Loader["_loaders"]) do GNIL.log("Registered loader handler '" .. k .. "'.", "debug") end
 
     -- Load thirdparty and classes directories.
-    GNIL.Thirdparty = GNIL.Loader.DirectoryMap(GNIL.Utils.ResolveGamemodePath("core/thirdparty"))
-    GNIL.Classes    = GNIL.Loader.DirectoryMap(GNIL.Utils.ResolveGamemodePath("core/classes"), true)
+    GNIL.Integrations   = GNIL.Loader.DirectoryMap(GNIL.Utils.ResolveGamemodePath("core/integrations"))
+    GNIL.Thirdparty     = GNIL.Loader.DirectoryMap(GNIL.Utils.ResolveGamemodePath("core/thirdparty"))
+    GNIL.Classes        = GNIL.Loader.DirectoryMap(GNIL.Utils.ResolveGamemodePath("core/classes"), true)
 end
 GNIL.Loader["_init"] = true
