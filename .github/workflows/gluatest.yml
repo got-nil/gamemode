@@ -1,0 +1,13 @@
+name: GLuaTest Runner
+
+on:
+  pull_request:
+  push:
+
+jobs:
+  run-tests:
+    uses: CFC-Servers/GLuaTest/.github/workflows/run_tests.yml@main
+    with:
+      server-cfg: .github/gluatest/test.cfg
+      requirements: .github/gluatest/deps.txt
+      gamemode: gnil
