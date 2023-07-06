@@ -40,7 +40,7 @@ end
 function GNIL.Modules.IsLoaded(name) return GNIL.Modules._loaded[name] == true end
 
 -- Returns an initialized module before it has been loaded.
-function GNIL.Modules._Initialize(name, _dependency_chain, _reload)
+function GNIL.Modules._Initialize(name, _dependency_chain, _reload, _returnLastModuleFn)
 
     -- Find the module init file to allow it to setup other things.
     local initFilesOrder, initFile = {
@@ -74,6 +74,17 @@ function GNIL.Modules._Initialize(name, _dependency_chain, _reload)
     local lastModule = _G["MODULE"] or nil
     _G["MODULE"] = moduleInstance
 
+    -- Restore the previous MODULE value. Can be called externally.
+    -- The env should only be closed on local exit if the callback isn't
+    -- being returned (keep open if callback is requested).
+    local _restoreModuleFn = function()
+        _G["MODULE"] = lastModule
+    end
+    local restoreModuleFn = function()
+        if _returnLastModuleFn then return end
+        _restoreModuleFn()
+    end
+
     -- Actually include the init file if the init file is suitable for the
     -- current execution realm (can be server or client).
     if initFile and GNIL.Utils.IsFilenameForCurrentRealm(initFile == "init.lua" and "sv_init.lua" or initFile) then
@@ -84,7 +95,8 @@ function GNIL.Modules._Initialize(name, _dependency_chain, _reload)
         -- Allow modules to be disabled, preventing loading.
         if moduleInstance._disabled then
             moduleInstance:log("Module is disabled.", "warning")
-            return false, nil
+            restoreModuleFn()
+            return false, nil, nil
         end
 
         -- Call the module hook before anything.
@@ -95,7 +107,8 @@ function GNIL.Modules._Initialize(name, _dependency_chain, _reload)
         -- Allow for other utilities etc to process the init file output.
         if hook.Run("GNIL.Modules.Init", name, moduleInstance) == false then
             moduleInstance:log("Module load was prevented by init hook.", "debug")
-            return false, nil
+            restoreModuleFn()
+            return false, nil, nil
         end
  
         -- Load all required module dependencies.
@@ -110,7 +123,17 @@ function GNIL.Modules._Initialize(name, _dependency_chain, _reload)
         if initFile then moduleInstance:log("Init file '" .. initFile .. "' is not suitable for the current realm.", "debug")
         else moduleInstance:log("Init file could not be found, skipping.", "debug") end
     end
-    return true, moduleInstance
+    
+    -- GNIL.Modules.Load delays the MODULE from being reset until the end. Instead the resetter
+    -- callable should be returned so the env closing can be handled when needed.
+    if _returnLastModuleFn then
+        return true, moduleInstance, _restoreModuleFn
+    else
+        
+        -- Restore the MODULE const to last module to handle loading inside another module.
+        _G["MODULE"] = lastModule    
+        return true, moduleInstance, nil
+    end
 end
 
 -- Load a module by its name.
@@ -121,13 +144,15 @@ function GNIL.Modules.Load(name, _dependency_chain, _reload)
     if not GNIL.Modules.Exists(name) then GNIL.log("Refusing to load module '" .. name .. "' as it does not exist.", "warning") return false end
 
     -- Initialize the module to get the moduleInstance ready to be loaded.
-    local initialized, moduleInstance = GNIL.Modules._Initialize(name, _dependency_chain, _reload)
-    if not initialized then return false end
+    -- The MODULE const is kept as the loading module until the end.
+    local initialized, moduleInstance, restoreModuleFn = GNIL.Modules._Initialize(name, _dependency_chain, _reload, true)
+    if not initialized then restoreModuleFn() return false end
 
     -- Include the rest of the module directory without any of the init files.
     -- Also call OnLoad hook, allowing a final chance to reject a load.
     if moduleInstance:OnLoad() == false or hook.Run("GNIL.Modules.Load", moduleInstance) == false then
         moduleInstance:log("Module refused to load.", "warning")
+        restoreModuleFn()
         return false
     end
 
@@ -217,11 +242,9 @@ function GNIL.Modules.Load(name, _dependency_chain, _reload)
         GNIL.Modules["_first_loaded"][name] = true
     end
 
-    -- Once finished, restore the MODULE const to the previous, or nil.
-    -- Allows other modules to load modules without losing their const.
-    _G["MODULE"] = lastModule
-
-    GNIL.log("Finished loading module '" .. name .. "'", "debug")
+    -- Restore the MODULE global to the last module (from _Initialize).
+    MODULE:log("Finished loading!", "debug")
+    restoreModuleFn()
     return true
 end
 
