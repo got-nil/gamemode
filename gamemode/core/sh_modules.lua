@@ -131,7 +131,7 @@ function GNIL.Modules._Initialize(name, _dependency_chain, _reload, _returnLastM
     else
         
         -- Restore the MODULE const to last module to handle loading inside another module.
-        _G["MODULE"] = lastModule    
+        restoreModuleFn()   
         return true, moduleInstance, nil
     end
 end
