@@ -1,8 +1,9 @@
 GNIL.Modules = GNIL.Modules or {
     ["_loaded"] = {},
-    ["_cached_modules"] = {},
     ["_tmp_dev_files"] = {},
-    ["_first_loaded"] = {}
+    ["_first_loaded"] = {},
+    ["_cached_modules"] = {},
+    ["_cached_extensions"] = {}
 }
 
 -- Clear all loaded modules each time theres a LUA refresh.
@@ -100,7 +101,7 @@ function GNIL.Modules._Initialize(name, _dependency_chain, _reload, _returnLastM
         end
 
         -- Call the module hook before anything.
-        if moduleInstance:OnInit() == false then
+        if moduleInstance:EmitEvent("Init", moduleInstance) == false then
             moduleInstance:log("Module refused to initialize.", "warning")
         end
 
@@ -150,7 +151,7 @@ function GNIL.Modules.Load(name, _dependency_chain, _reload)
 
     -- Include the rest of the module directory without any of the init files.
     -- Also call OnLoad hook, allowing a final chance to reject a load.
-    if moduleInstance:OnLoad() == false or hook.Run("GNIL.Modules.Load", moduleInstance) == false then
+    if moduleInstance:EmitEvent("Load", moduleInstance) == false or hook.Run("GNIL.Modules.Load", moduleInstance) == false then
         moduleInstance:log("Module refused to load.", "warning")
         restoreModuleFn()
         return false
@@ -233,7 +234,7 @@ function GNIL.Modules.Load(name, _dependency_chain, _reload)
 
     -- Once everything has finished loading, we should call the OnLoadFinished hook function.
     hook.Run("GNIL.Modules.Loaded", name, moduleInstance)
-    moduleInstance:OnLoadFinished()
+    moduleInstance:EmitSignal("LoadFinished", moduleInstance)
 
     -- Call the FirstLoaded hook once per module load, even if the modules loaded have been
     -- cleared on refresh the hook should still be called at most once per server runtime.
@@ -263,7 +264,7 @@ function GNIL.Modules.Unload(name, _caller)
     hook.Run("GNIL.Modules.Unloaded", name, moduleInstance)
 
     -- Call the module unloader.
-    moduleInstance:OnUnload()
+    moduleInstance:EmitSignal("Unload", moduleInstance)
 
     GNIL.log("The module '" .. name .. "' has been unloaded.", "debug")
     GNIL.Modules._loaded[name] = false
@@ -319,5 +320,28 @@ function GNIL.Modules.Get(name, additional) -- ?Module
     return GNIL.Modules["_cached_modules"][name]
 end
 
--- Remove hooks from module if it is being unloaded
+---------------------------------------------------------------------------
+
+function GNIL.Modules.AddExtension(name, extensionClass)
+    assert(extensionClass:IsSubclassOf(GNIL.Classes.Extension), "Extension class must inherit from BaseModuleExtension")
+    GNIL.Modules["_cached_extensions"][name] = extensionClass
+end
+
+-- Use MODULE:GetExtension instead. Do not call directly.
+function GNIL.Modules._GetExtension(moduleInstance, name)
+
+    local extensionClass = GNIL.Modules["_cached_extensions"][name]
+    if extensionClass == nil then return nil end
+    local extensionInstance = extensionClass:New(moduleInstance)
+
+    -- Passthrough some signals from the ModuleInstance to Extension.
+    for _, v in ipairs({"Load", "Unload"}) do
+        moduleInstance:AddSignalListener(v, function(...)
+            extensionInstance:EmitSignal(v, ...)
+        end)
+    end
+    return extensionInstance
+end
+
+-- Remove hooks from module if it is being unloaded.
 hook.Add("GNIL.Modules.Unloaded", "gnil_module_unload_clearhooks", function(_, m) m:ClearHooks() end)
