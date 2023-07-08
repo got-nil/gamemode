@@ -1,7 +1,17 @@
 -- Handle the loading and management of modules.
 
-local Module = GNIL.Thirdparty.middleclass("Module")
+local Module = GNIL.Thirdparty.middleclass("Module"):Include(GNIL.ClassMixins.Events)
 function Module:Initialize(name)
+    self:EmitSignal(self._initialized && "Reinitialize" || "Initialize", self)
+    
+    -- A module should not usually just be reinitialized, but if it is
+    -- all previous listeners should be removed to prevent a buildup.
+    if self._initialized then
+        self:ClearAllListeners()
+        self:ClearHooks()
+    end
+
+    self._initialized = true
     self._module_name = name
 
     self.name = name
@@ -14,6 +24,7 @@ function Module:Initialize(name)
     self.dependencies = false
     self._loaded_dependencies = {}
     self._disabled = false
+    self._extensions = {}
 
     -- If config is set, config_required determines if the module should
     -- be automatically disabled if the config is not found.
@@ -260,7 +271,7 @@ function Module:Find(path, sorting)
     return file.Find(self:ResolvePath(path), "LUA", sorting)
 end
 
--------------------------
+---------------------------------------------------------------------------
 
 -- Directory MUST be a directory supported by a load handler.
 -- Eg: 'entities'. If the directory has a weird name, use LoadDirectory.
@@ -301,11 +312,29 @@ function Module:LoadDirectory(base, directory, handler)
     return success
 end
 
--------------------------
+---------------------------------------------------------------------------
+
+-- Add an extension by name to the Module.
+function Module:UseExtension(name)
+    local ext = GNIL.Modules._GetExtension(self, name)
+    if not ext then
+        self:log("Could not find module extension '" .. name .. "'", "error")
+        return false, nil
+    end
+
+    -- Cache the extension.
+    self._extensions[name] = ext
+    return true, ext
+end
+function Module:GetExtension(name) return self._extensions[name] end
+function Module:HasExtension(name) return self._extensions[name] != nil end
+
+---------------------------------------------------------------------------
 
 -- Logging passthrough with module name as prefix.
 function Module:log(log, logtype) GNIL.log(log, logtype, self._module_name) end
 
+-- These functions can be used, however the EventEmitter can also be used.
 -- Load hooks (in order of call).
 function Module:OnInit() end          -- 1. Called when a module has been initialized, before dependencies. [false=(Module load halted before dependencies)] 
 function Module:OnLoad() end          -- 2. Called while the module is being loaded, after dependencies.    [false=(Module load halted before main autoload)]
