@@ -20,6 +20,12 @@ hook.Add("GLuaTest_RunTestFiles", "GNIL.GLuaTest.AddTests", function(testFiles)
             table.insert(testFiles, t)
         end
     end
+    
+    -- Add core gamemode tests.
+    for _, t in ipairs(GLuaTest.loader(GNIL.Utils.ResolveGamemodePath("core/tests"))) do
+        t.project = "core"
+        table.insert(testFiles, t)
+    end
 end)
 
 hook.Add("GLuaTest_Finished", "GNIL.GLuaTest.FinishedTests", function(_, allResults)

@@ -105,6 +105,7 @@ if not GNIL.Loader["_init"] then
     -- Load thirdparty and classes directories.
     GNIL.Integrations   = GNIL.Loader.DirectoryMap(GNIL.Utils.ResolveGamemodePath("core/integrations"))
     GNIL.Thirdparty     = GNIL.Loader.DirectoryMap(GNIL.Utils.ResolveGamemodePath("core/thirdparty"))
+    GNIL.ClassMixins    = GNIL.Loader.DirectoryMap(GNIL.Utils.ResolveGamemodePath("core/classes/mixins"), true)
     GNIL.Classes        = GNIL.Loader.DirectoryMap(GNIL.Utils.ResolveGamemodePath("core/classes"), true)
 end
 GNIL.Loader["_init"] = true
