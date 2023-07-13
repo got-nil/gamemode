@@ -18,15 +18,14 @@ local APIExtension = GNIL.Thirdparty.middleclass("APIExtension", GNIL.Classes.Ex
 -- When unloaded, remove all routes associated with module.
 
 function APIExtension:Initialize(moduleInstance)
-    self.module = moduleInstance
+    GNIL.Classes.Extension:Initialize(self, moduleInstance)
     
-    self.module.__api_routes = {}
-    self.module.__api_prefix = "/modules/" .. moduleInstance._module_name
+    if self._routes == nil then self._routes = {} else self:RemoveAllRoutes() end
+    self._prefix = "/modules/" .. moduleInstance._module_name
 end
 
 -- When being loaded or unloaded, clear all routes.
-function APIExtension:OnLoad() self:RemoveAllRoutes() end
-function APIExtension:OnUnload() self:RemoveAllRoutes() end
+function APIExtension:OnUnload() GNIL.log("APIExtension UNLOAD") self:RemoveAllRoutes() end
 
 ------------------------------------------------------------------------------
 -- Route prefixes setter/getter.
@@ -38,31 +37,31 @@ function APIExtension:SetRoutePrefix(prefix)
     if string.sub(prefix, #prefix) == "/" then
         prefix = string.sub(prefix, 1, #prefix - 1)
     end
-    self.module.__api_prefix = prefix
+    self._prefix = prefix
 end
 
 function APIExtension:GetRoutePrefix()
-    return self.module.__api_prefix
+    return self._prefix
 end
 
 ------------------------------------------------------------------------------
 
 function APIExtension:AddRoute(route)
-    table.insert(self.module.__api_routes, route)
+    table.insert(self._routes, route)
     return route
 end
 
 function APIExtension:RemoveAllRoutes()
-    if self.module.__api_routes == nil then return end
-    for _, v in ipairs(self.module.__api_routes) do
+    if self._routes == nil then return end
+    for _, v in ipairs(self._routes) do
         v:Remove()
     end
-    self.module.__api_routes = {}
+    self._routes = {}
 end
 
 function APIExtension:GetRoutes()
-    if self.module.__api_routes == nil then return {} end
-    return self.module.__api_routes
+    if self._routes == nil then return {} end
+    return self._routes
 end
 
 -- Basically just alias a bunch of functions from the global
@@ -70,10 +69,10 @@ end
 for _, v in ipairs({"Post", "Get", "Put", "Patch", "Delete", "Create", "Add"}) do
     APIExtension[v] = function(self, route, callback)
         return self:AddRoute(
-            GNIL.API.Routes[v](self.module.__api_prefix .. "/" .. GNIL.API.URL.RemoveStartingSlash(route), callback)
+            GNIL.API.Routes[v](self._prefix .. "/" .. GNIL.API.URL.RemoveStartingSlash(route), callback)
         )
     end
 end
 
 -- Add the extension class to Modules handler.
-GNIL.Modules.AddExtension("api", APIExtension)
+GNIL.ModuleExtensions.Add("api", APIExtension)
