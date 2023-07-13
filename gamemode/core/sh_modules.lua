@@ -2,30 +2,35 @@ GNIL.Modules = GNIL.Modules or {
     ["_loaded"] = {},
     ["_tmp_dev_files"] = {},
     ["_first_loaded"] = {},
-    ["_cached_modules"] = {},
-    ["_cached_extensions"] = {}
+    ["_cached_modules"] = {}
 }
-
--- Clear all loaded modules each time theres a LUA refresh.
-if GNIL.ENV.MODULES_RESET then
-    GNIL.Modules["_loaded"] = {}
-end
 
 -- A helper function for the shared gamemode file to use when loading
 -- all modules at once. It constantly checks to ensure that the module
 -- isnt loaded incase of dependency loading.
 function GNIL.Modules.LoadAll(_reload)
     GNIL.log("Loading all modules", "debug")
-    for name, _ in pairs(GNIL.Modules.GetAll(true, true)) do
+    for name, _ in pairs(GNIL.Modules.FindAll(true, true)) do
         GNIL.Modules.Load(name, nil, _reload)
     end
     hook.Run("GNIL.Modules.LoadedAll")
 end
 
--- Get all modules. If associative is true the return table is a key value
+-- Return all cached modules.
+function GNIL.Modules.GetAll(associative, just_names, ignore_disabled)
+    local modules = {}
+    
+    for k, v in pairs(GNIL.Modules["_cached_modules"]) do
+        if not ignore_disabled and v._disabled then continue end
+        modules[associative and k or (#modules + 1)] = just_names and k or v
+    end
+    return modules
+end
+
+-- Find all modules. If associative is true the return table is a key value
 -- mapping {name = module}, if false the table is a sequential list of module instances.
 -- If associative is false, just_names can be true which makes a sequential array of string names.
-function GNIL.Modules.GetAll(associative, just_names)
+function GNIL.Modules.FindAll(associative, just_names)
     local modules = {}
     
     local _, directories = file.Find(GNIL.Utils.ResolveGamemodePath("modules/*"), "LUA")
@@ -63,12 +68,18 @@ function GNIL.Modules._Initialize(name, _dependency_chain, _reload, _returnLastM
     -- Ensuring that the dependency chain is passed through to the module.
     local moduleInstance = GNIL.Modules.Get(name, {
         ["_dependency_chain"] = _dependency_chain
-    })
+    }, true)
 
     -- If we're reloading the module we should re-initialize it to ensure
     -- any previous loads don't conflict (_ignored_files etc).
     if _reload then
-        moduleInstance:Initialize(name)
+
+        -- If the module is already initialized, unload the module without
+        -- unloading dependencies (since we're not really unloading it).
+        -- Also send the 'Reinitialize' signal for listeners.
+        if moduleInstance._initialized then
+            GNIL.Modules.Unload(moduleInstance, nil, false)
+        end
     end
 
     -- Set the MODULE const for the module to access its local instance.
@@ -78,8 +89,17 @@ function GNIL.Modules._Initialize(name, _dependency_chain, _reload, _returnLastM
     -- Restore the previous MODULE value. Can be called externally.
     -- The env should only be closed on local exit if the callback isn't
     -- being returned (keep open if callback is requested).
+    local _hasRestored = false
     local _restoreModuleFn = function()
+        
+        -- Prevent the restoreModuleFn from being called twice.
+        -- Although this shouldn't happen anyway, it does allow the
+        -- function to always be called safely (even if its already closed).
+        if _hasRestored then return false end
+        _hasRestored = true
+
         _G["MODULE"] = lastModule
+        return true
     end
     local restoreModuleFn = function()
         if _returnLastModuleFn then return end
@@ -119,7 +139,14 @@ function GNIL.Modules._Initialize(name, _dependency_chain, _reload, _returnLastM
                 if moduleInstance._loaded_dependencies[k] then continue end
                 moduleInstance:_ResolveRequirement(k)
             end
-        end  
+        end
+
+        -- Initialize after dependencies hook.
+        if hook.Run("GNIL.Modules.InitAfterDependencies", name, moduleInstance) == false then
+            moduleInstance:log("Module load was prevented by hook after dependencies were loaded.", "debug")
+            restoreModuleFn()
+            return false, nil, nil
+        end
     else
         if initFile then moduleInstance:log("Init file '" .. initFile .. "' is not suitable for the current realm.", "debug")
         else moduleInstance:log("Init file could not be found, skipping.", "debug") end
@@ -250,12 +277,19 @@ function GNIL.Modules.Load(name, _dependency_chain, _reload)
 end
 
 -- Unload a module, recursively unloading all its dependencies.
-function GNIL.Modules.Unload(name, _caller)
-    if not GNIL.Modules.IsLoaded(name) then return false end
-    local moduleInstance = GNIL.Modules["_cached_modules"][name]
+function GNIL.Modules.Unload(name_or_module, _caller, _unload_dependencies)
+    
+    -- Allow a module to be provided directly instead of name.
+    local moduleInstance, name = false, false
+    if istable(name_or_module) then
+        moduleInstance, name = name_or_module, name_or_module._module_name
+    else
+        if not GNIL.Modules.IsLoaded(name_or_module) then return false end
+        moduleInstance, name = GNIL.Modules["_cached_modules"][name_or_module], name_or_module
+    end
 
     -- Unload all modules that depend on the module being unloaded.
-    if moduleInstance.dependencies != nil then
+    if _unload_dependencies != false and moduleInstance.dependencies != nil then
         for _, v in ipairs(moduleInstance.dependencies) do
             if v == _caller or v == name then continue end
             GNIL.Modules.Unload(v, name)
@@ -263,11 +297,13 @@ function GNIL.Modules.Unload(name, _caller)
     end
     hook.Run("GNIL.Modules.Unloaded", name, moduleInstance)
 
-    -- Call the module unloader.
+    -- Call the module unloader and cleanup the module.
     moduleInstance:EmitSignal("Unload", moduleInstance)
+    moduleInstance:_Cleanup()
 
     GNIL.log("The module '" .. name .. "' has been unloaded.", "debug")
     GNIL.Modules._loaded[name] = false
+    return true
 end
 
 -- Check if a module exists. Will attempt to used cached existance check unless
@@ -302,9 +338,9 @@ end
 
 -- Get a module instance from cache, or create a new one. This ensures that
 -- the same module instances are returned each time to persist class mutations.
-function GNIL.Modules.Get(name, additional) -- ?Module
+function GNIL.Modules.Get(name, additional, _ignore_exists) -- ?Module
     if not GNIL.Modules["_cached_modules"][name] then 
-        if not GNIL.Modules.Exists(name) then return nil end
+        if not _ignore_exists and not GNIL.Modules.Exists(name) then return nil end
 
         -- Create/Cache the module 
         GNIL.Modules["_cached_modules"][name] = GNIL.Classes.Module:New(name)
@@ -319,29 +355,3 @@ function GNIL.Modules.Get(name, additional) -- ?Module
 
     return GNIL.Modules["_cached_modules"][name]
 end
-
----------------------------------------------------------------------------
-
-function GNIL.Modules.AddExtension(name, extensionClass)
-    assert(extensionClass:IsSubclassOf(GNIL.Classes.Extension), "Extension class must inherit from BaseModuleExtension")
-    GNIL.Modules["_cached_extensions"][name] = extensionClass
-end
-
--- Use MODULE:GetExtension instead. Do not call directly.
-function GNIL.Modules._GetExtension(moduleInstance, name)
-
-    local extensionClass = GNIL.Modules["_cached_extensions"][name]
-    if extensionClass == nil then return nil end
-    local extensionInstance = extensionClass:New(moduleInstance)
-
-    -- Passthrough some signals from the ModuleInstance to Extension.
-    for _, v in ipairs({"Load", "Unload"}) do
-        moduleInstance:AddSignalListener(v, function(...)
-            extensionInstance:EmitSignal(v, ...)
-        end)
-    end
-    return extensionInstance
-end
-
--- Remove hooks from module if it is being unloaded.
-hook.Add("GNIL.Modules.Unloaded", "gnil_module_unload_clearhooks", function(_, m) m:ClearHooks() end)
