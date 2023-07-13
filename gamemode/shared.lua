@@ -40,7 +40,10 @@ GNIL = GNIL or {
 -- handling etc. The value can be a string preset name, or a table of env settings.
 -- If using table, each env setting must be full caps as key. The 'preset' can be
 -- used to inherit an environment preset, with the additional settings being overrides.
-GNIL._ENVIRONMENT = "core-dev"
+GNIL._ENVIRONMENT = {
+    preset = "core-dev",
+    ["REFRESH_MODULES"] = {"test"}
+}
 
 --------------------------------------------------------------------------------------------
 
@@ -63,8 +66,8 @@ end
 -- Load the environment handler first. This allows the gamemode to be halted
 -- if there is an invalid environment provided (instead of failing later).
 -- Loaded on all loads including refreshes to validate/change environment.
-if SERVER and not GNIL._LOADED then AddCSLuaFile("core/sh_env.lua") end
-if not include("core/sh_env.lua") then
+if SERVER and not GNIL._LOADED then AddCSLuaFile("core/sh_environment.lua") end
+if not include("core/sh_environment.lua") then
     ErrorNoHalt("GNIL - Invalid gamemode environment, failed to start.\n")
     return
 end

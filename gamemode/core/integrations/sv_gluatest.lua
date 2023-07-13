@@ -3,7 +3,7 @@
 hook.Add("GLuaTest_RunTestFiles", "GNIL.GLuaTest.AddTests", function(testFiles)
 
     -- Add tests from modules.
-    for _, v in ipairs(GNIL.Modules.GetAll()) do
+    for _, v in ipairs(GNIL.Modules.FindAll()) do
         if not v.tests then continue end
 
         -- Make sure the module test directory actually exists.
