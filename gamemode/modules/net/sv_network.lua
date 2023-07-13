@@ -71,7 +71,7 @@ end
 -- the last message has been added, Although you shouldn't ever
 -- need to add late messages anyway).
 function GNIL.Net.AddNetworkStrings(...)
-    local args = {...}
+    local args, out = {...}, {}
 
     -- If the first argument is a table, use that instead.
     if #args >= 1 and istable(args[1]) then
@@ -82,8 +82,9 @@ function GNIL.Net.AddNetworkStrings(...)
         -- Add the network ID, while also only allowing the
         -- network ids to be resynced on the last message.
         -- (Although they shouldn't be added late anyway)
-        GNIL.Net.AddNetworkString(v, nil, i == #args)
+        out[v] = GNIL.Net.AddNetworkString(v, nil, i == #args)
     end
+    return out
 end
 
 -- Send the network message to all players.
