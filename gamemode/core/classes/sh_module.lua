@@ -1,16 +1,12 @@
--- Handle the loading and management of modules.
+-- Handle the loading and management of modules. All modules should be
+-- designed with reloading in mind, using OnLoad, OnUnload or OnReinitialize.
 
 local Module = GNIL.Thirdparty.middleclass("Module"):Include(GNIL.ClassMixins.Events)
-function Module:Initialize(name)
-    self:EmitSignal(self._initialized && "Reinitialize" || "Initialize", self)
-    
-    -- A module should not usually just be reinitialized, but if it is
-    -- all previous listeners should be removed to prevent a buildup.
-    if self._initialized then
-        self:ClearAllListeners()
-        self:ClearHooks()
+function Module:Initialize(name, _emit_signal)
+    if _emit_signal != false then
+        self:EmitSignal(self._initialized && "Reinitialize" || "Initialize", self)
     end
-
+    
     self._initialized = true
     self._module_name = name
 
@@ -23,8 +19,13 @@ function Module:Initialize(name)
     self.autoload = true
     self.dependencies = false
     self._loaded_dependencies = {}
-    self._disabled = false
-    self._extensions = {}
+    self._delayed_extensions = {}
+    self._disabled = false 
+
+    -- Static values that should not change between reinitializations.
+    self._static = self._static or {}
+    self._extensions = self._extensions or {}
+    self._extension_classes = self._extension_classes or {}
 
     -- If config is set, config_required determines if the module should
     -- be automatically disabled if the config is not found.
@@ -44,6 +45,25 @@ function Module:Initialize(name)
 
     self._added_ignored_file = false
     self._ignored_files = {}
+end
+
+-- Cleanup the module after being unloaded. This is very important as
+-- it ensures that reloads don't pool a bunch of old callbacks etc.
+-- This can be overriden, but it REALLY shouldn't unless theres a VERY
+-- good reason. The "Unload" signal should be used instead.
+function Module:_Cleanup()
+
+    self:ClearAllListeners()
+    self:ClearHooks()
+
+    -- Reinitialize the module without sending Reinitialization signal.
+    self:Initialize(self._module_name, false)
+    
+    -- Add all the events back to the extension after cleanup.
+    -- (Since the extension listeners would be removed above).
+    for _, v in pairs(self._extensions) do
+        GNIL.ModuleExtensions._Initialize(self, v)
+    end
 end
 
 -- Simply call the modules utility with the current module name
@@ -314,17 +334,57 @@ end
 
 ---------------------------------------------------------------------------
 
+-- Add an extension with a name and extensionClass. This should be
+-- used for modules that require a non-global extension (also for testing).
+function Module:AddExtensionByClass(name, extensionClass)
+    assert(isstring(name), "Provided extension name must be a string")
+    assert(extensionClass:IsSubclassOf(GNIL.Classes.Extension), "Extension class must inherit from BaseModuleExtension")
+
+    -- Do not allow existing extensions to be overwritten.
+    if self._extensions[name] then return false end
+    if self._extension_classes[name] then return false end
+
+    -- Cache the extension class.
+    self._extension_classes[name] = extensionClass
+    return true
+end
+
+-- Require an extension (is loaded after dependencies in load).
+function Module:RequireExtension(name)
+    self._delayed_extensions[name:lower()] = true
+end
+
 -- Add an extension by name to the Module.
 function Module:UseExtension(name)
-    local ext = GNIL.Modules._GetExtension(self, name)
-    if not ext then
-        self:log("Could not find module extension '" .. name .. "'", "error")
-        return false, nil
+    assert(isstring(name), "Provided extension name must be a string")
+    if self:HasExtension(name) then return false end
+
+    -- Prioritise a modules local reference of extension classes
+    -- over the global registry (for testing mainly).
+    local extensionInstance = false
+    if self._extension_classes[name] then
+
+        -- Initialize the extension and add the passthrough events.
+        extensionInstance = GNIL.ModuleExtensions._Initialize(self, self._extension_classes[name]:New(self))
+    else
+
+        -- Get the extension normally through global registration.
+        extensionInstance = GNIL.ModuleExtensions._Get(self, name)
+        if not extensionInstance then
+            self:log("Could not find module extension '" .. name .. "'", "error")
+            return false
+        end
+    end
+
+    -- Sanity check just incase.
+    if not extensionInstance then
+        self:log("Failed to initialize extension '" .. name .. "' for some reason.", "error")        
+        return false
     end
 
     -- Cache the extension.
-    self._extensions[name] = ext
-    return true, ext
+    self._extensions[name] = extensionInstance
+    return true
 end
 function Module:GetExtension(name) return self._extensions[name] end
 function Module:HasExtension(name) return self._extensions[name] != nil end
