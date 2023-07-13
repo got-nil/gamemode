@@ -5,7 +5,6 @@ local env_options = {
     -- General.
     ["DEV"] = false,            -- Catch all development flag, used for non-specific cases.
     ["LOADER_RESET"] = false,   -- Should gamemode loaders be reset on lua refresh.
-    ["MODULES_RESET"] = false,  -- Should all modules be reset on lua refresh (reloading all).
     ["DARKRP_REFRESH"] = false, -- Should DarkRP be lua refreshed?
 
     -- Luadev access.
