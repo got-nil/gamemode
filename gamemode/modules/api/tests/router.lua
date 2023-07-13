@@ -1,15 +1,19 @@
 
+-- Uses a nonstandard port to prevent the possibility of
+-- some bug trying to set failed responses to a 200 status.
+local SUCCESS_STATUS = 005
+
 local function createRouter()
     local router = GNIL.API.Router:New()
 
-    router:Get("/abc", function() return GNIL.API.Responses.Empty(200) end)
-    router:Post("/def", function() return GNIL.API.Responses.Empty(200) end)
+    router:Get("/static/abc", function() return GNIL.API.Responses.Empty(SUCCESS_STATUS) end)
+    router:Post("/static/def", function() return GNIL.API.Responses.Empty(SUCCESS_STATUS) end)
     
-    router:Get("/ghi", function() return GNIL.API.Responses.Empty(1) end)
-    router:Post("/ghi", function() return GNIL.API.Responses.Empty(2) end)
+    router:Get("/static/ghi", function() return GNIL.API.Responses.Empty(1) end)
+    router:Post("/static/ghi", function() return GNIL.API.Responses.Empty(2) end)
 
-    router:Get("/async", function() return function(fn) timer.Simple(1, function() fn(GNIL.API.Responses.Empty(200)) end) end end)
-
+    router:Get("/static/async", function() return function(fn) timer.Simple(1, function() fn(GNIL.API.Responses.Empty(SUCCESS_STATUS)) end) end end)
+    
     return router
 end
 
@@ -32,22 +36,22 @@ return {
         {
             name = "Route with valid method returns success",
             func = function(state)
-                expect( state.router:Call(createRequest("GET", "/abc")).status ).to.equal(200)
-                expect( state.router:Call(createRequest("POST", "/def")).status ).to.equal(200)
+                expect( state.router:Call(createRequest("GET", "/static/abc")).status ).to.equal(SUCCESS_STATUS)
+                expect( state.router:Call(createRequest("POST", "/static/def")).status ).to.equal(SUCCESS_STATUS)
             end
         },
         {
             name = "Route with invalid method returns InvalidMethod",
             func = function(state)
-                expect( state.router:Call(createRequest("POST", "/abc")).status ).to.equal(405)
-                expect( state.router:Call(createRequest("GET", "/def")).status ).to.equal(405)
+                expect( state.router:Call(createRequest("POST", "/static/abc")).status ).to.equal(405)
+                expect( state.router:Call(createRequest("GET", "/static/def")).status ).to.equal(405)
             end
         },
         {
             name = "Routes with same structure but different methods returns success",
             func = function(state)
-                expect( state.router:Call(createRequest("GET", "/ghi")).status ).to.equal(1)
-                expect( state.router:Call(createRequest("POST", "/ghi")).status ).to.equal(2)
+                expect( state.router:Call(createRequest("GET", "/static/ghi")).status ).to.equal(1)
+                expect( state.router:Call(createRequest("POST", "/static/ghi")).status ).to.equal(2)
             end
         },
         {
@@ -55,10 +59,40 @@ return {
             async = true,
             timeout = 5,
             func = function(state)
-                state.router:Call(createRequest("GET", "/async"), function(response)
-                    expect( response.status ).to.equal(200)
+                state.router:Call(createRequest("GET", "/static/async"), function(response)
+                    expect( response.status ).to.equal(SUCCESS_STATUS)
                     done()
                 end)
+            end
+        },
+        {
+            name = "Request content is preserved through router",
+            func = function(state)
+
+                local expect = expect
+                state.router:Get("/test", function()
+                    return GNIL.API.Responses.Text("abcdef", SUCCESS_STATUS)
+                end)
+
+                local response = state.router:Call(createRequest("GET", "/test"))
+                expect( response.status ).to.equal(SUCCESS_STATUS)
+                expect( tostring(response.body) ).to.equal("abcdef")
+            end
+        },
+        {
+            name = "Route arguments values passthrough",
+            func = function(state)
+
+                local expect = expect
+                state.router:Get("/test/{a}/{b:str}/{c:int}", function(request)
+                    expect( request.args["a"] ).to.equal("abc")
+                    expect( request.args["b"] ).to.equal("def")
+                    expect( request.args["c"] ).to.equal(123)
+
+                    return GNIL.API.Responses.Empty(SUCCESS_STATUS)
+                end)
+
+                expect ( state.router:Call(createRequest("GET", "/test/abc/def/123")).status ).to.equal(SUCCESS_STATUS)
             end
         },
         {
@@ -66,16 +100,16 @@ return {
             func = function(state)
 
                 local expect = expect
-                state.router:Get("/types/{a}/{b:str}/{c:int}/{d:steamid64}", function(request)
+                state.router:Get("/test/{a}/{b:str}/{c:int}/{d:steamid64}", function(request)
                     expect( request.args["a"] ).to.beA(TYPE_STRING)
                     expect( request.args["b"] ).to.beA(TYPE_STRING)
                     expect( request.args["c"] ).to.beA(TYPE_NUMBER)
                     expect( request.args["d"] ).to.beA(TYPE_STRING)
                     
-                    return GNIL.API.Responses.Empty(200)
+                    return GNIL.API.Responses.Empty(SUCCESS_STATUS)
                 end)
 
-                expect( state.router:Call(createRequest("GET", "/types/abc/123/456/76561198301284223")).status ).to.equal(200)
+                expect( state.router:Call(createRequest("GET", "/test/abc/123/456/76561198301284223")).status ).to.equal(SUCCESS_STATUS)
             end
         },
         {
@@ -101,11 +135,11 @@ return {
                 for k, v in pairs(tests) do
                     
                     -- Create test route with typed argument.
-                    state.router:Get("/" .. k .. "/{a:" .. k .. "}", function() return GNIL.API.Responses.Empty(200) end)
+                    state.router:Get("/test/" .. k .. "/{a:" .. k .. "}", function() return GNIL.API.Responses.Empty(SUCCESS_STATUS) end)
 
                     for i, x in ipairs(v) do
                         for _, c in ipairs(x) do
-                            expect( state.router:Call(createRequest("GET", k .. "/" .. c)).status ).to.equal(i == 2 && 400 || 200)
+                            expect( state.router:Call(createRequest("GET", "/test/" .. k .. "/" .. c)).status ).to.equal(i == 2 && 400 || SUCCESS_STATUS)
                         end
                     end
                 end
