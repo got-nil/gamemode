@@ -55,9 +55,17 @@ local function callEventFunctions(class, key, ...)
     if not class then return nil end
     local function_name = "on" .. key:lower()
 
+    -- Get class instance functions.
+    local out
+    if class.class == nil then
+        out = class
+    else
+        out = class.class.__instanceDict
+    end
+
     -- TODO: Implement caching.
-    for k, v in pairs(Either(class.class != nil, class.class.__instanceDict, class)) do
-        if class.class == nil and not isfunction(v) then continue end
+    for k, v in pairs(out) do
+        if not isfunction(v) then continue end
         if k:lower() == function_name then
 
             -- Call event function.
