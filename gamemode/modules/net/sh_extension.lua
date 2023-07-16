@@ -19,10 +19,10 @@ function NetExtension:RemoveReceivers()
             if not v then continue end
             if not GNIL.Net["_c"][k] then continue end
 
-            -- Remove the reciever callback directly from the internal
-            -- callbacks table. Not the best solution, but its still
-            -- technically "internal use" so its okay?
-            GNIL.Net["_c"][k][i] = nil
+            -- Replace normal messages callbacks, or remove
+            -- entirely for chuncked recievers. Auto replies
+            -- with DISABLED error state.
+            GNIL.Net["_c"][k][i] = Either(i == 1, GNIL.Net.Helpers.DisabledMessageReciever(k), nil)
         end
     end
 end
