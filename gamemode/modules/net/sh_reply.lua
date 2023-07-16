@@ -64,11 +64,11 @@ function GNIL.Net.Reply.WriteHeader(targets, callback, timeout)
     -- players to accept responses from.
     local message_targets = {}
     if SERVER then
-        assert(istable(targets) and table.IsSequential(targets) and #targets > 0, "Provided targets must be a table of one or more players.")
+        assert(targets == nil or (istable(targets) and table.IsSequential(targets) and #targets > 0), "Provided targets must be a table of one or more players, or nil.")
 
         -- If there are targets provided, ensure they're
         -- all players before storing.
-        if istable(targets) then
+        if targets != nil then
             for _, v in ipairs(targets) do
                 assert(IsPlayer(v), "If a table of targets is provided, they should all be players.")
                 message_targets[v] = true

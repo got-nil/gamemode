@@ -33,6 +33,11 @@ net.Incoming = function(len, ply)
         return
     end
 
+    -- Allow the server to block all incomming messages. This is
+    -- used mainly to prevent receiving messages during a test.
+    -- Only here as a sanity check, tests should not be ran live.
+    if not GNIL.Net["_receive"] then return end
+
     -- Find associated reciever.
     local reciever = net.Receivers[messageName:lower()]
     if not reciever then return end
