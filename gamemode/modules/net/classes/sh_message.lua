@@ -1,13 +1,14 @@
 local MODULE = MODULE
 
+-- Uses WriteableMixin (sh_writeable.lua).
+
 -- The NetworkMessage is an OOP interface for writing network data
 -- to a write buffer instead of directly to the write stream. This
 -- allows for messages to be queued etc.
-local NetworkMessage = GNIL.Thirdparty.middleclass("NetworkMessage")
-function NetworkMessage:Initialize(name)
+local NetworkMessage = GNIL.Thirdparty.middleclass("NetworkMessage"):Include(GNIL.Net.Classes.WriteableMixin)
+function NetworkMessage:Initialize(name, _debug)
     self.name = name
     self.unreliable = false
-    self._write_buffer = {}
 
     self._reply = {
         callback = nil,
@@ -19,33 +20,10 @@ function NetworkMessage:Initialize(name)
         ratelimited = nil,
         _set = false
     }
-end
 
--- This is pretty ugly, but its the result of having to alias
--- everything into the write cache.
-function NetworkMessage:_WriteToBuffer(args, fn) table.insert(self._write_buffer, {args, fn}) return self end
-function NetworkMessage:WriteAngle(...)  return self:_WriteToBuffer({...}, net.WriteAngle)  end
-function NetworkMessage:WriteBit(...)    return self:_WriteToBuffer({...}, net.WriteBit)    end
-function NetworkMessage:WriteBool(...)   return self:_WriteToBuffer({...}, net.WriteBool)   end
-function NetworkMessage:WriteColor(...)  return self:_WriteToBuffer({...}, net.WriteColor)  end
-function NetworkMessage:WriteData(...)   return self:_WriteToBuffer({...}, net.WriteData)   end
-function NetworkMessage:WriteDouble(...) return self:_WriteToBuffer({...}, net.WriteDouble) end
-function NetworkMessage:WriteEntity(...) return self:_WriteToBuffer({...}, net.WriteEntity) end
-function NetworkMessage:WriteFloat(...)  return self:_WriteToBuffer({...}, net.WriteFloat)  end
-function NetworkMessage:WriteInt(...)    return self:_WriteToBuffer({...}, net.WriteInt)    end
-function NetworkMessage:WriteMatrix(...) return self:_WriteToBuffer({...}, net.WriteMatrix) end
-function NetworkMessage:WriteString(...) return self:_WriteToBuffer({...}, net.WriteString) end
-function NetworkMessage:WriteType(...)   return self:_WriteToBuffer({...}, net.WriteType)   end
-function NetworkMessage:WriteUInt(...)   return self:_WriteToBuffer({...}, net.WriteUInt)   end
-function NetworkMessage:WriteVector(...) return self:_WriteToBuffer({...}, net.WriteVector) end
-
--- Allow for the write buffer to be flushed or written to an
--- existing network stream (these should be used internally).
-function NetworkMessage:_FlushWriteBuffer() self._write_buffer = {} end
-function NetworkMessage:_WriteBufferToStream()
-    for _, v in ipairs(self._write_buffer) do
-        v[2](unpack(v[1]))
-    end
+    -- Debug messages should be used ONLY FOR TESTING.
+    -- Ignores non-existant messages, disables checks.
+    self._debug = Either(_debug != nil, _debug, false)
 end
 
 -- Start the netmessage (writing the header id) and the buffer.
@@ -54,7 +32,7 @@ function NetworkMessage:_WriteToStream(targets)
 
     -- If there is a reply callback set, a reply header is added.
     local has_reply = self._reply.callback != nil or self._errors._set
-    GNIL.Net.Start(self.name, self.unreliable, has_reply)
+    GNIL.Net.Start(self.name, self.unreliable, has_reply, self._debug)
 
     -- If the message has a reply callback, also add the
     -- reply header to the start of the message.
@@ -68,10 +46,20 @@ function NetworkMessage:_WriteToStream(targets)
             reply_callback = function(success, len, ply, err)     
                 if not success then
                     if self._errors.callback then self._errors.callback(err.enum, err.int) end
-
-                    -- Error specific callback handlers.
-                    if err.enum == GNIL_NET_ERRORS_TIMEOUT and self._errors.timeout then self._errors.timeout(err.enum, err.int) end
-                    if err.enum == GNIL_NET_ERRORS_RATELIMITED and self._errors.ratelimited then self._errors.ratelimited(err.enum, err.int) end
+                    
+                    -- k = error enum, v = self._errors callback key
+                    local error_callbacks = {
+                        [GNIL_NET_ERRORS_TIMEOUT] = "timeout",
+                        [GNIL_NET_ERRORS_RATELIMITED] = "ratelimited",
+                        [GNIL_NET_ERRORS_DISABLED] = "disabled" 
+                    }
+                    
+                    -- Handle specific error callbacks such as "OnTimeout" etc.
+                    -- Maybe better than always calling generic error and checking there?
+                    local key = error_callbacks[err.enum]
+                    if key and isfunction(self._errors[key]) then
+                        self._errors[key](err.enum, err.int)
+                    end
                 end
                 if self._reply.callback != nil then
                     return self._reply.callback(success, len, ply, err)
@@ -139,8 +127,8 @@ function NetworkMessage:SendChunked(ply, verify_checksum, callback)
     assert(SERVER, "This function may only be used by the server.")
 
     local data = {}
-    for _, v in ipairs(self._write_buffer) do
-        if v[2] != net.WriteData then
+    for _, v in ipairs(self:_GetWriteBuffer()) do
+        if v[2] != "Data" then
             MODULE:log("To send as chunks, all writes MUST be written with WriteData, cannot send message.", "error")
             return
         end
@@ -166,6 +154,7 @@ function NetworkMessage:SetReplyTimeout(timeout) assert(isnumber(timeout) and ti
 function NetworkMessage:OnError(callback) assert(isfunction(callback), "Provided callback argument must be a function.") self._errors.callback = callback self._errors._set = true return self end
 function NetworkMessage:OnTimeout(callback) assert(isfunction(callback), "Provided callback argument must be a function.") self._errors.timeout = callback self._errors._set = true return self end
 function NetworkMessage:OnRatelimited(callback) assert(isfunction(callback), "Provided callback argument must be a function.") self._errors.ratelimited = callback self._errors._set = true return self end
+function NetworkMessage:OnDisabled(callback) assert(isfunction(callback), "Provided callback argument must be a function.") self._errors.disabled = callback self._errors._set = true return self end
 
 function NetworkMessage:__tostring()
     return "<NetworkMessage '" .. self.name .. "'>"
