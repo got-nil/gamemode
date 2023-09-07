@@ -131,7 +131,15 @@ function Router:Call(request, callback)
         end
 
         -- Provide the request promise with the callback.
-        out(callback)
+        local already_responded = false
+        out(function(...)
+
+            -- Prevent something from calling with response more than once.
+            if already_responded then return end
+            already_responded = true
+
+            return callback(...)
+        end)
         return
     end
 
