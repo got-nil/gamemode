@@ -1,9 +1,5 @@
 local PlayerMeta = FindMetaTable("Player")
 
--- Allow for logging directly to a player instance
-function PlayerMeta:log(log, logtype) GNIL.Logging.LogToPlayer(self, log, logtype) end
-PlayerMeta.Log = PlayerMeta.log
-
 -- Add IsDeveloper check similar to IsAdmin. Uses the
 -- steamid64 information from the server credits table.
 local DeveloperSteamIDs = {}
@@ -19,7 +15,14 @@ function PlayerMeta:ToString(quotes, steamid)
            (steamid == false && "" || (" (" .. self:SteamID() .. ")"))
 end
 
-function PlayerMeta:IsFamilyShared()
-    if self:IsBot() then return false end
-    return self:SteamID64() != self:OwnerSteamID64()
+if SERVER then
+
+    -- Allow for logging directly to a player instance
+    function PlayerMeta:log(log, logtype) GNIL.Logging.LogToPlayer(self, log, logtype) end
+    PlayerMeta.Log = PlayerMeta.log
+
+    function PlayerMeta:IsFamilyShared()
+        if self:IsBot() then return false end
+        return self:SteamID64() != self:OwnerSteamID64()
+    end
 end

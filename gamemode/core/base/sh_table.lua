@@ -1,6 +1,6 @@
 -- Table modifications/extensions
 
-function table.slice(tbl, first, last, step)
+table.slice = function(tbl, first, last, step)
     local sliced = {}
   
     for i = first or 1, last or #tbl, step or 1 do
