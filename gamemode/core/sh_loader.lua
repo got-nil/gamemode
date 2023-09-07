@@ -59,16 +59,28 @@ function GNIL.Loader.GetLoader(name)
     return GNIL.Loader["_loaders"][name]
 end
 
--- Load a directory of files into a table. Each key will be the 
--- filename without extension (uppercase first if argument set).
--- The value is the return value of the file. (could be nil!)
-function GNIL.Loader.DirectoryMap(directory_path, key_uppercase_first, extension, force_realm)
+--[[
+
+    Load a directory of files into a table. Each key will be the 
+    filename without extension (uppercase first if argument set).
+    The value is the return value of the file. (could be nil!)
+
+    sh_pet.lua -> PetClass
+    sh_dog.lua -> DogClass
+
+    ={
+        pet = PetClass,
+        dog = DogClass
+    }
+
+--]]
+function GNIL.Loader.DirectoryFilenameMap(directory_path, key_uppercase_first, force_realm)
 
     -- Map file return values to cleaned filename.
     local out = {}
 
     -- Allow files to be overridden.
-    local files, _ = file.Find(directory_path .. "/*." .. (extension or "lua"), "LUA")
+    local files, _ = file.Find(directory_path .. "/*.lua", "LUA")
     if files == nil then return nil end
     for _, f in ipairs(files) do
         if not force_realm and not GNIL.Utils.IsFilenameForCurrentRealm(f) then
@@ -79,6 +91,51 @@ function GNIL.Loader.DirectoryMap(directory_path, key_uppercase_first, extension
         local rtrn = GNIL.Utils.Include(directory_path .. "/" .. f, force_realm)
         if rtrn != nil then
             out[key_uppercase_first && ucfirst(name) || name] = rtrn
+        end
+    end
+    return out
+end
+
+--[[
+
+    Load a directory of files, each returning a table of names to
+    values (these can be classes or whatever). Instead of the name
+    coming from the filename, it is instead from the table key value.
+
+    ** EACH RETURN VALUE MUST BE NIL OR TABLE **
+
+    sh_pet.lua -> { Pet = PetClass }
+    sh_dog.lua -> { Dog = DogClass }
+
+    ={
+        Pet = PetClass,
+        Dog = DogClass
+    }
+
+--]]
+function GNIL.Loader.DirectoryMap(directory_path, callback, force_realm)
+    assert(callback == nil or isfunction(callback), "If a callback is provided, it must be a function.")
+
+    local out = {}
+
+    local files, _ = file.Find(directory_path .. "/*." .. (extension or "lua"), "LUA")
+    if files == nil then return nil end
+    for _, f in ipairs(files) do
+        if not force_realm and not GNIL.Utils.IsFilenameForCurrentRealm(f) then
+            continue
+        end
+
+        local rtrn = GNIL.Utils.Include(directory_path .. "/" .. f, force_realm)
+        if rtrn == nil then continue end
+        assert(istable(rtrn), "File '" .. f .. "' must return nil or a table")
+        
+        for k, v in pairs(rtrn) do
+            out[k] = v
+
+            -- If there is a callback, run it. This allows for the class to
+            -- be stored in a global table to be used in the next (where needed).
+            -- Basically any case where you can't wait till the end to get the values.
+            if callback then callback(k, v, f) end
         end
     end
     return out
@@ -95,7 +152,8 @@ end
 
 -- Prevent reloading on luarefresh (although for dev
 -- environment everything is always reloaded).
-if not GNIL.Loader["_init"] then
+function GNIL.Loader.LoadBase()
+    if GNIL.Loader["_init"] then return end
     GNIL.log("Starting to load Thirdparty, Classes and other loaders.", "debug")
 
     -- Load the other loaders (entity, material).
@@ -103,9 +161,11 @@ if not GNIL.Loader["_init"] then
     for k, _ in pairs(GNIL.Loader["_loaders"]) do GNIL.log("Registered loader handler '" .. k .. "'.", "debug") end
 
     -- Load thirdparty and classes directories.
-    GNIL.Integrations   = GNIL.Loader.DirectoryMap(GNIL.Utils.ResolveGamemodePath("core/integrations"))
-    GNIL.Thirdparty     = GNIL.Loader.DirectoryMap(GNIL.Utils.ResolveGamemodePath("core/thirdparty"))
-    GNIL.ClassMixins    = GNIL.Loader.DirectoryMap(GNIL.Utils.ResolveGamemodePath("core/classes/mixins"), true)
-    GNIL.Classes        = GNIL.Loader.DirectoryMap(GNIL.Utils.ResolveGamemodePath("core/classes"), true)
+    GNIL.Integrations   = GNIL.Loader.DirectoryFilenameMap(GNIL.Utils.ResolveGamemodePath("core/integrations"))
+    GNIL.Thirdparty     = GNIL.Loader.DirectoryFilenameMap(GNIL.Utils.ResolveGamemodePath("core/thirdparty"))
+    GNIL.ClassMixins    = GNIL.Loader.DirectoryFilenameMap(GNIL.Utils.ResolveGamemodePath("core/classes/mixins"), true)
+    GNIL.Classes        = GNIL.Loader.DirectoryFilenameMap(GNIL.Utils.ResolveGamemodePath("core/classes"), true)
+
+    -- Prevent this function from being called again.
+    GNIL.Loader["_init"] = true
 end
-GNIL.Loader["_init"] = true
