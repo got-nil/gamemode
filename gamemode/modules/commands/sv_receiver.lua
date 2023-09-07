@@ -1,3 +1,4 @@
+local MODULE = MODULE
 GNIL.Commands.Receiver = {}
 
 -- The server concommand handler! (Does not support autocomplete etc).
@@ -21,7 +22,7 @@ concommand.Add(
 
             -- If there are no commands, show a little message.
             if #table.GetKeys(server_cmds) == 0 then
-                GNIL.log("There are no commands found (or no commands that the server has access to).", "warning")
+                MODULE:log("There are no commands found (or no commands that the server has access to).", "warning")
                 return
             end
 
@@ -53,7 +54,7 @@ function GNIL.Commands.Receiver.Execute(argstr, ply)
     -- provided, or just the default log function for server executions.)
     local rlog = function(...)
         if ply then return ply:log(...)
-        else return GNIL.log(...) end
+        else return MODULE:log(...) end
     end
 
     -- Parse the raw argument string into its individual parts.
