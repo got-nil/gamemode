@@ -2,7 +2,7 @@ return {
     groupName = "Events Mixin",
 
     beforeEach = function(state)
-        state.Class = GNIL.Thirdparty.middleclass("TestClass"):Include(GNIL.ClassMixins.Events)
+        state.Class = GNIL.Thirdparty.middleclass("TestClass"):IncludeMixin(GNIL.ClassMixins.Events)
     end,
 
     cases = {

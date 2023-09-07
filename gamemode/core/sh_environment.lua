@@ -6,6 +6,7 @@ local env_options = {
     ["DEV"] = false,            -- Catch all development flag, used for non-specific cases.
     ["LOADER_RESET"] = false,   -- Should gamemode loaders be reset on lua refresh.
     ["DARKRP_REFRESH"] = false, -- Should DarkRP be lua refreshed?
+    ["GLUATEST"] = true,        -- Should the GLuaTest integration be enabled?
 
     -- Luadev access.
     ["LUADEV_ALLOWED"] = true,  -- Can luadev be used by developers? (default to true since the addon has to be installed).
@@ -24,16 +25,30 @@ end
 
 -- Preset environments.
 local env_presets = {
+
+    -- If you wanna reload modules manually (which you should).
     ["dev"] = {
+        ["DEV"] = true
+    },
+
+    -- Working "live" allowing lua refreshes to reload all modules.
+    ["dev-live"] = {
         ["DEV"] = true,
         ["LOADER_RESET"] = true,
         ["MODULES_RESET"] = true,
         ["LUA_REFRESH"] = true,
-        ["REFRESH_ALL_MODULES"] = true
+        ["REFRESH_ALL_MODULES"] = true,
+        ["GLUATEST"] = false
     },
+
+    -- For the working server. (The one that hopefully has players on it)
     ["prod"] = {
-        ["LUADEV_SNITCH"] = true
+        ["LUADEV_SNITCH"] = true,
+        ["GLUATEST"] = false
     },
+
+    ------------------------------------------------------------------------
+    -- CUSTOM PRESETS
 
     -- Development preset for working on the gamemode core.
     ["core-dev"] = {

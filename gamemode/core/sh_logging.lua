@@ -18,7 +18,7 @@ function GNIL.Logging.Log(log, logtype, prefix)
     -- If the provided input is a table, and the pretty_table thirdparty
     -- utility is loaded then we should use that to print it. (Also ensure
     -- that the thirdparty utility actually exists). 
-    if istable(log) and GNIL.Thirdparty and GNIL.Thirdparty.pretty_table then
+    if istable(log) and SafeTableAccess(GNIL, "Thirdparty", "pretty_table") != nil then
         GNIL.Thirdparty.pretty_table(log)
         return
     end

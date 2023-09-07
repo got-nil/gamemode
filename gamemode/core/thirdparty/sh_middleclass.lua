@@ -1,6 +1,17 @@
 -- https://github.com/kikito/middleclass
 -- Used to create object oriented classes.
 
+
+--[[
+
+    Method changes:
+        initialize -> Initialize
+        Include -> IncludeMixin
+    
+    - morgverd
+
+--]]
+
 local middleclass = {
     _VERSION = 'middleclass v4.1.1',
     _DESCRIPTION = 'Object Orientation for Lua',
@@ -191,7 +202,7 @@ local DefaultMixin = {
                        (self.super == other or self.super:IsSubclassOf(other))
         end,
 
-        Include = function(self, ...)
+        IncludeMixin = function(self, ...)
             assert(type(self) == 'table', "Make sure you that you are using 'Class:Include' instead of 'Class.Include'")
             for _, mixin in ipairs({...}) do
                 _includeMixin(self, mixin)

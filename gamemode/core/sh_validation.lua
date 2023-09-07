@@ -10,8 +10,12 @@ These look like:
     ...
 }
 
+Validator function returns:
+    bool - Is the value accepted?
+    str - Reason for rejection if first arg is false.
+
 default - The default value that should be used if the key is ommitted in the provided table.
-validator - Either a table of values that should be accepted, or a TYPE enum to validate against value.
+validator - Either a table of values that should be accepted, or a TYPE enum to validate against value, or validator function.
 required? - Optional, is the key required in the provided table? (Default: false)
 
 */
@@ -26,14 +30,20 @@ function GNIL.Validation.Structure(provided, structure)
                 return false, "Missing required key " .. k
             end
             provided[k] = v[1]
-        end
-        if istable(v[2]) then
-            if not table.HasValue(v[2], provided[k]) then
-                return false, "Required key '" .. k .. "' is not in accepted values"
-            end
         else
-            if provided[k] != v[1] and isnumber(v[2]) and TypeID(provided[k]) != v[2] then
-                return false, "Required key '" .. k .. "' is an invalid type: " .. type(provided[k])
+            if istable(v[2]) then
+                if not table.HasValue(v[2], provided[k]) then
+                    return false, "Required key '" .. k .. "' is not in accepted values"
+                end
+            elseif isfunction(v[2]) then
+                local success, err = v[2](provided[k])
+                if not success then
+                    return false, Either(isstring(err), err, "Key '" .. k .. "' was rejected by validator callback without reason")
+                end
+            else
+                if provided[k] != v[1] and isnumber(v[2]) and TypeID(provided[k]) != v[2] then
+                    return false, "Key '" .. k .. "' is an invalid type: " .. type(provided[k])
+                end
             end
         end
     end

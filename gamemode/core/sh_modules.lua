@@ -5,6 +5,13 @@ GNIL.Modules = GNIL.Modules or {
     ["_cached_modules"] = {}
 }
 
+local function EmitModuleEvent(eventName, moduleInstance)
+    return not (
+        moduleInstance:EmitEvent(eventName, moduleInstance) == false or
+        hook.Run("GNIL.Modules." .. eventName, tostring(moduleInstance), moduleInstance) == false
+    )
+end
+
 -- A helper function for the shared gamemode file to use when loading
 -- all modules at once. It constantly checks to ensure that the module
 -- isnt loaded incase of dependency loading.
@@ -120,14 +127,9 @@ function GNIL.Modules._Initialize(name, _dependency_chain, _reload, _returnLastM
             return false, nil, nil
         end
 
-        -- Call the module hook before anything.
-        if moduleInstance:EmitEvent("Init", moduleInstance) == false then
-            moduleInstance:log("Module refused to initialize.", "warning")
-        end
-
-        -- Allow for other utilities etc to process the init file output.
-        if hook.Run("GNIL.Modules.Init", name, moduleInstance) == false then
-            moduleInstance:log("Module load was prevented by init hook.", "debug")
+        -- Allow the module load to be stopped in Init, before dependencies.
+        if not EmitModuleEvent("Init", moduleInstance) then
+            moduleInstance:log("Module load was prevented by init.", "debug")
             restoreModuleFn()
             return false, nil, nil
         end
@@ -174,11 +176,11 @@ function GNIL.Modules.Load(name, _dependency_chain, _reload)
     -- Initialize the module to get the moduleInstance ready to be loaded.
     -- The MODULE const is kept as the loading module until the end.
     local initialized, moduleInstance, restoreModuleFn = GNIL.Modules._Initialize(name, _dependency_chain, _reload, true)
-    if not initialized then restoreModuleFn() return false end
+    if not initialized then return false end
 
     -- Include the rest of the module directory without any of the init files.
     -- Also call OnLoad hook, allowing a final chance to reject a load.
-    if moduleInstance:EmitEvent("Load", moduleInstance) == false or hook.Run("GNIL.Modules.Load", moduleInstance) == false then
+    if not EmitModuleEvent("Load", moduleInstance) then
         moduleInstance:log("Module refused to load.", "warning")
         restoreModuleFn()
         return false
