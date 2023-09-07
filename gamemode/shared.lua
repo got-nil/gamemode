@@ -102,10 +102,14 @@ if not GNIL._LOADED or GNIL.ENV.REFRESH_CORE then
         include(path)
     end
 
-    -- Include all base files and other files within the core directory.
-    -- We also exclude the requiredSharedUtilities from being re-loaded
-    -- as they are included seperately above.
+    -- Include core base directory before anything else, these contain core
+    -- functions used by anything/everything else. Once the base directory
+    -- has been loaded, load the Thirdparty, Classes and Integrations before
+    -- also Initializing the configuration files (so the core can use configs).
     GNIL.Utils.IncludeDirectory(GNIL.Utils.ResolveGamemodePath("core/base"))
+    GNIL.Loader.LoadBase() GNIL.Config.LoadAll()
+
+    -- Include the rest of the core.
     GNIL.Utils.IncludeDirectory(GNIL.Utils.ResolveGamemodePath("core"), requiredSharedUtilities)
 end
 

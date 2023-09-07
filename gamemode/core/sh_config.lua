@@ -78,7 +78,8 @@ end
 -- Load any full config files. On the server this is all files,
 -- whereas on the client this is shared/client config files.
 -- Server config files with shared attributes are sent seperately.
-if not GNIL.Config["_loaded"] then
+function GNIL.Config.LoadAll()
+    if GNIL.Config["_loaded"] then return end
     local files, _ = file.Find(GNIL.Utils.ResolveGamemodePath("config") .. "/*.lua", "LUA")
     for _, v in ipairs(files) do
         local success, conf = GNIL.Config.Load(v)
@@ -86,7 +87,6 @@ if not GNIL.Config["_loaded"] then
             GNIL.log("Successfully loaded config file '" .. conf.name .. "'!", "debug")
         end
     end
-
     GNIL.Config["_loaded"] = true
 end
 
