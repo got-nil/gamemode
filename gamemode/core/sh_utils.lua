@@ -1,5 +1,6 @@
 GNIL.Utils = GNIL.Utils or {
-    ["blacklisted_files"] = {}
+    ["blacklisted_files"] = {},
+    ["_loaded_dlls"] = {}
 }
 
 -- Filename realm aliaes, these are used by default
@@ -108,6 +109,7 @@ end
 -- realm prefix (optional, default: true) Makes using filenames as ids
 -- relatively simple. 
 function GNIL.Utils.GetCleanFilename(filename, extension, includeRealmPrefix)
+    if not extension then extension = "lua" end
     if not string.StartWith(extension, ".") then extension = "." .. extension end
     local filename = string.Left(filename, #filename - #extension)
     if not includeRealmPrefix and GNIL.Utils.GetFilepathRealmPrefix(filename) != nil then
@@ -223,8 +225,43 @@ end
 -- Check if a lua bin module is installed.
 local suffix = ({"osx64", "osx", "linux64", "linux", "win64", "win32"})[(system.IsWindows() and 4 or 0) + (system.IsLinux() and 2 or 0) + (jit.arch == "x86" and 1 or 0) + 1]
 local fmt = "lua/bin/gm" .. (CLIENT and "cl" or "sv") .. "_%s_%s.dll"
-function GNIL.Utils.IsInstalled(name)
-    if file.Exists(string.format(fmt, name, suffix), "GAME") then return true end
-    if jit.versionnum != 20004 and jit.arch == "x86" and system.IsLinux() then return file.Exists(string.format(fmt, name, "linux32"), "GAME") end
-    return false
+function GNIL.Utils.GetDLLFilepath(name)
+    name = string.lower(name)
+    if jit.versionnum != 20004 and jit.arch == "x86" and system.IsLinux() and file.Exists(string.format(fmt, name, "linux32"), "GAME") then
+        return string.format(fmt, name, "linux32")
+    end
+    return string.format(fmt, name, suffix)
+end
+
+-- Check if a DLL is installed or already included.
+function GNIL.Utils.IsDLLInstalled(name) return file.Exists(GNIL.Utils.GetDLLFilepath(name), "GAME") end
+function GNIL.Utils.IsDLLIncluded(name) return GNIL.Utils["_loaded_dlls"][string.lower(name)] == true end
+
+-- Require a DLL. This ensures that the module actually exists,
+-- and will not allow modules that have already been included to
+-- be loaded twice. Can also verify that global const exists.
+function GNIL.Utils.RequireDLL(name, const)
+
+    -- If the DLL is already included, return early.
+    if GNIL.Utils.IsDLLIncluded(name) then
+        if const then return _G[const] != nil, "Global '" .. const .. "' does not exist, despite the module already being included." end
+        return true, nil
+    end
+    
+    -- Get the target module filepath. If it doesn't exist,
+    -- return a failure state + error message.
+    local filepath = GNIL.Utils.GetDLLFilepath(name)
+    if not file.Exists(filepath, "GAME") then
+        local _, filename = GNIL.Utils.SplitPath(filepath)
+        return false, "Module '" .. name .. "' (" .. filename .. ") does not exist."
+    end
+
+    -- Actually require/load the DLL. This is done in a pcall
+    -- just incase (prevent ugly errors for broken modules).
+    local success, _ = pcall(require, name)
+    if not success then return false, "Could not require module " .. name end
+
+    GNIL.Utils["_loaded_dlls"][string.lower(name)] = true
+    if const then return _G[const] != nil, "Global '" .. const .. "' does not exist after requiring module." end
+    return true, nil
 end
