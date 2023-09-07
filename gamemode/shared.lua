@@ -41,8 +41,8 @@ GNIL = GNIL or {
 -- If using table, each env setting must be full caps as key. The 'preset' can be
 -- used to inherit an environment preset, with the additional settings being overrides.
 GNIL._ENVIRONMENT = {
-    preset = "core-dev",
-    ["REFRESH_MODULES"] = {"test"}
+    preset = "dev",
+    GLUATEST = false
 }
 
 --------------------------------------------------------------------------------------------
@@ -78,7 +78,7 @@ end
 if GNIL._LOADED then
     if (GNIL.ENV == nil or not GNIL.ENV.LUA_REFRESH) then
         hook.Run("GNIL.LuaRefreshBlocked")
-        GNIL._safeLog("Lua refresh blocked due to environment settings.", "warning")
+        GNIL._safeLog("Lua refresh blocked due to environment settings.", "debug")
         return
     end
     GNIL._safeLog("Lua refreshing gamemode!", "warning")
@@ -102,9 +102,10 @@ if not GNIL._LOADED or GNIL.ENV.REFRESH_CORE then
         include(path)
     end
 
-    -- Include all other files within the core directory. We also exclude
-    -- the requiredSharedUtilities from being re-loaded as they are included
-    -- seperately above.
+    -- Include all base files and other files within the core directory.
+    -- We also exclude the requiredSharedUtilities from being re-loaded
+    -- as they are included seperately above.
+    GNIL.Utils.IncludeDirectory(GNIL.Utils.ResolveGamemodePath("core/base"))
     GNIL.Utils.IncludeDirectory(GNIL.Utils.ResolveGamemodePath("core"), requiredSharedUtilities)
 end
 
