@@ -96,3 +96,15 @@ end
 
 net.Receive("gnil", recieveMessage)
 if SERVER then GNIL.Net._Receiver = recieveMessage end
+
+------------------------------------------------
+
+-- 30/08/2023: net.WriteUInt64 added to main branch.
+-- When the update rolls around, this can be removed.
+
+if net["WriteUInt64"] == nil then
+    
+    net.WriteUInt64 = net.WriteString
+    net.ReadUInt64 = net.ReadString
+
+end

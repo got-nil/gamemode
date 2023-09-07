@@ -2,7 +2,7 @@
 -- Basically just a writer with some additional functionality.
 -- Uses the writeable mixin instead of subclassing Message since
 -- a bunch of functions had to be overriden/removed from parent.
-local NetworkReply = GNIL.Thirdparty.middleclass("NetworkReply"):Include(GNIL.Net.Classes.WriteableMixin)
+local NetworkReply = GNIL.Thirdparty.middleclass("NetworkReply"):IncludeMixin(GNIL.Net.Classes.WriteableMixin)
 
 -- Initialize the message without a name since it will not
 -- be sent directly anyway.

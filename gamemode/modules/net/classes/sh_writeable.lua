@@ -47,5 +47,6 @@ return {
     WriteType =     function(self, ...) return self:_WriteToBuffer({...}, "Type")   end,
     WriteUInt =     function(self, ...) return self:_WriteToBuffer({...}, "UInt")   end,
     WriteVector =   function(self, ...) return self:_WriteToBuffer({...}, "Vector") end,
+    WriteUInt64 =   function(self, ...) return self:_WriteToBuffer({...}, "UInt64") end
 
 }

@@ -54,7 +54,7 @@ local function createBuffer(is_read, write_buffer)
     if is_read then
         return GNIL.Net.Classes.Readable:New(write_buffer)
     else
-        return GNIL.Thirdparty.middleclass("WriteBuffer"):Include(GNIL.Net.Classes.WriteableMixin)
+        return GNIL.Thirdparty.middleclass("WriteBuffer"):IncludeMixin(GNIL.Net.Classes.WriteableMixin)
     end
 end
 

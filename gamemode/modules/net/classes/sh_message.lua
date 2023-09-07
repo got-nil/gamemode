@@ -5,7 +5,7 @@ local MODULE = MODULE
 -- The NetworkMessage is an OOP interface for writing network data
 -- to a write buffer instead of directly to the write stream. This
 -- allows for messages to be queued etc.
-local NetworkMessage = GNIL.Thirdparty.middleclass("NetworkMessage"):Include(GNIL.Net.Classes.WriteableMixin)
+local NetworkMessage = GNIL.Thirdparty.middleclass("NetworkMessage"):IncludeMixin(GNIL.Net.Classes.WriteableMixin)
 function NetworkMessage:Initialize(name, _debug)
     self.name = name
     self.unreliable = false
