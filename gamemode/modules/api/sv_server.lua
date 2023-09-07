@@ -12,7 +12,7 @@ function Server:__tostring() return self._name end
 
 function Server:Connect(callback)
     if self._ws:IsConnected() then return false end
-    self._ws[callback == nil && "Open" || "OpenCallback"](self._ws, callback)
+    self._ws:Open(callback)
 end
 
 -- Alias to router call, returns response.

@@ -1,13 +1,24 @@
 
-local MODULE, Websocket = MODULE, GNIL.Thirdparty.middleclass("Websocket")
+local MODULE, Websocket = MODULE, GNIL.Thirdparty.middleclass("APIWebsocket", GNIL.Classes.Websocket)
+
+-- Now uses base websocket class as super to inherit
+-- auto-reconnect system + better interface.
 
 function Websocket:Initialize(server)
     self._server = server
-    self._connected = false
-    self._socket = false
-
-    self._connect_callbacks = {}
     self._request_partials = {}
+
+    -- Initialize base websocket connection.
+    local conf = MODULE:Config()
+    GNIL.Classes.Websocket.Initialize(
+        self,
+        conf:Get("ws_host"),
+        conf:Get("ws_verify_cert", true)    
+    )
+
+    -- Set connection headers.
+    self:SetHeader("GNIL-S", self._server._name)
+    self:SetHeader("GNIL-T", conf:Get("ws_token"))
 end
 
 local operations = {
@@ -51,24 +62,24 @@ local operations = {
             end
 
             -- Send constructed response.
-            ws:_WriteResponse(header["i"], response)
+            ws:WriteResponse(header["i"], response)
             response_sent = true
         end)
     end
 }
 
 -- Write provided operation to socket.
-function Websocket:_WriteOperation(name, data)
+function Websocket:WriteOperation(name, data)
     data["o"] = name
-    self._socket:write("#" .. util.TableToJSON(data))
+    self:Write("#" .. util.TableToJSON(data))
 end
 
 -- Write response operation header + body to socket.
-function Websocket:_WriteResponse(request_id, response)    
+function Websocket:WriteResponse(request_id, response)    
     local data = response:ToTable()
     
     -- Send response operation (header).
-    self:_WriteOperation("response", {
+    self:WriteOperation("response", {
         s = data.status,
         l = #data.body,
         h = data.headers,
@@ -84,19 +95,19 @@ function Websocket:_WriteResponse(request_id, response)
         local body = Either(b64_encoded, util.Base64Encode(data.body), data.body)
 
         -- Send the body message.
-        self._socket:write("@" .. (b64_encoded && "1" || "0") .. request_id .. body)
+        self:Write("@" .. (b64_encoded && "1" || "0") .. request_id .. body)
     end
 end
 
--- Connection state.
-function Websocket:IsConnected() return self._connected end
-function Websocket:_OnConnected() self:_Callback(true) end
-function Websocket:_OnDisconnected() self:_Callback(false) end
+-- Connection states.
+function Websocket:OnConnected() self:ConnectionStateChange(true, true) end
+function Websocket:OnDisconnected() self:ConnectionStateChange(false, true) end
 
-function Websocket:_OnError(err)
+function Websocket:OnError(err)
     MODULE:log("Server '" .. self._server._name .. "' websocket error: " .. err, "error")
 end
-function Websocket:_OnMessage(msg)
+
+function Websocket:OnMessage(msg)
 
     -- Get the message type (# operation, @ body).
     local message_type = string.sub(msg, 1, 1)
@@ -141,59 +152,9 @@ function Websocket:_OnMessage(msg)
     end
 end
 
--- Open the websocket connection, calling the provided callback
--- when connected or on error (connection status).
-function Websocket:OpenCallback(callback)
-    assert(isfunction(callback), "Provided callback must be a function.")
-
-    -- If already connected, call as-if we've just connected.
-    if self._connected then
-        return callback(true)
-    end
-
-    table.insert(self._connect_callbacks, callback)
-    self:Open()
-end
-
 -- Call all queued callbacks with state and then clear.
-function Websocket:_Callback(state)
+function Websocket:ConnectionStateChange(state, log)
     MODULE:log("Websocket state '" .. self._server._name .. "': " .. (state && "Connected" || "Disconnected"), "debug")
-    for _, v in ipairs(self._connect_callbacks) do
-        v(state)
-    end
-    self._connected = state
-    self._connect_callbacks = {}
-end
-
--- Open websocket connection.
-function Websocket:Open()
-
-    -- Prevent double connection attempts.
-    if self._connected then
-        MODULE:log("Cannot open server '" .. self._server._name .. "' connection as it's already open!", "warning")
-        return
-    end
-
-    local conf = MODULE:Config()
-    local socket = GWSockets.createWebSocket(
-        conf:Get("ws_host"),
-        conf:Get("ws_verify_cert", true)
-    )
-
-    -- Set server identifier and authorization token.
-    socket:setHeader("GNIL-S", self._server._name)
-    socket:setHeader("GNIL-T", conf:Get("ws_token"))
-
-    -- Set callbacks (drop socket self reference as its stored).
-    socket.onError = function(_, ...) return self:_OnError(...) end
-    socket.onMessage = function(_, ...) return self:_OnMessage(...) end
-    socket.onConnected = function(_, ...) return self:_OnConnected(...) end
-    socket.onDisconnected = function(_, ...) return self:_OnDisconnected(...) end
-
-    -- Open the socket connection.
-    MODULE:log("Opening websocket connection for server '" .. self._server._name .. "'.", "debug")
-    self._socket = socket
-    self._socket:open()
 end
 
 GNIL.API.Websocket = Websocket

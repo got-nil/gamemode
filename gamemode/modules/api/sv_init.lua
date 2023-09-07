@@ -9,27 +9,6 @@ MODULE.tests = true
 -- Handle module fileloading manually to preserve load-order.
 MODULE:SetAutoload(false)
 
--- Ensure the required 'gwsockets' module is present and loaded.
-if SERVER then
-    local failure = false
-    if not GNIL.Utils.IsInstalled("gwsockets") then
-        MODULE:log("Missing required bin module 'gwsockets'.", "error")
-        failure = true
-    end
-    if not pcall(require, "gwsockets") or GWSockets == nil then
-        MODULE:log("Could not load required bin module 'gwsockets'.", "error")
-        failure = true
-    end
-
-    -- If the sockets module was not loaded, disable the module
-    -- as the websocket connection is required (handled by upstream)
-    if failure then
-        MODULE:SetDisabled(true)
-        MODULE:log("Disabled due to failures with gwsockets.", "error")
-        return
-    end
-end
-
 GNIL.API = GNIL.API or {
     
     -- This is the global server instance that is used as
@@ -37,6 +16,16 @@ GNIL.API = GNIL.API or {
     -- router methods. 
     _GLOBAL_SERVER = nil
 }
+
+MODULE.OnInit = function()
+
+    -- Require the gwsockets module.
+    local success, errorMessage = GNIL.Utils.RequireDLL("gwsockets", "GWSockets")
+    if not success then
+        MODULE:log("Failed to load gwsockets with error: " .. errorMessage)
+        return false
+    end
+end
 
 -- Module load start before any other files are included.
 MODULE.OnLoad = function()
