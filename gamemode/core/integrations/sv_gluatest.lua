@@ -2,6 +2,13 @@
 
 hook.Add("GLuaTest_RunTestFiles", "GNIL.GLuaTest.AddTests", function(testFiles)
 
+    -- If GLuaTest is disabled, stop the tests from running
+    -- by emptying any collected test case files.
+    if not GNIL.ENV.GLUATEST then
+        GNIL.log("GLuaTest disabled by environment variable, removing test cases.", "warning")
+        return table.Empty(testFiles)
+    end
+
     -- Add tests from modules.
     for _, v in ipairs(GNIL.Modules.FindAll()) do
         if not v.tests then continue end
