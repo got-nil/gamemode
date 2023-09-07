@@ -25,7 +25,7 @@ function APIExtension:Initialize(moduleInstance)
 end
 
 -- When being loaded or unloaded, clear all routes.
-function APIExtension:OnUnload() GNIL.log("APIExtension UNLOAD") self:RemoveAllRoutes() end
+function APIExtension:OnUnload() self:RemoveAllRoutes() end
 
 ------------------------------------------------------------------------------
 -- Route prefixes setter/getter.

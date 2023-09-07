@@ -51,7 +51,7 @@ MODULE.OnLoad = function()
 
     -- Load any remaining core utilities.
     MODULE:IncludeDirectory("utils", ignoredUtilities)
-    MODULE:Include("sh_extension.lua")
+    MODULE:Include("sv_extension.lua")
 end
 
 -- When the module files have been fully loaded.
