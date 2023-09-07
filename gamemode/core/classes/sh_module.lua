@@ -1,7 +1,7 @@
 -- Handle the loading and management of modules. All modules should be
 -- designed with reloading in mind, using OnLoad, OnUnload or OnReinitialize.
 
-local Module = GNIL.Thirdparty.middleclass("Module"):Include(GNIL.ClassMixins.Events)
+local Module = GNIL.Thirdparty.middleclass("Module"):IncludeMixin(GNIL.ClassMixins.Events)
 function Module:Initialize(name, _emit_signal)
     if _emit_signal != false then
         self:EmitSignal(self._initialized && "Reinitialize" || "Initialize", self)
@@ -403,12 +403,10 @@ function Module:OnUnload() end        -- 4. Called when the module is being unlo
 
 -- Additional module hooks.
 function Module:IsConfigRequired() end -- If a config is set, is it required? Default: true.                [true=(Module is disabled if config missing)]
+function Module:__tostring() return self._module_name end
 
--- Middleclass allows us to directly overwrite the default tostring handler,
--- allowing us to insert the module name and author if one is defined.
-function Module:__tostring()
-    return "Module " .. self._module_name .. " by " .. self.author
-end
-
+-- Aliases
+Module.RequireModule = Module.Require
+Module.RequireModules = Module.Requires
 
 return Module

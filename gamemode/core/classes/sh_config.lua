@@ -17,6 +17,11 @@ function Config:Setup()
     return self
 end
 
+-- Call a validation structure directly on the raw config.
+function Config:Validate(structure)
+    return GNIL.Validation.Structure(self.struct.config, structure)
+end
+
 -- Return the raw config data instead of using Get.
 function Config:ToTable()
     return self.struct.config
