@@ -1,4 +1,3 @@
-hook.Run("DarkRPStartedLoading")
 
 DeriveGamemode("darkrp")
 DEFINE_BASECLASS("gamemode_darkrp")
