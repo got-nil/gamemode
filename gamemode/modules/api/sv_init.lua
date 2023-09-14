@@ -3,7 +3,7 @@ local MODULE = MODULE
 MODULE.name = "API"
 MODULE.description = "Provides a HTTP interface for external data access."
 MODULE.author = "morgverd"
-MODULE.config = "api"
+MODULE.config = true
 MODULE.tests = true
 
 -- Handle module fileloading manually to preserve load-order.
@@ -22,7 +22,7 @@ MODULE.OnInit = function()
     -- Require the gwsockets module.
     local success, errorMessage = GNIL.Utils.RequireDLL("gwsockets", "GWSockets")
     if not success then
-        MODULE:log("Failed to load gwsockets with error: " .. errorMessage)
+        MODULE:log("Failed to load gwsockets with error: " .. errorMessage, "error")
         return false
     end
 end
