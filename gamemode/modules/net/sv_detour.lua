@@ -1,5 +1,5 @@
 
-local internal_messages = {}
+local MODULE, internal_messages = MODULE, {}
 for _, v in ipairs(GNIL.Net["_netstrings"]) do
     internal_messages[v] = true
 end
@@ -36,7 +36,10 @@ net.Incoming = function(len, ply)
     -- Allow the server to block all incomming messages. This is
     -- used mainly to prevent receiving messages during a test.
     -- Only here as a sanity check, tests should not be ran live.
-    if not GNIL.Net["_receive"] then return end
+    if not GNIL.Net["_receive"] then
+        MODULE:log("Message from " .. Either(ply, ply:ToString(), "'No Player'") .. " was rejected as receiver is disabled.", "warning")
+        return
+    end
 
     -- Find associated reciever.
     local reciever = net.Receivers[messageName:lower()]

@@ -47,7 +47,8 @@ local Types = {
     "Table",
     "Type",
     "UInt",
-    "Vector"
+    "Vector",
+    "UInt64"
 }
 
 local function createBuffer(is_read, write_buffer)
