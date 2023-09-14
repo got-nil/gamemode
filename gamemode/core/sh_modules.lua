@@ -7,6 +7,7 @@ GNIL.Modules = GNIL.Modules or {
 
 local function EmitModuleEvent(eventName, moduleInstance)
     return not (
+        hook.Run("GNIL.Modules.Pre" .. eventName, tostring(moduleInstance), moduleInstance) == false or
         moduleInstance:EmitEvent(eventName, moduleInstance) == false or
         hook.Run("GNIL.Modules." .. eventName, tostring(moduleInstance), moduleInstance) == false
     )
