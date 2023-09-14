@@ -16,9 +16,9 @@ local function finish(deferred, state)
 	state = state or REJECTED
 	for i, f in ipairs(deferred.queue) do
 		if state == RESOLVED then
-			f:resolve(deferred.value)
+			f:Resolve(deferred.value)
 		else
-			f:reject(deferred.value)
+			f:Reject(deferred.value)
 		end
 	end
 	deferred.state = state
@@ -114,11 +114,11 @@ end
 --
 -- PUBLIC API
 --
-function deferred:resolve(value)
+function deferred:Resolve(value)
 	return resolve(self, RESOLVING, value)
 end
 
-function deferred:reject(value)
+function deferred:Reject(value)
 	return resolve(self, REJECTING, value)
 end
 
@@ -127,19 +127,19 @@ function M.new(options)
 		local d = M.new()
 		local ok, err = pcall(options, d)
 		if not ok then
-			d:reject(err)
+			d:Reject(err)
 		end
 		return d
 	end
 	options = options or {}
 	local d
 	d = {
-		next = function(self, success, failure)
+		Next = function(self, success, failure)
 			local next = M.new({success = success, failure = failure, extend = options.extend})
 			if d.state == RESOLVED then
-				next:resolve(d.value)
+				Next:Resolve(d.value)
 			elseif d.state == REJECTED then
-				next:reject(d.value)
+				Next:Reject(d.value)
 			else
 				table.insert(d.queue, next)
 			end
@@ -160,7 +160,7 @@ end
 function M.all(args)
 	local d = M.new()
 	if #args == 0 then
-		return d:resolve({})
+		return d:Resolve({})
 	end
 	local method = "resolve"
 	local pending = #args
@@ -181,7 +181,7 @@ function M.all(args)
 	end
 
 	for i = 1, pending do
-		args[i]:next(synchronizer(i, true), synchronizer(i, false))
+		args[i]:Next(synchronizer(i, true), synchronizer(i, false))
 	end
 	return d
 end
@@ -191,13 +191,13 @@ function M.map(args, fn)
 	local results = {}
 	local function donext(i)
 		if i > #args then
-			d:resolve(results)
+			d:Resolve(results)
 		else
-			fn(args[i]):next(function(res)
+			fn(args[i]):Next(function(res)
 				table.insert(results, res)
 				donext(i+1)
 			end, function(err)
-				d:reject(err)
+				d:Reject(err)
 			end)
 		end
 	end
@@ -208,10 +208,10 @@ end
 function M.first(args)
 	local d = M.new()
 	for _, v in ipairs(args) do
-		v:next(function(res)
-			d:resolve(res)
+		v:Next(function(res)
+			d:Resolve(res)
 		end, function(err)
-			d:reject(err)
+			d:Reject(err)
 		end)
 	end
 	return d
