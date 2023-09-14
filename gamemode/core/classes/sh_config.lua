@@ -1,10 +1,10 @@
 -- Used to contain each gamemode config file.
 
 local Config = GNIL.Thirdparty.middleclass("Config")
-function Config:Initialize(name, struct)
+function Config:Initialize(name, struct, filepath)
     self.name = name
     self.struct = struct
-    self.filepath = GNIL.Utils.ResolveGamemodePath("config/" .. name .. ".lua")
+    self.filepath = filepath or GNIL.Utils.ResolveGamemodePath("config/" .. name .. ".lua")
 end
 
 function Config:Setup()

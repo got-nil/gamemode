@@ -73,8 +73,9 @@ function Module:IsLoaded() return GNIL.Modules.IsLoaded(self._module_name) end
 function Module:Load() return GNIL.Modules.Load(self._module_name) end
 function Module:Unload() return GNIL.Modules.Unload(self._module_name) end
 
--- Get module config, set from config attribute.
-function Module:Config() return GNIL.Config.Get(self.config) end
+-- Get module config, set from config attribute. Either use the local
+-- module config name or a public/global one. (A little confusing I know).
+function Module:Config() return GNIL.Config.Get(Either(self.config == true, "M_" .. self:__tostring(), self.config)) end
 
 -- A functional way to set the autoload if you want to be fancy.
 -- (Although you could just change the class var directly)
