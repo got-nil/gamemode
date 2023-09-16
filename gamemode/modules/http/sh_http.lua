@@ -14,7 +14,7 @@ if SERVER then
         
     -- Support both reqwest and CHTTP. (Prefer reqwest).
     for possible_driver, const in pairs({["reqwest"] = "reqwest", ["chttp"] = "CHTTP"}) do
-        if GNIL.Utils.IsInstalled(possible_driver) then
+        if GNIL.Utils.IsDLLInstalled(possible_driver) then
             require(possible_driver)
             
             -- Verify that the driver was loaded correctly.
