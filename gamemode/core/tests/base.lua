@@ -146,15 +146,15 @@ return {
                 ClassAccessorFunc(state.Class, {
                     A = FuncAccessors.ReadOnly("a"),
                     B = FuncAccessors.NumberMinMax("b", 3, 5),
+                    C = FuncAccessors.Boolean("c"),
                     _set_return_self = false
                 })
 
                 local obj = state.Class:New()
 
-                expect( obj.SetA ).to.beNil()
-                expect( obj.GetA ).to.exist()
-                expect( obj.SetB ).to.exist()
-                expect( obj.GetB ).to.exist()
+                expect( obj.SetA ).to.beNil() expect( obj.GetA ).to.exist() expect( obj.IsA ).to.beNil()
+                expect( obj.SetB ).to.exist() expect( obj.GetB ).to.exist() expect( obj.IsB ).to.beNil()
+                expect( obj.GetC ).to.beNil() expect( obj.SetC ).to.exist() expect( obj.IsC ).to.exist()
 
                 for _, v in ipairs({1, 2, 6, 7}) do
                     expect( obj:SetB(v) ).to.beFalse()
@@ -163,6 +163,11 @@ return {
 
                 expect( obj:SetB(4) ).to.beTrue()
                 expect( obj:GetB() ).to.equal( 4 )
+
+                expect( obj:SetC(true) ).to.beTrue()
+                expect( obj:GetC(false) ).to.beTrue()
+                expect( obj:SetC(false) ).to.beTrue()
+                expect( obj:GetC(true) ).to.beFalse()
             end
         },
         {

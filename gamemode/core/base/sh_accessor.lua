@@ -134,6 +134,7 @@ ClassAccessorFunc = function(obj, tbl)
             validate = {nil, TYPE_FUNCTION},
             get = {nil, _acceptedTypes(TYPE_BOOL, TYPE_FUNCTION)},
             set = {nil, _acceptedTypes(TYPE_BOOL, TYPE_FUNCTION)},
+            is = {false, _acceptedTypes(TYPE_BOOL, TYPE_FUNCTION)},
 
             -- Should :Set() return itsself to be chainable?
             set_return_self = {true, TYPE_BOOL}
@@ -155,12 +156,12 @@ ClassAccessorFunc = function(obj, tbl)
                 if out.force then
                     v = force_setters[out.force](v)
                 end
-                
                 local should_set = true
                 if (not (v == nil and out.nillable)) and out.validate then
                     local fn_validate = out.validate(self, v, out)
                     if isbool(fn_validate) then should_set = fn_validate end
                 end
+                GNIL.log({"SHOULD_SET", should_set})
                 if should_set then
                     if out.set then
                         local fn_set = out.set(self, v, out)
@@ -185,28 +186,50 @@ ClassAccessorFunc = function(obj, tbl)
                 return Either(class_value == nil, fallback, class_value)
             end
         end
+
+        -- Only for boolean types.
+        if out.is != false then
+            obj["Is" .. k] = function(self)
+                if out.is != true then return out.is(self) end
+                return tobool(self[out.var])
+            end
+        end
     end
 end
 
 FuncAccessors = {
-    ReadOnly = function(var)
-        return {
+    ReadOnly = function(var, additions)
+        return table.Inherit({
             var = var,
             set = false
-        }
+        }, additions or {})
     end,
     
-    NumberMinMax = function(var, min, max)
+    NumberMinMax = function(var, min, max, additions)
         local min, max = min, max
-        return {
+        return table.Inherit({
             var = var,
             validate = function(self, v)
-                return isnumber(v) and v >= min and max >= v
+                
+                -- Min, Max is optional.
+                if not isnumber(v) then return false end
+                if min and v > min then return false end
+                if max and max > v then return false end
+                return true
             end
-        }
+        }, additions or {})
     end,
 
-    Enum = function(var, count)
-        return FuncAccessors.NumberMinMax(var, 0, count)
+    Boolean = function(var, additions)
+        return table.Inherit({
+            var = var,
+            validate = function(self, v) return isbool(v) end,
+            get = false,
+            is = true
+        }, additions or {})
+    end,
+
+    Enum = function(var, count, additions)
+        return FuncAccessors.NumberMinMax(var, 1, count, additions)
     end
 }
