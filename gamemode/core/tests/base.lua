@@ -165,9 +165,36 @@ return {
                 expect( obj:GetB() ).to.equal( 4 )
 
                 expect( obj:SetC(true) ).to.beTrue()
-                expect( obj:GetC(false) ).to.beTrue()
+                expect( obj:IsC() ).to.beTrue()
                 expect( obj:SetC(false) ).to.beTrue()
-                expect( obj:GetC(true) ).to.beFalse()
+                expect( obj:IsC() ).to.beFalse()
+            end
+        },
+        {
+            name = "ClassAccessorFunc InstanceOf FuncAccessor",
+            func = function(state)
+
+                local targetClassA = GNIL.Thirdparty.middleclass("TargetA")
+                local targetClassB = GNIL.Thirdparty.middleclass("TargetB")
+
+                ClassAccessorFunc(state.Class, {
+                    A = FuncAccessors.InstanceOf("a", targetClassA),
+                    B = FuncAccessors.InstanceOf("b", function()
+                        return targetClassB
+                    end),
+                    _set_return_self = false
+                })
+
+                local obj = state.Class:New()
+                local a, b = targetClassA:New(), targetClassB:New()
+            
+                expect( obj.SetA ).to.exist() expect( obj.GetA ).to.exist() expect( obj.IsA ).to.beNil()
+                expect( obj.SetB ).to.exist() expect( obj.GetB ).to.exist() expect( obj.IsB ).to.beNil()
+
+                expect( obj:SetA(b) ).to.beFalse() expect( obj:GetA() ).to.beNil()
+                expect( obj:SetA(a) ).to.beTrue() expect( obj:GetA() ).to.equal( a )
+                expect( obj:SetB(a) ).to.beFalse() expect( obj:GetB() ).to.beNil()
+                expect( obj:SetB(b) ).to.beTrue() expect( obj:GetB() ).to.equal( b )
             end
         },
         {
