@@ -31,10 +31,13 @@ end
 function GNIL.Logging.LogToPlayer(ply, log, logtype)
     if not GNIL.Net then return end
 
+    assert(isstring(log), "Provided log message must be a string")
+    assert(logtype == nil or isstring(logtype), "Provided logtype must be nil or a string")
+
     -- Send the log net message to player.
     GNIL.Net.Create("log")
         :WriteString(log)
-        :WriteString(logtype)
+        :WriteString(logtype or "default")
     :Send(ply)
 end
 
