@@ -161,7 +161,6 @@ ClassAccessorFunc = function(obj, tbl)
                     local fn_validate = out.validate(self, v, out)
                     if isbool(fn_validate) then should_set = fn_validate end
                 end
-                GNIL.log({"SHOULD_SET", should_set})
                 if should_set then
                     if out.set then
                         local fn_set = out.set(self, v, out)
@@ -209,13 +208,29 @@ FuncAccessors = {
         local min, max = min, max
         return table.Inherit({
             var = var,
-            validate = function(self, v)
+            validate = function(_, v)
                 
                 -- Min, Max is optional.
                 if not isnumber(v) then return false end
-                if min and v > min then return false end
-                if max and max > v then return false end
+                if min and min > v then return false end
+                if max and v > max then return false end
                 return true
+            end
+        }, additions or {})
+    end,
+
+    InstanceOf = function(var, class, additions)
+        local class, is_fn = class, isfunction(class)
+        return table.Inherit({
+            var = var,
+            validate = function(_, v)
+
+                -- Allow a function to be provided in-place of the class.
+                -- This is useful for classes that do not exist when the
+                -- ClassAccessorFunc is being added. (weird load orders).
+                local cls = class
+                if is_fn then cls = class() end
+                return v.IsInstanceOf and v:IsInstanceOf(cls)
             end
         }, additions or {})
     end,
@@ -223,7 +238,7 @@ FuncAccessors = {
     Boolean = function(var, additions)
         return table.Inherit({
             var = var,
-            validate = function(self, v) return isbool(v) end,
+            validate = function(_, v) return isbool(v) end,
             get = false,
             is = true
         }, additions or {})
