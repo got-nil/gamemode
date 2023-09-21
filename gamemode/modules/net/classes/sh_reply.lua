@@ -3,6 +3,9 @@
 -- Uses the writeable mixin instead of subclassing Message since
 -- a bunch of functions had to be overriden/removed from parent.
 local NetworkReply = GNIL.Thirdparty.middleclass("NetworkReply"):IncludeMixin(GNIL.Net.Classes.WriteableMixin)
+ClassAccessorFunc(NetworkReply, {
+    ID = FuncAccessors.ReadOnly("id")
+})
 
 -- Initialize the message without a name since it will not
 -- be sent directly anyway.

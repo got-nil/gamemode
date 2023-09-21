@@ -4,6 +4,10 @@ local MODULE = MODULE
 -- https://en.wikipedia.org/wiki/Token_bucket
 
 local Bucket = GNIL.Thirdparty.middleclass("Bucket")
+ClassAccessorFunc(Bucket, {
+    RefillAmount = {"refill_amount", FORCE_NUMBER},
+    RefillPeriod = {"refill_delay", FORCE_NUMBER}
+})
 
 function Bucket:Initialize(capacity, refill_delay, refill_amount)
     self.capacity = capacity
@@ -13,9 +17,6 @@ function Bucket:Initialize(capacity, refill_delay, refill_amount)
     self._data = {}
     -- ply: {bucket, last_check}
 end
-
-AccessorFunc(Bucket, "refill_amount", "RefillAmount", FORCE_NUMBER)
-AccessorFunc(Bucket, "refill_delay", "RefillPeriod", FORCE_NUMBER)
 
 -- Used to verify that a bucket matches provided bucket settings.
 -- Prevents a bucket from being needlessly reset with the same conf.

@@ -1,4 +1,7 @@
 local NetworkReadable = GNIL.Thirdparty.middleclass("NetworkReadable")
+ClassAccessorFunc(NetworkReadable, {
+    Buffer = FuncAccessors.ReadOnly("_buffer")
+})
 
 -- Read from a class that uses NetworkWriteable.
 -- This is specifically for unit tests, detouring net.Read* to

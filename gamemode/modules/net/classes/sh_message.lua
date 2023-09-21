@@ -6,6 +6,11 @@ local MODULE = MODULE
 -- to a write buffer instead of directly to the write stream. This
 -- allows for messages to be queued etc.
 local NetworkMessage = GNIL.Thirdparty.middleclass("NetworkMessage"):IncludeMixin(GNIL.Net.Classes.WriteableMixin)
+ClassAccessorFunc(NetworkMessage, {
+    Name = FuncAccessors.ReadOnly("name"),
+    Debug = FuncAccessors.Boolean("_debug")
+})
+
 function NetworkMessage:Initialize(name, _debug)
     self.name = name
     self.unreliable = false
