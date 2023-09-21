@@ -114,26 +114,14 @@ end
 -- Return a table of all other modules this module needs to operate.
 function Module:GetDependencies() return self.dependencies and table.GetKeys(self.dependencies) or {} end
 
--- Require a module. These modules are loaded before OnLoad.
-function Module:Require(requirement)
-
-    -- Retard dectection (raptor is a dumbass) just incase someone
-    -- tries to use this as Requires and they give a table despite
-    -- me making it very clear that theres a seperate function for it.
-    if istable(requirement) then return self:Requires(requirement) end
-
-    if not GNIL.Modules.Exists(requirement) then self:log("Required module '" .. requirement .. "' is Missing/Invalid.", "error") end
-    if self.dependencies == false then self.dependencies = {} end
-    self.dependencies[requirement] = true
-end
-
--- Allow for multiple dependencies to be given at once.
-function Module:Requires(requirements)
-    assert(not table.IsSequential(requirements), "Requirements should be given as a sequential array of module names.")
-    for _, v in ipairs(requirements) do
-        if not self:Require(v, delayed) then return false end
+-- Require a module(s). These modules are loaded before OnLoad.
+-- Accepts multiple module names as varargs.
+function Module:RequireModule(...)
+    for _, requirement in ipairs({...}) do
+        if not GNIL.Modules.Exists(requirement) then self:log("Required module '" .. requirement .. "' is Missing/Invalid.", "error") end
+        if self.dependencies == false then self.dependencies = {} end
+        self.dependencies[requirement] = true
     end
-    return true
 end
 
 -- Add a module-based hook
@@ -329,7 +317,7 @@ function Module:LoadDirectory(base, directory, handler)
 
     -- Use the load handler to actually load the directory.
     local success = loader.LoadDirectory(directory, path)
-    self:log((success && "Successfully loaded" || "Failed to load") .. " '" .. handler .. "' directory '" .. path .. "'!", success && "success" || "warning")
+    self:log((success && "Successfully loaded" || "Failed to load") .. " '" .. handler .. "' directory '" .. path .. "'!", success && "debug" || "warning")
     return success
 end
 
@@ -350,12 +338,16 @@ function Module:AddExtensionByClass(name, extensionClass)
     return true
 end
 
--- Require an extension (is loaded after dependencies in load).
-function Module:RequireExtension(name)
-    self._delayed_extensions[name:lower()] = true
+-- Require an extension(s) (is loaded after dependencies in load).
+function Module:RequireExtension(...)
+    for _, name in ipairs({...}) do
+        assert(isstring(name), "Provided extension name must be a string")
+        self._delayed_extensions[name:lower()] = true
+    end
 end
 
 -- Add an extension by name to the Module.
+-- ** THIS ACTUALLY LOADS THE EXTENSION, IT DOESNT RETURN IT **
 function Module:UseExtension(name)
     assert(isstring(name), "Provided extension name must be a string")
     if self:HasExtension(name) then return false end
@@ -405,9 +397,5 @@ function Module:OnUnload() end        -- 4. Called when the module is being unlo
 -- Additional module hooks.
 function Module:IsConfigRequired() end -- If a config is set, is it required? Default: true.                [true=(Module is disabled if config missing)]
 function Module:__tostring() return self._module_name end
-
--- Aliases
-Module.RequireModule = Module.Require
-Module.RequireModules = Module.Requires
 
 return Module
