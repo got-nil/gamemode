@@ -56,27 +56,31 @@ function GNIL.Modules.IsLoaded(name) return GNIL.Modules._loaded[name] == true e
 -- Returns an initialized module before it has been loaded.
 function GNIL.Modules._Initialize(name, _dependency_chain, _reload, _returnLastModuleFn)
 
-    -- Find the module init file to allow it to setup other things.
-    local initFilesOrder, initFile = {
-        "init.lua",     -- sv_init alias
-        "sv_init.lua",
-        "sh_init.lua",
-        "cl_init.lua"
-    }, nil
-    for _, v in ipairs(initFilesOrder) do
-        if file.Exists(GNIL.Utils.ResolveGamemodePath("modules/" .. name .. "/" .. v), "LUA") then
-            initFile = v
-            break
+    -- Find valid init files for the module. There can now be multiple
+    -- init files for a single module to split initialization across realms.
+    local initFiles, realmInits = {}, {
+        [1] = {"init.lua", "sv_init.lua", "sh_init.lua"},
+        [2] = {"cl_init.lua", "sh_init.lua"}
+    }
+    local iRealm = Either(SERVER, 1, 2)
+    for i, files in ipairs(realmInits) do
+        for _, v in pairs(files) do
+            local filepath = GNIL.Utils.ResolveGamemodePath("modules/" .. name .. "/" .. v)
+            if not file.Exists(filepath, "LUA") then continue end               -- Ignore non-existant files.
+            if i == iRealm then table.insert(initFiles, v) end                  -- If its correct realm, add it as initFile.
+            if SERVER and i == 2 then GNIL.Utils.Include(filepath, "cl_") end   -- If its client only, add CSLuaFile.
         end
-    end
-    if not initFile then GNIL.log("Couldn't find suitable init file for module '" .. name .. "'", "warning")
-    else GNIL.log("Found init file '" .. initFile .. "' for module '" .. name .. "'", "debug") end
+    end 
 
     -- Once the init file has been found, we should load it individually.
     -- Ensuring that the dependency chain is passed through to the module.
     local moduleInstance = GNIL.Modules.Get(name, {
         ["_dependency_chain"] = _dependency_chain
     }, true)
+
+    -- Log the init file directly to moduleInstance instead of globally.
+    if #initFiles == 0 then moduleInstance:log("Couldn't find suitable realm init file for module.", "warning")
+    else moduleInstance:log("Found init file(s): " ..  table.concat(initFiles, ", "), "debug") end
 
     -- If we're reloading the module we should re-initialize it to ensure
     -- any previous loads don't conflict (_ignored_files etc).
@@ -86,7 +90,8 @@ function GNIL.Modules._Initialize(name, _dependency_chain, _reload, _returnLastM
         -- unloading dependencies (since we're not really unloading it).
         -- Also send the 'Reinitialize' signal for listeners.
         if moduleInstance._initialized then
-            GNIL.Modules.Unload(moduleInstance, nil, false)
+            moduleInstance:log("Reloading module as its already been initialized.", "debug")
+            GNIL.Modules.Unload(moduleInstance, nil, true)
         end
     end
 
@@ -116,10 +121,13 @@ function GNIL.Modules._Initialize(name, _dependency_chain, _reload, _returnLastM
 
     -- Actually include the init file if the init file is suitable for the
     -- current execution realm (can be server or client).
-    if initFile and GNIL.Utils.IsFilenameForCurrentRealm(initFile == "init.lua" and "sv_init.lua" or initFile) then
+    if #initFiles > 0 then
 
-        moduleInstance:log("Loading init file '" .. initFile .. "'", "debug")
-        GNIL.Utils.Include(GNIL.Utils.ResolveGamemodePath("modules/" .. name .. "/" .. initFile), initFile == "init.lua" and "sv_" or nil)
+        -- Include all the init files for the module (since there can be multiple).
+        for _, initFile in ipairs(initFiles) do
+            moduleInstance:log("Loading init file '" .. initFile .. "'", "debug")
+            GNIL.Utils.Include(GNIL.Utils.ResolveGamemodePath("modules/" .. name .. "/" .. initFile))
+        end
 
         -- Allow modules to be disabled, preventing loading.
         if moduleInstance._disabled then
@@ -134,7 +142,7 @@ function GNIL.Modules._Initialize(name, _dependency_chain, _reload, _returnLastM
             restoreModuleFn()
             return false, nil, nil
         end
- 
+
         -- Load all required module dependencies.
         if moduleInstance.dependencies then
             moduleInstance:log("Resolving dependencies.", "debug")
@@ -149,7 +157,7 @@ function GNIL.Modules._Initialize(name, _dependency_chain, _reload, _returnLastM
             moduleInstance:log("Module load was prevented by hook after dependencies were loaded.", "debug")
             restoreModuleFn()
             return false, nil, nil
-        end
+        end        
     else
         if initFile then moduleInstance:log("Init file '" .. initFile .. "' is not suitable for the current realm.", "debug")
         else moduleInstance:log("Init file could not be found, skipping.", "debug") end
@@ -165,6 +173,16 @@ function GNIL.Modules._Initialize(name, _dependency_chain, _reload, _returnLastM
         restoreModuleFn()   
         return true, moduleInstance, nil
     end
+end
+
+-- Reload a module by its name.
+-- This is WAY better than calling Unload and Load as it ignores some unload
+-- steps such as dependency, entity etc unloading.
+function GNIL.Modules.Reload(name)
+    if not GNIL.Modules.IsLoaded(name) then
+        return false
+    end
+    return GNIL.Modules.Load(name, nil, true)
 end
 
 -- Load a module by its name.
@@ -189,6 +207,7 @@ function GNIL.Modules.Load(name, _dependency_chain, _reload)
 
     -- Allow modules to disable autoloading. Allows init file to essentially "disable" modules.
     if moduleInstance.autoload then
+        moduleInstance:log("Starting top level autoload cycle.", "debug")
 
         -- Get all of the directories that should be used when including all of the module.
         -- If there are defined autoload directories then convert them all to absolute paths
@@ -203,7 +222,7 @@ function GNIL.Modules.Load(name, _dependency_chain, _reload)
         -- Load all of the directories that were gathered above. Ensure that
         -- the module init file is not included on the base directory as it will
         -- always be first. Ignore any files already included.
-        local ignored_root_files, base_ignored_files = {"init.lua", "sv_init.lua", "sh_init.lua", "cl_init.lua"}, moduleInstance._ignored_files
+        local ignored_root_files, base_ignored_files = {"init.lua", "sv_init.lua", "sh_init.lua", "cl_init.lua", "config.lua"}, moduleInstance._ignored_files
 
         -- Remove any other restricted files (developer files + ignored files).
         -- Since this runs on the root it should only be ran once.
@@ -280,7 +299,8 @@ function GNIL.Modules.Load(name, _dependency_chain, _reload)
 end
 
 -- Unload a module, recursively unloading all its dependencies.
-function GNIL.Modules.Unload(name_or_module, _caller, _unload_dependencies)
+-- If _reload is specified, some unload steps are ignored.
+function GNIL.Modules.Unload(name_or_module, _caller, _reload)
     
     -- Allow a module to be provided directly instead of name.
     local moduleInstance, name = false, false
@@ -292,7 +312,7 @@ function GNIL.Modules.Unload(name_or_module, _caller, _unload_dependencies)
     end
 
     -- Unload all modules that depend on the module being unloaded.
-    if _unload_dependencies != false and moduleInstance.dependencies != nil then
+    if not _reload and moduleInstance.dependencies != nil then
         for _, v in ipairs(moduleInstance.dependencies) do
             if v == _caller or v == name then continue end
             GNIL.Modules.Unload(v, name)
