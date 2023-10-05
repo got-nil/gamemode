@@ -4,10 +4,16 @@
 -- been sent the client executes each file.
 
 local MODULE = MODULE
+local ChatMessageTypes = {
+    [1] = {isstring, "String"},
+    [2] = {IsColor, "Color"},
+    [3] = {IsPlayer, "Player"}
+}
+
 if SERVER then
 
     -- Server setup stuff.
-    GNIL.Net.AddNetworkString("file_include")
+    GNIL.Net.AddNetworkStrings("file_include", "chat_message")
     local PlayerMeta = FindMetaTable("Player")
 
     -- Send code data to player, codes should either be the luacode
@@ -49,6 +55,37 @@ if SERVER then
         -- Once all files have been read, include all the files together.
         self:Execute(codes)
     end
+
+    -- Send Colors and strings to send PrintMessage
+    function PlayerMeta:ChatMessage(...)
+        local chat_net, tbl = GNIL.Net.Create("chat_message"), {...}
+
+        chat_net:WriteUInt(#tbl, 16)
+        for _, v in ipairs(tbl) do
+
+            -- Find the argument type from validator.
+            local type_id, type_name = 0, false
+            for i, data in ipairs(ChatMessageTypes) do
+                if data[1](v) then
+                    type_id, type_name = i, data[2]
+                    break
+                end
+            end
+
+            -- If its none of the other types, make it a string.
+            if type_id == 0 then
+                v = tostring(v)
+                type_id, type_name = 1, "String"
+            end
+
+            -- Write the type ID and then directly add the value
+            -- and typename to the buffer.
+            -- Equiv: chat_net["Write" .. type_name](chat_net, ...)
+            chat_net:WriteUInt(type_id, 2)
+            chat_net:_WriteToBuffer({v}, type_name)
+        end
+        chat_net:Send(self)
+    end
 else
 
     -- Receive the files once the chunks finished being sent. Then just
@@ -61,5 +98,30 @@ else
                 MODULE:log("Net include error: " .. out, "error")
             end
         end
+    end)
+
+    -- Recieve chat message messages from server.
+    GNIL.Net.Receive("chat_message", function()
+
+        local out = {}
+        for _ = 1, net.ReadUInt(16) do
+
+            local type_id = net.ReadUInt(2)
+            local type_data = ChatMessageTypes[type_id]
+            if type_id == 0 or type_data == nil then
+                continue
+            end
+
+            -- Read the type directly, ignore it if
+            -- the value is nil to prevent weird messages.
+            local value = net["Read" .. type_data[2]]()
+            if value then
+                table.insert(out, value)
+            end
+        end
+
+        GNIL.log(out)
+
+        chat.AddText(unpack(out))
     end)
 end
