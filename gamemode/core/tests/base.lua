@@ -294,6 +294,54 @@ return {
                 expect( SafeTableAccess(tbl, "A", "E", 2) ).to.equal( tbl.A.E[2] )
                 expect( SafeTableAccess(tbl, "F") ).to.equal( tbl.F )
             end
+        },
+        {
+            name = "Timeout class resolves correctly",
+            async = true,
+            func = function()
+
+                -- The timeout should still resolve immidiately 
+                -- despite the timeout being longer.
+
+                local timeout = GNIL.Classes.Timeout:New(3)
+                expect( timeout ).to.exist()
+
+                local start = math.Round(os.time())
+                local done, expect = done, expect
+                timeout:OnResolve(function() 
+                
+                        expect( math.Round(os.time() - start) ).to.equal( 0 )
+                        done()
+
+                    end)
+                    :OnTimeout(function() error("This should not be called!") end)
+                    :Run(function(resolve)
+                    
+                        expect( resolve ).to.beA( TYPE_FUNCTION )
+                        expect( resolve() ).to.succeed() 
+
+                    end)
+            end
+        },
+        {
+            name = "Timeout class times out correctly",
+            async = true,
+            func = function()
+
+                local timeout = GNIL.Classes.Timeout:New(3)
+                expect( timeout ).to.exist()
+
+                local start = math.Round(os.time())
+                local done, expect = done, expect
+                timeout:OnResolve(function() error("This should not be called!") end)
+                    :OnTimeout(function()
+                    
+                        expect( math.Round(os.time() - start) ).to.equal( 3 )
+                        done()
+
+                    end)
+                    :Run(function() end) -- do nothing
+            end
         }
     }
 }
