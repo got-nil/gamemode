@@ -108,3 +108,15 @@ if net["WriteUInt64"] == nil then
     net.ReadUInt64 = net.ReadString
 
 end
+
+------------------------------------------------
+
+-- 05/10/2023: net.WritePlayer added to main branch.
+-- When the update rolls around, this can be removed.
+
+if net["WritePlayer"] == nil then
+    
+    net.WritePlayer = net.WriteEntity
+    net.ReadPlayer = net.ReadEntity
+
+end

@@ -48,7 +48,8 @@ local Types = {
     "Type",
     "UInt",
     "Vector",
-    "UInt64"
+    "UInt64",
+    "Player"
 }
 
 local function createBuffer(is_read, write_buffer)
