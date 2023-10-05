@@ -27,11 +27,15 @@ ClassAccessorFunc(Websocket, {
         - More efficient IsConnected implementation.
 
     Events:
-        message (message: str) - Message recieved
-        error (errMessage: str) - Websocket error (excluding connection failures)
-        connectionfailure - Websocket failed to connect
-        connected - Websocket connection established
-        disconnected - Websocket connection closed
+        open (url: string) - Websocket about to be opened. (return false to block)
+        write (message: string) - Message about to be written. (return false to block)
+
+    Signals:
+        message (message: string) - Message recieved.
+        error (errMessage: string) - Websocket error. (excluding connection failures)
+        connectionfailure - Websocket failed to connect.
+        connected - Websocket connection established.
+        disconnected - Websocket connection closed.
     
 --]]
 
@@ -53,7 +57,7 @@ local function GWSocketsExists()
     local success, errorMessage = GNIL.Utils.RequireDLL("gwsockets", "GWSockets")
     if not success then
         GNIL.log("Could not include required websocket module with error: " .. errorMessage, "error")
-        self:EmitEvent("error", errorMessage) -- Emit error event.
+        self:EmitSignal("error", errorMessage) -- Emit error event.
         return false
     end
     return true
@@ -120,6 +124,12 @@ function Websocket:Open(callback)
         return self
     end
 
+    -- Allow the websocket connection to be blocked by listeners.
+    if self:EmitEvent("open", self.url) == false then
+        if callback then callback(false, "Connection opening blocked by event.") end
+        return self
+    end
+
     -- Initialize the GWSocket connection.
     assert(callback == nil or isfunction(callback), "Provided callback argument must either be nil or a function")
     if not GWSocketsExists() then
@@ -138,9 +148,9 @@ function Websocket:Open(callback)
         -- Seperate connection failure errors from actual errors.
         if string.sub(string.lower(errorMessage), 1, 17) == "connection failed" then
             WebsocketReconnect(self, true)
-            return self:EmitEvent("connectionfailure", errorMessage)
+            return self:EmitSignal("connectionfailure", errorMessage)
         end
-        return self:EmitEvent("error", errorMessage)
+        return self:EmitSignal("error", errorMessage)
     end
     socket.onDisconnected = function(_, ... )
         ResolveOpenCallbacks(self, false)
@@ -155,7 +165,7 @@ function Websocket:Open(callback)
         if not self.__closed then
             WebsocketReconnect(self, true)
         end
-        return self:EmitEvent("disconnected", ...)
+        return self:EmitSignal("disconnected", ...)
     end
     socket.onConnected = function(_, ...)
         ResolveOpenCallbacks(self, true)
@@ -163,9 +173,9 @@ function Websocket:Open(callback)
         -- Reset reconnection state and call connected event.
         self.__connected = true
         WebsocketReconnect(self, false)
-        return self:EmitEvent("connected", ...)
+        return self:EmitSignal("connected", ...)
     end
-    socket.onMessage = function(_, ...) return self:EmitEvent("message", ...) end
+    socket.onMessage = function(_, ...) return self:EmitSignal("message", ...) end
     
     -- If there is already a socket, ensure the connection
     -- is closed before overwriting it (losing the reference).
@@ -192,8 +202,14 @@ function Websocket:Write(message)
     end
     assert(isstring(message), "Provided message must be a string.")
 
+    -- Emit an event when we're writing something to allow the message
+    -- to be blocked by a listener directly on the websocket connection.
+    if self:EmitEvent("write", message) == false then
+        return false
+    end
+    
     self.__socket:write(message)
-    return self
+    return true
 end
 
 function Websocket:Close() self.__closed = true return self.__socket:close() end
