@@ -8,12 +8,12 @@ local function createRouter()
 
     router:Get("/static/abc", function() return GNIL.API.Responses.Empty(SUCCESS_STATUS) end)
     router:Post("/static/def", function() return GNIL.API.Responses.Empty(SUCCESS_STATUS) end)
-    
+
     router:Get("/static/ghi", function() return GNIL.API.Responses.Empty(1) end)
     router:Post("/static/ghi", function() return GNIL.API.Responses.Empty(2) end)
 
     router:Get("/static/async", function() return function(fn) timer.Simple(1, function() fn(GNIL.API.Responses.Empty(SUCCESS_STATUS)) end) end end)
-    
+
     return router
 end
 
@@ -21,7 +21,7 @@ local function createRequest(...) return GNIL.API.Request:New(...) end
 
 return {
     groupName = "Router",
-    
+
     beforeEach = function(state)
         state.router = createRouter()
     end,
@@ -105,7 +105,7 @@ return {
                     expect( request.args["b"] ).to.beA(TYPE_STRING)
                     expect( request.args["c"] ).to.beA(TYPE_NUMBER)
                     expect( request.args["d"] ).to.beA(TYPE_STRING)
-                    
+
                     return GNIL.API.Responses.Empty(SUCCESS_STATUS)
                 end)
 
@@ -115,7 +115,7 @@ return {
         {
             name = "Route arguments reject invalid types",
             func = function(state)
-                
+
                 -- 1 = Valid arguments
                 -- 2 = Invalid arguments
                 local tests = {
@@ -133,7 +133,7 @@ return {
                 }
 
                 for k, v in pairs(tests) do
-                    
+
                     -- Create test route with typed argument.
                     state.router:Get("/test/" .. k .. "/{a:" .. k .. "}", function() return GNIL.API.Responses.Empty(SUCCESS_STATUS) end)
 
@@ -141,6 +141,47 @@ return {
                         for _, c in ipairs(x) do
                             expect( state.router:Call(createRequest("GET", "/test/" .. k .. "/" .. c)).status ).to.equal(i == 2 && 400 || SUCCESS_STATUS)
                         end
+                    end
+                end
+            end
+        },
+        {
+            name = "Route is called with weird slash formatting",
+            func = function(state)
+
+                expect( state.router:Call(createRequest("GET", "//static//abc//")).status ).to.equal( SUCCESS_STATUS )
+                expect( state.router:Call(createRequest("GET", "//static//_//abc")).status ).to.equal( 404 )
+            end
+        },
+        {
+            name = "Router converts certain non-response types into responses",
+            func = function(state)
+
+                -- Test different return types.
+                -- {route_return_value, response_validator}
+                local types = {
+                    bool = {
+                        {true, function(v) return v.status == 200 end},
+                        {false, function(v) return v.status == 500 end}
+                    },
+                    num = {
+                        {SUCCESS_STATUS, function(v) return v.status == SUCCESS_STATUS end},
+                        {400, function(v) return v.status == 400 end},
+                        {503, function(v) return v.status == 503 end}
+                    },
+                    str = {
+                        {"Hello! How are you?", function(v) return v.status == 200 and v.body == "Hello! How are you?" end},
+                        {"abc\ndef", function(v) return v.status == 200 and v.body == "abc\ndef" end}
+                    }
+                }
+                for type_name, cases in pairs(types) do
+                    for i, v in ipairs(cases) do
+
+                        local route_name = "/converter/" .. type_name .. "/" .. tostring(i)
+                        state.router:Get(route_name, function() return v[1] end)
+
+                        local response = state.router:Call(createRequest("GET", route_name))
+                        expect( v[2](response) ).to.beTrue()
                     end
                 end
             end
