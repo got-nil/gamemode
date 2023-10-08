@@ -120,8 +120,6 @@ else
             end
         end
 
-        GNIL.log(out)
-
         chat.AddText(unpack(out))
     end)
 end
