@@ -1,3 +1,19 @@
+--[[
+
+    GET /players
+        Get basic info about all online players. This
+        also returns the current and max player count.
+
+    GET /players/{target:steamid64}
+        Get additional info about a player. This accepts a
+        steamid64 instead of a player, allowing it to act as
+        an online check (as it returns 'is_online' state).
+
+    POST /players/{target:ply}/kick | [?reason: string]
+        Kick an online player from the server with an optional
+        reason provided in body.
+
+--]]
 
 -- All players basic info
 GNIL.API.Routes.Get("/players", function(request)
@@ -49,17 +65,14 @@ GNIL.API.Routes.Get("/players/{target:steamid64}", function(request, args)
     })
 end)
 
--- Get the reason string from the request body, ignoring non-strings.
-local function getReason(request)
+-- Kick player from server. Requires player to be online.
+GNIL.API.Routes.Post("/players/{target:ply}/kick", function(request, args)
+
+    -- Get reason string from body, only if its a string.
     local reason = request.body:Get("reason")
     if reason != nil and not isstring(reason) then
         reason = nil
     end
-    return reason
-end
-
--- Kick player from server. Requires player to be online.
-GNIL.API.Routes.Post("/players/{target:ply}/kick", function(request, args)
 
     -- Kick the player with reason and return success response.
     args.target:Kick(

@@ -1,3 +1,10 @@
+--[[
+
+    GET /server
+        Get all loaded modules info and player count. Also
+        returns some static data like the map, ip etc.
+
+--]]
 
 -- Base server info
 GNIL.API.Routes.Get("/server", function(request)
