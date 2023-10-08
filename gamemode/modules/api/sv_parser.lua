@@ -105,7 +105,13 @@ function GNIL.API.Parser.Route(raw_route)
 
 	local fragments = {}
 	for i, v in ipairs(string.Explode("/", raw_route)) do
-		
+
+		-- Ignore empty parts, this could be a trailing slash or
+		-- incorrect formatting (double slashes etc).
+		if v == "" then
+			continue
+		end
+
 		local frag_type, arg_type = GNIL_API_ARGUMENT_STR, nil
 		if (v[1] == "{" and v[#v] == "}") then
 			frag_type = GNIL_API_ARGUMENT_ARG
