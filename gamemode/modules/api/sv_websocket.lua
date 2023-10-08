@@ -13,7 +13,7 @@ function Websocket:Initialize(server)
     GNIL.Classes.Websocket.Initialize(
         self,
         conf:Get("ws_host"),
-        conf:Get("ws_verify_cert", true)    
+        conf:Get("ws_verify_cert", true)
     )
 
     -- Set connection headers.
