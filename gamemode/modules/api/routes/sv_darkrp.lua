@@ -1,5 +1,5 @@
 
-GNIL.API.Routes.Get("/darkrp/{target:steamid64}", function(request)
+GNIL.API.Routes.Get("/darkrp/{target:steamid64}", function(request, args)
 
     -- Make sure DarkRP is loaded (it isn't in test environments).
     if not DarkRP then
@@ -9,9 +9,9 @@ GNIL.API.Routes.Get("/darkrp/{target:steamid64}", function(request)
         }, 503)
     end
 
-    local ply = player.GetBySteamID64(request.args["target"])
+    local ply = player.GetBySteamID64(args.target)
     if ply then
-        
+
         -- If the player is currently online we can return the
         -- values from cache which is faster than waiting for the
         -- database query results.
@@ -24,13 +24,13 @@ GNIL.API.Routes.Get("/darkrp/{target:steamid64}", function(request)
             }
         })
     end
-    
+
     -- If the player is offline, instead return a response promise.
     -- The router then returns a callback that can be called with the
     -- query response from the database.
     return function(respond)
         DarkRP.offlinePlayerData(
-            util.SteamIDFrom64(request.args["target"]),
+            util.SteamIDFrom64(args.target),
             function(data)
 
                 -- If there were no results returned in the query then

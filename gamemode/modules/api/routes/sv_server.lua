@@ -8,7 +8,7 @@ GNIL.API.Routes.Get("/server", function(request)
         if GNIL.Modules.IsLoaded(k) then
             modules[#modules + 1] = {
                 name = v.name,
-                author = v.author   
+                author = v.author
             }
         end
     end

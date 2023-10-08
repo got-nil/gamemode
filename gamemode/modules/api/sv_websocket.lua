@@ -75,9 +75,9 @@ function Websocket:WriteOperation(name, data)
 end
 
 -- Write response operation header + body to socket.
-function Websocket:WriteResponse(request_id, response)    
+function Websocket:WriteResponse(request_id, response)
     local data = response:ToTable()
-    
+
     -- Send response operation (header).
     self:WriteOperation("response", {
         s = data.status,
