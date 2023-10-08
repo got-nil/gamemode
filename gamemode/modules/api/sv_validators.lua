@@ -21,17 +21,19 @@ GNIL.API.Validators._argumentValidators = {
         end
         return nil
     end,
-    
+
     -- Patterns provided by Virtualraptor.
     ["steamid64"] = function(v)
-        if string.find(v, "(7656119%d+)") then
-            return v
+        local startPos, endPos, str = string.find(v, "(7656119%d+)")
+        if startPos == 1 and endPos == 17 then
+            return str
         end
         return nil
     end,
     ["steamid"] = function(v)
-        if string.find(v, "(STEAM_[0-3]:[01]:%d+)") then
-            return v
+        local startPos, _, str = string.find(v, "(STEAM_[0-3]:[01]:%d+)")
+        if startPos == 1 then
+            return str
         end
         return nil
     end
