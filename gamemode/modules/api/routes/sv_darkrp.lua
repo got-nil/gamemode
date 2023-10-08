@@ -108,9 +108,9 @@ GNIL.API.Routes.Patch("/darkrp/{target:steamid64}/money", function(request, args
         -- Get the money var again instead of just doing (before + amount)
         -- since the 'playerWalletChanged' hook is called which could modify
         -- the total before its set.
-        local before, after = tonumber(ply:getDarkRPVar("money")), 0
+        local before = tonumber(ply:getDarkRPVar("money"))
         ply:addMoney(amount)
-        after = tonumber(ply:getDarkRPVar("money"))
+        local after = tonumber(ply:getDarkRPVar("money"))
 
         return GNIL.API.Responses.JSON({
             success = true,
@@ -128,8 +128,8 @@ GNIL.API.Routes.Patch("/darkrp/{target:steamid64}/money", function(request, args
         -- actually store the new money amount. The storeOfflineMoney
         -- func does not call any hooks, so we must ensure that the
         -- amount is not negative ourselves.
-        local before, after = tonumber(data[1]["wallet"]), 0
-        after = before + amount
+        local before = tonumber(data[1]["wallet"])
+        local after = before + amount
         if after < 0 then after = 0 end
         if after != before then DarkRP.storeOfflineMoney(args.target, after) end
 

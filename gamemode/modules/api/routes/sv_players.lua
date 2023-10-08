@@ -76,7 +76,7 @@ GNIL.API.Routes.Post("/players/{target:ply}/kick", function(request, args)
 
     -- Kick the player with reason and return success response.
     args.target:Kick(
-        getReason(request)
+        reason
     )
     return GNIL.API.Responses.JSON({
         success = true
