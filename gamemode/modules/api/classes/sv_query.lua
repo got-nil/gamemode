@@ -17,7 +17,7 @@ function Query:Initialize(query)
 	if isstring(query) then
 		query = GNIL.API.Parser.Query(query)
 	end
-	
+
 	self._args = query
 end
 
@@ -37,19 +37,18 @@ function Query:Set(name, value)
 	self._args[name] = value
 end
 
-local function isQueryValueInTbl(name, accepted)
-	name = string.lower(name)
-	for _, v in ipairs(accepted) do
-		if name == v then
-			return true
-		end
-	end
-	return false
+-- Is an argument true or false (in certain strings).
+local query_bools = {
+	[1] = table.Lookup({"true", "1", "yes"}),
+	[2] = table.Lookup({"false", "0", "no"})
+}
+local function isQueryBool(i, v)
+	if not v then return false end
+	return query_bools[i][string.lower(v)] == true
 end
 
--- Is an argument true or false (in certain strings).
-function Query:IsTrue(name) return isQueryValueInTbl(name, {"true", "1", "yes"}) end
-function Query:IsFalse(name) return isQueryValueInTbl(name, {"false", "0", "no"}) end
+function Query:IsTrue(name) return isQueryBool(1, self:Get(name)) end
+function Query:IsFalse(name) return isQueryBool(2, self:Get(name)) end
 
 -- Build query string from current arguments.
 function Query.BuildQuery(tab, sep, key)
