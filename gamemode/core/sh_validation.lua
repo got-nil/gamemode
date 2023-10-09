@@ -1,6 +1,6 @@
 GNIL.Validation = {}
 
-/*
+--[[
 
 Validate a provided table against a type structure.
 These look like:
@@ -18,7 +18,7 @@ default - The default value that should be used if the key is ommitted in the pr
 validator - Either a table of values that should be accepted, or a TYPE enum to validate against value, or validator function.
 required? - Optional, is the key required in the provided table? (Default: false)
 
-*/
+--]]
 
 function GNIL.Validation.Structure(provided, structure)
     if not istable(provided) or not istable(structure) then

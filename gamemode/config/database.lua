@@ -1,7 +1,7 @@
 return {
     realm = "server",
     config = {
-            
+
         -- Possible drivers: sqlite, mysqloo
         driver = "sqlite",
 

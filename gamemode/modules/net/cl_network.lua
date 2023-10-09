@@ -116,7 +116,7 @@ net.Receive("gnilc", function()
                 -- is then split based on the header length values.
                 local has_header = net.ReadBool()
                 if has_header then
-                    
+
                     -- Read the header size and split the output into a header and body
                     -- based upon the header length. (If theres a more efficient way lmk).
                     local header_size = net.ReadUInt(32)

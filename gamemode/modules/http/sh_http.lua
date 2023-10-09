@@ -10,13 +10,13 @@ setmetatable(GNIL.Http, {
 })
 
 -- Only trust the server!
-if SERVER then 
-        
+if SERVER then
+
     -- Support both reqwest and CHTTP. (Prefer reqwest).
     for possible_driver, const in pairs({["reqwest"] = "reqwest", ["chttp"] = "CHTTP"}) do
         if GNIL.Utils.IsDLLInstalled(possible_driver) then
             require(possible_driver)
-            
+
             -- Verify that the driver was loaded correctly.
             if not _G[const] then
                 MODULE:log("Despite HTTP driver '" .. possible_driver .. "' existing, it failed to load.", "error")
@@ -92,7 +92,7 @@ local function _getArgumentsAsTable(...)
                 MODULE:log("Parameter validator function for '" .. k .. "' marked the request as invalid.", "warning")
                 return nil
             end
-            
+
             -- Functions can change the parameter value.
             arguments[k] = v
         else
@@ -114,7 +114,7 @@ end
     Request functions accept two different parameter layouts:
         1: Key value arguments. Arguments can be provided as single table
            such as {["url"] = "https://google.com", ["method"] = "GET"}
-            
+
         2: Standard parameters in the following order:
             - method
             - url
@@ -147,7 +147,7 @@ function GNIL.Http.SendRequest(...)
         for k, v in pairs(arguments["query"]) do
             query_string = query_string .. (k .. "=" .. v) .. "&"
         end
-        
+
         -- Remove trailing &
         query_string = string.sub(query_string, 0, -2)
         arguments["url"] = arguments["url"] .. query_string
@@ -162,7 +162,7 @@ function GNIL.Http.SendRequest(...)
     -- validated/structured table.
     local httpStruct = HTTP({
         ["failed"] = function(...)
-            
+
             -- Reqwests provides an additional/better error message
             -- as the second argument. Therefore we should always use
             -- the last provided argument as the reason (supports both
@@ -179,7 +179,7 @@ function GNIL.Http.SendRequest(...)
         ["body"] = arguments["body"],
         ["type"] = arguments["type"]
     })
-    
+
     -- Create the actual request.
     GNIL.Http._driver(httpStruct)
 end

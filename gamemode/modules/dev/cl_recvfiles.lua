@@ -17,7 +17,7 @@ function command_callback(_, __, args)
     end
 
     -- If theres only one argument, return the script status
-    -- (is it enabled). If theres multiple then it must 
+    -- (is it enabled). If theres multiple then it must
     -- setting its state (enabled/disabled).
     if #args == 1 then
         GNIL.log("Developer script '" .. script.name .. "' is currently " .. (GNIL.Dev["_scripts"]["_enabled"][script.name] == true && "enabled" || "disabled") .. ".")
@@ -34,7 +34,7 @@ function command_callback(_, __, args)
             GNIL.log("Developer script '" .. script.name .. "' is already " .. (target_state && "enabled" || "disabled") .. "!", "warning")
             return
         end
-        
+
         -- Actually enable/disable the script and store its state.
         GNIL.Dev["_scripts"]["_out"][script.name][target_state && "enable" || "disable"]()
         GNIL.Dev["_scripts"]["_enabled"][script.name] = target_state
@@ -106,17 +106,17 @@ GNIL.Net.ReceiveChunked("dev_files", function(data)
                 continue
             end
 
-            -- The script must have a suitable scriptname. 
+            -- The script must have a suitable scriptname.
             if not isSuitableScriptName(out.name) then
                 GNIL.log("Unsuitable scriptname '" .. out.name .. "' for developer file '" .. v .. "', skipping.", "warning")
                 continue
             end
-            
+
             -- If the filepath is already stored and its a script
             -- then it should be unloaded as its about to be overwritten.
             -- The script is stored as the file output and can be accessed there.
             if GNIL.Dev["_files"][v] and GNIL.Dev["_files"][v][1] then
-                
+
                 -- Check if the module is actually enabled.
                 local is_enabled = GNIL.Dev["_scripts"]["_enabled"][GNIL.Dev["_files"][v][2].name] == true
                 GNIL.log((is_enabled && "Currently enabled developer script" || "Disabled developer script") .. " '" .. GNIL.Dev["_files"][v][2].name .. "' is being reloaded.", is_loaded && "warning" || "info")
@@ -137,6 +137,6 @@ GNIL.Net.ReceiveChunked("dev_files", function(data)
         files[v] = {is_script, out != nil && out || false}
     end
 
-    -- Cache the files output 
+    -- Cache the files output
     GNIL.Dev["_files"] = files
 end)

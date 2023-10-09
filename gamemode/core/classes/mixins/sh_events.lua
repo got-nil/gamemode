@@ -23,13 +23,13 @@ local function addCallback(class, index, key, callback)
 end
 
 local function clearCallbacks(class, index, key)
-    
+
     -- If there is no index provided, reset the events table.
     if not index then
         class.__event_callbacks = nil
         ensureEventsExists(class)
     else
-        
+
         -- If no key is provided, clear the entire indexed table.
         -- Also clear (All) listeners for the index.
         -- Otherwise, remove just the key provided.
@@ -133,7 +133,7 @@ return {
 
     EmitSignal = function(self, signalName, ...)
         assert(isstring(signalName), "Provided signalName must be a string")
-        
+
         -- Call signal function if there is one ("OnSignalName")
         callEventFunctions(self, signalName, ...)
         callSignalListeners(self, signalName, ...)

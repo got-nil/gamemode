@@ -1,5 +1,5 @@
 -- https://github.com/TomDotBat/semver.lua
--- Semantic version comparison, not needed for client. 
+-- Semantic version comparison, not needed for client.
 
 --semver.lua for Tom.lib - forked from https://github.com/kikito/semver.lua.
 local semver = {

@@ -18,9 +18,9 @@ return {
                 end)
 
                 expect( writeBuffer ).toNot.beFalse()
-                
+
                 GNIL.Net.Testing.CallReciever(writeBuffer, function(_, __, reply)
-            
+
                     expect( net.ReadString() ).to.equal("abc")
                     expect( net.ReadString() ).to.equal("def")
                     expect( net.ReadUInt(5) ).to.equal(10)
@@ -50,7 +50,7 @@ return {
 
                     expect( net.ReadString() ).to.equal("abc")
                     expect( net.ReadInt(4) ).to.equal(5)
-                
+
                     expect( reply ).to.exist()
                     done()
                 end)

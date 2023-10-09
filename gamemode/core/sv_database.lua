@@ -14,7 +14,7 @@ local function createAllTables()
             if k:sub(1, 1) == "_" then continue end
             query:Create(k, v)
         end
-        
+
         -- If there is a _primary_key attribute in the table we
         -- should apply it to the create query.
         if table_data["_primary_key"] then
@@ -46,7 +46,7 @@ if not GNIL.Database["_db"] then
             createAllTables()
         end
     end
-    
+
     -- Attempt connection with configured credentials.
     db:SetModule(conf:Get("driver", "sqlite"))
     db:Connect(
@@ -89,7 +89,7 @@ hook.Add("GNIL.Modules.Init", "gnil_database_modules_init", function(name, init)
 
     -- Copy the tables structure to be created later.
     for k, v in pairs(out.tables) do
-        
+
         -- Key should be table name, value should be the table headers.
         if not (isstring(k) and istable(v) and (not table.IsSequential(v))) then
             init:log("Invalid provided database structure for table '" .. tostring(k) .. "'!", "warning")

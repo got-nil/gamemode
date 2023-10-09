@@ -6,7 +6,7 @@ function Module:Initialize(name, _emit_signal)
     if _emit_signal != false then
         self:EmitSignal(self._initialized && "Reinitialize" || "Initialize", self)
     end
-    
+
     self._initialized = true
     self._module_name = name
 
@@ -20,7 +20,7 @@ function Module:Initialize(name, _emit_signal)
     self.dependencies = false
     self._loaded_dependencies = {}
     self._delayed_extensions = {}
-    self._disabled = false 
+    self._disabled = false
 
     -- Static values that should not change between reinitializations.
     self._static = self._static or {}
@@ -58,7 +58,7 @@ function Module:_Cleanup()
 
     -- Reinitialize the module without sending Reinitialization signal.
     self:Initialize(self._module_name, false)
-    
+
     -- Add all the events back to the extension after cleanup.
     -- (Since the extension listeners would be removed above).
     for _, v in pairs(self._extensions) do
@@ -234,7 +234,7 @@ function Module:Include(path, delayed)
         if self._ignored_files[path] == true then
             return self:log("Refusing to include '" .. path .."' as it is ignored", "debug")
         end
-        
+
         _addIgnoredFile(self, path)
         return GNIL.Utils.Include(path)
 
@@ -248,7 +248,7 @@ end
 function Module:IncludeDirectory(directory, ignoredFiles, delayed)
     local path = GNIL.Utils.ResolveGamemodePath("modules/" .. self._module_name .. "/" .. directory)
     if not delayed then
-        
+
         local ignored_files = nil
         if ignoredFiles or self._added_ignored_file then
             ignored_files = self._ignored_files
@@ -265,8 +265,8 @@ function Module:IncludeDirectory(directory, ignoredFiles, delayed)
                 end
             end
         end
-        return GNIL.Utils.IncludeDirectory(path, ignored_files, true)    
-        
+        return GNIL.Utils.IncludeDirectory(path, ignored_files, true)
+
     else self._added_delayed = true self._delayed_autoload[2][path] = true end
 end
 
@@ -298,7 +298,7 @@ function Module:LoadDirectories(directory, handler)
 
     local path = self:ResolvePath(directory)
     local files, directories = file.Find(path .. "/*", "LUA")
-    
+
     for _, v in ipairs(directories) do
         self:log("Found '" .. handler .. "' '" .. v .. "' at '" .. path .. "'", "debug")
         self:LoadDirectory(path, v, handler)
@@ -371,7 +371,7 @@ function Module:UseExtension(name)
 
     -- Sanity check just incase.
     if not extensionInstance then
-        self:log("Failed to initialize extension '" .. name .. "' for some reason.", "error")        
+        self:log("Failed to initialize extension '" .. name .. "' for some reason.", "error")
         return false
     end
 
@@ -389,9 +389,9 @@ function Module:log(log, logtype) GNIL.log(log, logtype, self._module_name) end
 
 -- These functions can be used, however the EventEmitter can also be used.
 -- Load hooks (in order of call).
-function Module:OnInit() end          -- 1. Called when a module has been initialized, before dependencies. [false=(Module load halted before dependencies)] 
+function Module:OnInit() end          -- 1. Called when a module has been initialized, before dependencies. [false=(Module load halted before dependencies)]
 function Module:OnLoad() end          -- 2. Called while the module is being loaded, after dependencies.    [false=(Module load halted before main autoload)]
-function Module:OnLoadFinished() end  -- 3. Called once the module has finished loading everything. 
+function Module:OnLoadFinished() end  -- 3. Called once the module has finished loading everything.
 function Module:OnUnload() end        -- 4. Called when the module is being unloaded.
 
 -- Additional module hooks.

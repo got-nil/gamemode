@@ -37,7 +37,7 @@ function GNIL.Net.ReceiveChunked(messageName, callback) assert(CLIENT, "Only the
 function GNIL.Net.Create(messageName)
     return GNIL.Net.Classes.Message:New(messageName)
 end
- 
+
 -- Start a net message, inserting the message id
 -- header and using the blanket gnil message name.
 function GNIL.Net.Start(messageName, unreliable, _has_reply, _ignore_nonexistant)
@@ -81,7 +81,7 @@ local function recieveMessage(len, ply, _receiver)
         MODULE:log("Rejecting player " .. ply:ToString() .. " message '" .. mstr .. "' as abuse was detected.", "debug")
         return
     end
-    
+
     -- Call the associated network receiver with the
     -- provided length (- idsize) and the calling ply.
     local out, reciever_args = false, {len - offset, ply, reply}
@@ -103,7 +103,7 @@ if SERVER then GNIL.Net._Receiver = recieveMessage end
 -- When the update rolls around, this can be removed.
 
 if net["WriteUInt64"] == nil then
-    
+
     net.WriteUInt64 = net.WriteString
     net.ReadUInt64 = net.ReadString
 
@@ -115,7 +115,7 @@ end
 -- When the update rolls around, this can be removed.
 
 if net["WritePlayer"] == nil then
-    
+
     net.WritePlayer = net.WriteEntity
     net.ReadPlayer = net.ReadEntity
 

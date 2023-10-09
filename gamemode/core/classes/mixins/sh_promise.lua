@@ -10,7 +10,7 @@ return {
 
     Success = function(self, ...) installEvents(self) return self:EmitEvent("resolve", ...) end,
     Error = function(self, ...) installEvents(self) return self:EmitEvent("reject", ...) end,
-    
+
     OnSuccess = function(self, callback) installEvents(self) self:AddEventListener("resolve", callback) return self end,
     OnError = function(self, callback) installEvents(self) self:AddEventListener("reject", callback) return self end,
 

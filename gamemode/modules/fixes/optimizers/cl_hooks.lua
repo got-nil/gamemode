@@ -1,6 +1,6 @@
 GNIL.Fixes["_originalHooks"] = GNIL.Fixes["_originalHooks"] or {}
 local laggy_hooks = {
-    
+
     {"Think", "DOFThink"},
     {"PlayerTick", "TickWidgets"},
     {"RenderScene", "RenderSuperDoF"},

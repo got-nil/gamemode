@@ -11,7 +11,7 @@ end
 -- value until a valid bitcount is found, or false.
 function GNIL.Net.Helpers.GetBitcount(value, is_uint)
     local offset, value = Either(is_uint == true, 0, 1), math.abs(value)
-    
+
     if 0 >= value then return false end
     if is_uint != true and 3 > value then return false end
     if value > bitcount_map[#bitcount_map] then return false end
@@ -28,7 +28,7 @@ end
 -- Wraper for a reciever that auto replies with the
 -- DISABLED error. Also a little bit of logging.
 function GNIL.Net.Helpers.DisabledMessageReciever(messageName)
-    
+
     return function(len, ply, reply)
 
         if SERVER then MODULE:log(ply:ToString() .. " attempted to send to disabled message '" .. messageName .. "'", "debug")

@@ -7,7 +7,7 @@ local MODULE, core_files = MODULE, {
     "validators",       -- 2. Validators can be used anywhere.
     "parser",           -- 3. Used to parse plaintext into HTTP format.
     "message",          -- 4. All HTTP classes subclass Message.
-    "request",          
+    "request",
     "response",
     "responses",
     "router",

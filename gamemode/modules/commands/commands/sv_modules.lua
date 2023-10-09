@@ -7,12 +7,12 @@ GNIL.Commands.AddFromTable({
         GNIL_CMD_ARGUMENT_STRING
     },
     ["callback"] = function(_, args)
-        
+
         if not GNIL.Modules.Exists(args[1]) then
             return GNIL.log("Unknown module name '" .. args[1] .. "'. The module must filepath actually exist.", "warning")
         end
 
-        local success = GNIL.Modules.Load(args[1], nil, true)
+        local success = GNIL.Modules.Reload(args[1])
         return GNIL.log("Successfully loaded/reloaded module '" .. args[1] .. "'!", "success")
     end
 })

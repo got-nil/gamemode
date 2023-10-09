@@ -9,7 +9,7 @@
 -- TODO: BytesWritten
 
 return {
-    
+
     -- When included, initialize a write buffer.
     Included = function(self) self.__write_buffer = {} self.__write_size = 0 end,
 
@@ -29,7 +29,7 @@ return {
             if fn then fn(unpack(v[1])) end
         end
     end,
-    
+
     -- Instead of using the function directly, reference
     -- the typename since the function is just "Write<Type>".
     -- Also makes it easier for other things to read writeables.

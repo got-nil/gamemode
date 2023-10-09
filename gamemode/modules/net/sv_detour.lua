@@ -20,11 +20,11 @@ local GNIL_Net_AntiAbuse_Check = GNIL.Net.AntiAbuse.Check
 
 -- Detour all incomming messages and read header.
 net.Incoming = function(len, ply)
-    
+
     -- Get the original message name.
     local messageName = util_NetworkIDToString(net_ReadHeader())
     if not messageName then
-        
+
         -- If the player is requesting an invalid/unknown message
         -- we should assume that they're being abusive (as normal
         -- code shouldn't be trying to use non-existant messages).
@@ -50,7 +50,7 @@ net.Incoming = function(len, ply)
     if not internal_messages[messageName] and not GNIL_Net_AntiAbuse_Check(messageName, ply, nil, true) then
         return
     end
-    
+
     -- Call the original reciever if the bucket passed.
     -- Default message header is sent as 16 bit uint, should
     -- be removed from total message length to keep offset.

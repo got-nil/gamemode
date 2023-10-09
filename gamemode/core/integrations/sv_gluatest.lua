@@ -19,7 +19,7 @@ hook.Add("GLuaTest_RunTestFiles", "GNIL.GLuaTest.AddTests", function(testFiles)
             v:log("Could not find GLuaTests in directory '" .. test_dir .. "'.", "warning")
             continue
         end
-        
+
         -- Set the project to the module name and add the tests.
         for _, t in ipairs(GLuaTest.loader(test_dir)) do
             t.project = v._module_name
@@ -27,7 +27,7 @@ hook.Add("GLuaTest_RunTestFiles", "GNIL.GLuaTest.AddTests", function(testFiles)
             table.insert(testFiles, t)
         end
     end
-    
+
     -- Add core gamemode tests.
     for _, t in ipairs(GLuaTest.loader(GNIL.Utils.ResolveGamemodePath("core/tests"))) do
         t.project = "core"

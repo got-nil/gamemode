@@ -10,7 +10,7 @@ function Request:Initialize(...)
         ["body"] = false,
         ["headers"] = false,
     }
-    
+
     -- If an associative table is provided as the first argument
     -- then we should take that as the input and directly set it
     -- into the class parameters.
@@ -63,7 +63,7 @@ function Request:Send()
     -- the request function arguments.
     local args = {}
     for k, _ in pairs(self.requestProperties) do args[k] = self[k] end
-    
+
     return GNIL.Http.SendRequest(args)
 end
 

@@ -7,12 +7,12 @@
 
 	*Modified to ensure QUERY_CLASS returns itself
 	 for chained function calls.
-	
+
 	*Errors call provided callback. Changed callback
 	 return structure
 	   successful: (true, result, lastRow)
 	   failure:    (false, errorText)
-	
+
 --]]
 
 mysql = mysql or {

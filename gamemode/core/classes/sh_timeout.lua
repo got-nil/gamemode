@@ -5,7 +5,7 @@ ClassAccessorFunc(Timeout, {
 
 function Timeout:Initialize(timeout)
     self._id = GNIL.Utils.Random(18)
-    self._timeout = Either(isnumber(timeout), timeout, 3) 
+    self._timeout = Either(isnumber(timeout), timeout, 3)
     self._callback = callback
 end
 

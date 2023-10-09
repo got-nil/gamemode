@@ -36,7 +36,7 @@ ClassAccessorFunc(Websocket, {
         connectionfailure - Websocket failed to connect.
         connected - Websocket connection established.
         disconnected - Websocket connection closed.
-    
+
 --]]
 
 local function ResolveOpenCallbacks(self, ...)
@@ -48,7 +48,7 @@ local function ResolveOpenCallbacks(self, ...)
 end
 
 local function GWSocketsExists()
-    
+
     -- Check if the DLL has already been loaded by another module.
     -- (If its using websockets, it really should load it itself).
     if GNIL.Utils.IsDLLIncluded("gwsockets") then return true end
@@ -64,14 +64,14 @@ local function GWSocketsExists()
 end
 
 local function WebsocketReconnect(self, state)
-    
+
     local timerName = "gnil_ws_" .. self.__identifier
     if state then
 
         -- If theres no retry_delay, or we're already reconnecting ignore.
         if self.retry_delay == nil or self.__reconnecting then return end
         self.__reconnecting = true
-        
+
         -- The websocket connection has terminated. Start a timer that
         -- runs every retry_delay to attempt a websocket connection.
         timer.Create(timerName, self.retry_delay, 0, function()
@@ -84,7 +84,7 @@ local function WebsocketReconnect(self, state)
             end)
         end)
     else
-        
+
         -- The websocket connection has resumed. Remove the connection
         -- retry timer to prevent it from continuing to run.
         if not self.__reconnecting then return end
@@ -144,7 +144,7 @@ function Websocket:Open(callback)
 
     -- Forward socket callbacks to class events.
     socket.onError = function(_, errorMessage)
-        
+
         -- Seperate connection failure errors from actual errors.
         if string.sub(string.lower(errorMessage), 1, 17) == "connection failed" then
             WebsocketReconnect(self, true)
@@ -159,7 +159,7 @@ function Websocket:Open(callback)
         -- the websocket fails to connect initially, it will send an error event
         -- followed by a disconnect, despite not actually disconnecting from anything.
         if not self.__connected then return end
-        
+
         -- Set connection state and start reconnection timer if applicable.
         self.__connected = false
         if not self.__closed then
@@ -176,7 +176,7 @@ function Websocket:Open(callback)
         return self:EmitSignal("connected", ...)
     end
     socket.onMessage = function(_, ...) return self:EmitSignal("message", ...) end
-    
+
     -- If there is already a socket, ensure the connection
     -- is closed before overwriting it (losing the reference).
     if self.__socket and self.__socket:isConnected() then
@@ -207,7 +207,7 @@ function Websocket:Write(message)
     if self:EmitEvent("write", message) == false then
         return false
     end
-    
+
     self.__socket:write(message)
     return true
 end

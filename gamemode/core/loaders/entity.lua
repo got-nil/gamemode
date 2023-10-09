@@ -11,7 +11,7 @@ local defaultEnt = {
 return {
 
     Directory = "entities",
-    
+
     -- Load a directory of files as one entity.
     -- Must respect default gmod entity file names.
     LoadDirectory = function(classname, directory_path)

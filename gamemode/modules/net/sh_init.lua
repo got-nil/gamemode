@@ -65,4 +65,4 @@ MODULE.OnLoadFinished = function()
     -- Cache max net messages for warning.
     GNIL.Net["_max_messages"] = GNIL.Net.Helpers.GetBitcountMaxValue(GNIL.Net["_idsize"], true)
     MODULE:log("Configured idsize supports a maximum of " .. tostring(GNIL.Net["_max_messages"]) .. " individual messages.", "debug")
-end 
+end

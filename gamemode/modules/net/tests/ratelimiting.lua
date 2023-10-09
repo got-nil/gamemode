@@ -37,7 +37,7 @@ return {
             async = true,
             timeout = 5,
             func = function(state)
-                
+
                 -- Empty the bucket.
                 expect(emptyBucket(state.bucket)).to.beTrue()
 
@@ -79,7 +79,7 @@ return {
             func = function(state)
 
                 -- Increase bucket capacity and decrease refill_delay,
-                -- this should cause the bucket to refill fully in 5 seconds. 
+                -- this should cause the bucket to refill fully in 5 seconds.
                 state.bucket.capacity = 10
                 state.bucket.refill_delay = 0.5
                 expect(emptyBucket(state.bucket)).to.beTrue()

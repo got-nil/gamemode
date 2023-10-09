@@ -29,14 +29,14 @@ function Bucket:Check(steamid, requested_tokens)
     if IsPlayer(steamid) then
         steamid = tostring(steamid:SteamID64())
     end
-    
+
     -- If the player does not yet have a ratelimit, they're passing.
     local now = SysTime()
     if not self._data[steamid] then
         self._data[steamid] = {self.capacity - requested_tokens, now}
         return true
     end
-    
+
     -- Get current bucket state and calculate elapsed time since last refill.
     local tokens, last_refill_time = unpack(self._data[steamid])
     local elapsed = now - last_refill_time

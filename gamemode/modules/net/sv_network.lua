@@ -7,7 +7,7 @@ GNIL.Net["_netstrings"] = {
     "gnilc",  -- GNIL Chunked (chunked messages for large datasets)
     "gnils",  -- GNIL Sync (sync pooled netstrings between client and server)
     "gnilr"   -- GNIL Reply (message reply system)
-} 
+}
 for _, v in ipairs(GNIL.Net["_netstrings"]) do
     util.AddNetworkString(v)
 end
@@ -35,7 +35,7 @@ function GNIL.Net.AddNetworkString(str, ratelimits, _d)
 
     -- Prevent messages from being re-synced to clients.
     if GNIL.Net["_i"][str] then
-        
+
         -- Allow ratelimits to be modified after the message creation.
         GNIL.Net.AntiAbuse.SetLimits(str, ratelimits)
         return false
@@ -49,7 +49,7 @@ function GNIL.Net.AddNetworkString(str, ratelimits, _d)
     else
         GNIL.Net["_r"][l] = str
         GNIL.Net["_i"][str] = l
-        
+
         -- Set any provided ratelimits for the message.
         GNIL.Net.AntiAbuse.SetLimits(str, ratelimits)
     end

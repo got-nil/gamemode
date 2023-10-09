@@ -48,17 +48,17 @@ function NetworkMessage:_WriteToStream(targets)
         if self._errors._set then
 
             -- Wrap the actual reply_callback to handle inline errors.
-            reply_callback = function(success, len, ply, err)     
+            reply_callback = function(success, len, ply, err)
                 if not success then
                     if self._errors.callback then self._errors.callback(err.enum, err.int) end
-                    
+
                     -- k = error enum, v = self._errors callback key
                     local error_callbacks = {
                         [GNIL_NET_ERRORS_TIMEOUT] = "timeout",
                         [GNIL_NET_ERRORS_RATELIMITED] = "ratelimited",
-                        [GNIL_NET_ERRORS_DISABLED] = "disabled" 
+                        [GNIL_NET_ERRORS_DISABLED] = "disabled"
                     }
-                    
+
                     -- Handle specific error callbacks such as "OnTimeout" etc.
                     -- Maybe better than always calling generic error and checking there?
                     local key = error_callbacks[err.enum]

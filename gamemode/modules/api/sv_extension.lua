@@ -4,7 +4,7 @@ local APIExtension = GNIL.Thirdparty.middleclass("APIExtension", GNIL.Classes.Ex
 
     Using the APIExtension on a Module allows for routes
     to be directly associated with the active module itself.
-    
+
     This means that when the module is unloaded (or refreshed)
     all routes can be removed. Using the API interface directly
     means that each individual Module would have to handle its
@@ -19,7 +19,7 @@ local APIExtension = GNIL.Thirdparty.middleclass("APIExtension", GNIL.Classes.Ex
 
 function APIExtension:Initialize(moduleInstance)
     GNIL.Classes.Extension:Initialize(self, moduleInstance)
-    
+
     if self._routes == nil then self._routes = {} else self:RemoveAllRoutes() end
     self._prefix = "/modules/" .. moduleInstance._module_name
 end

@@ -1,4 +1,4 @@
--- Route is used by the server router to define a 
+-- Route is used by the server router to define a
 -- specific route entity. It contains the route callback
 -- and provides an interface for route matching.
 -- Usually, routes should not be constructed manually, instead

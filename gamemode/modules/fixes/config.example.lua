@@ -5,7 +5,7 @@ return {
         "Modules"
     },
     config = {
-            
+
         -- Disable/Enable certain fix modules.
         Modules = {
             Optimizers = true,
@@ -28,7 +28,7 @@ return {
             ["env_sprite"] = {banned},
             ["func_tracktrain"] = {banned},
             ["point_template"] = {banned},
-            
+
             ["donation_box"] = {nodamage},
             ["gmod_winch_controller"] = {nodamage},
             ["gmod_button"] = {nodamage},
@@ -56,7 +56,7 @@ return {
         -- A set of models that should be blacklisted (disallowed spawn).
         -- This is not a full collection, just a base set of known bad props.
         PropBlacklist = {
-            
+
             ["models/props_vehicles/tanker001a.mdl"] = true,
             ["models/props_vehicles/apc001.mdl"] = true,
             ["models/props_combine/combinetower001.mdl"] = true,

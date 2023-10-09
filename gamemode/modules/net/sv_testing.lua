@@ -13,7 +13,7 @@ local Replacements = {
         ["SendPVS"] = function(vector) GNIL.Net.Testing["_target"] = vector end,
         ["SendToServer"] = function() GNIL.Net.Testing["_target"] = 2 end,
         ["Broadcast"] = function() GNIL.Net.Testing["_target"] = 1 end,
-        
+
         -- Whenever Start is called, the write buffer
         -- should be reset since its a "new" message.
         ["Start"] = function(name)
@@ -25,7 +25,7 @@ local Replacements = {
         ["BytesWritten"] = function() return 0 end
     },
     ["Read"] = {
-        
+
         -- TODO: Make this work properly.
         ["BytesLeft"] = function() return 0 end,
     }
@@ -65,7 +65,7 @@ local function detourCallback(is_read, typeName)
     return function(...)
         local buffer = GNIL.Net.Testing["_buffer"][prefix]
         if is_read then
-            return buffer:Read({...}, typeName)            
+            return buffer:Read({...}, typeName)
         else
             buffer:_WriteToBuffer({...}, typeName)
         end
@@ -96,7 +96,7 @@ function GNIL.Net.Testing.Detour(is_read, write_buffer)
         originals[k] = net[k]
         net[k] = v
     end
-    
+
     -- Cache the original callbacks and detour state.
     GNIL.Net.Testing["_original"][prefix] = originals
     GNIL.Net.Testing["_detoured"][prefix] = true
@@ -136,7 +136,7 @@ function GNIL.Net.Testing.CallReciever(write_buffer, receiver)
 
     GNIL.Net.Testing.Detour(true, write_buffer)     -- 1. Detour
     local succ, err = pcall(function()              -- 2. Call reciever
-        
+
         -- Call the primary network reciever with write buffer.
         -- TODO: Use BytesWritten on write_buffer instead of static.
         GNIL.Net._Receiver(25, player.GetAll()[1], receiver)

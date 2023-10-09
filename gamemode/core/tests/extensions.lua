@@ -39,7 +39,7 @@ return {
                 local A, B = 0, 0
 
                 function Extension:OnLoad() A = A + 1 end
-                function Extension:OnUnload() B = B + 1 end 
+                function Extension:OnUnload() B = B + 1 end
 
                 state.Module:AddExtensionByClass("test", Extension)
                 expect( state.Module:UseExtension("test") ).to.beTrue()

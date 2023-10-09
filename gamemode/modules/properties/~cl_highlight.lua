@@ -3,7 +3,7 @@
 return {
     name = "properties-grid",
     enable = function()
-                
+
         local white = Color(255, 255, 255)
         local red = Color(255, 0, 0)
         local blue = Color(0, 0, 255)
@@ -11,14 +11,14 @@ return {
 
         hook.Add("PostDrawTranslucentRenderables", "GNIL.DevPropertiesDebugGrid", function()
             if not GNIL.Properties["_map"] then return end
-            
+
             for i, x in ipairs(GNIL.Properties["_map"].sets.row) do
                 render.DrawLine(
                     Vector(x, 0, z),
                     Vector(x, GNIL.Properties["_map"].max.x, z),
                     red
                 )
-                
+
                 if i == 1 then
                     render.DrawSphere(Vector(x, 0, z), 500, 50, 50, red)
                 end
@@ -42,7 +42,7 @@ return {
             local pos = GNIL.Properties.GetMyCoordinates()
             draw.SimpleText("x = " .. pos.x .. "; y = " .. pos.y, "CloseCaption_Bold", 50, 50, white)
         end)
-    
+
     end,
     disable = function()
         hook.Remove("PostDrawTranslucentRenderables", "GNIL.DevPropertiesDebugGrid")

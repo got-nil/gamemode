@@ -36,7 +36,7 @@ function GNIL.Commands.Arguments.Parse(argstr)
             args[#args + 1], buffer = buffer, ""
         end
     end
-    if buffer != "" then args[#args + 1] = buffer end    
+    if buffer != "" then args[#args + 1] = buffer end
     return args
 end
 
@@ -61,17 +61,17 @@ end
 
 /*
     The structure for this table should be as follows:
-    
+
     GNIL_CMD_ARGUMENT_? = {
         validatorFunction,
         autocompleteFunction?
     }
 
-    The validatorFunction function should be a callable with a structure as:            
+    The validatorFunction function should be a callable with a structure as:
         Input Arguments:
             - argument: string = The user inputted argument
             - caller: ?ply = The command caller or nil when command called from server
-        
+
         Returns:
             - ?output: Any = The output from the converter. Or nil for invalid inputs
 
@@ -188,13 +188,13 @@ local genericArguments = {
         function(arg, ply)
 
             -- If there is no caller provided, use the argument as
-            -- the entity id number directly. Cannot be world. 
+            -- the entity id number directly. Cannot be world.
             if ply == nil then
                 arg = tonumber(arg, 10)
                 if arg == nil or arg == 0 then return false end
                 return Entity(arg)
             end
-            
+
             -- If there is a player, return the eye trace result.
             -- (or nil if theres no result, which is handy for invalid)
             return ply:GetEyeTrace().Entity
@@ -212,7 +212,7 @@ local genericArguments = {
 
     -- This is the far more advanced entity targetting system that uses the
     -- syntax defined in sv_ent_parser. It allows for multiple entities to be
-    -- selectively targetted for mass actions. 
+    -- selectively targetted for mass actions.
     [GNIL_CMD_ARGUMENT_ENTITY_MULTI] = {
         function(arg, ply)
 
@@ -230,10 +230,10 @@ local genericArguments = {
                     "* - World lookup",
                     "^ - Current player",
                     "+ - Combine multiple command outputs, remove duplicates",
-                    "; - Combine multiple command outputs, keep duplicates" 
+                    "; - Combine multiple command outputs, keep duplicates"
                 }
             else
-                
+
                 -- If there is more text typed, we should attempt to show hints
                 -- depending on the first character of the argument (operator).
                 local operatorHints = {

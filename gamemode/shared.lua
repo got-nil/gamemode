@@ -2,7 +2,7 @@ GNIL = GNIL or {
 
     -- So unbelievably sweaty, but we're going to be following the semver
     -- standardisation. (https://semver.org/). This will be for automation
-    -- purposes primarily. 
+    -- purposes primarily.
     _VERSION = "1.0.0-alpha",
 
     -- These are the credits of core developers among the project. The steamIDs
@@ -12,7 +12,7 @@ GNIL = GNIL or {
 
         -- Copy my structure, and paste your own stuff over it.
         -- IF YOU DON'T KNOW YOUR TITLE, ASK MORG OR RAPTOR, DONT MAKE ONE UP.
-        -- ADD SEQUENTIALLY, YOUR PR WILL BE REJECTED IF YOU TRY ALTER ORDER. 
+        -- ADD SEQUENTIALLY, YOUR PR WILL BE REJECTED IF YOU TRY ALTER ORDER.
         {
             ["name"] = "morgverd",
             ["id64"] = "76561198301284223",

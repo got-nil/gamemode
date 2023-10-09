@@ -26,7 +26,7 @@ local function validateConfigStructure(structure) -- valid(bool), out(table|stri
         -- Replace shorthand aliases
         ["cl"] = "client",
         ["sv"] = "server",
-        ["sh"] = "shared" 
+        ["sh"] = "shared"
     }
     if realms[b.realm] == nil then
         return false, "Invalid provided realm name '" .. b.realm .. "'"
@@ -34,7 +34,7 @@ local function validateConfigStructure(structure) -- valid(bool), out(table|stri
     if realms[b.realm] != true then
         b.realm = realms[b.realm]
     end
-    
+
     return a, b
 end
 
@@ -105,7 +105,7 @@ end
 -- certain shared attributes.
 if SERVER then
     hook.Add("PlayerNetLoad", "gnil_config_net_send", function(ply)
-    
+
         -- Get all config files that the player should recieve.
         local conf = {}
         for _, v in pairs(GNIL.Config["_r"]) do
@@ -114,7 +114,7 @@ if SERVER then
             if v:ShouldSend(ply) then
                 conf[v.name] = v.struct.config
             end
-            
+
             -- Add specific shared attributes.
             for _, k in ipairs(v.struct.shared) do
                 if not conf[v.name] then conf[v.name] = {} end
@@ -146,7 +146,7 @@ local function loadModuleConfig(partialModule)
     -- the file actually exists and then load it for reference later.
     if GNIL.Config.Get("M_" .. tostring(partialModule)) == nil then
         if SERVER then
-            
+
             -- Make sure the local file actually exists.
             if file.Exists(partialModule:ResolvePath("config.lua"), "GAME") then
                 partialModule:log("Local module configuration file 'config.lua' is missing!", "debug")
@@ -163,7 +163,7 @@ local function loadModuleConfig(partialModule)
         else
             partialModule:log("Missing local module config!", "debug")
             return false
-        end        
+        end
     end
     return true
 end
@@ -171,14 +171,14 @@ end
 hook.Add("GNIL.Modules.PreInit", "gnil_config_module_validation", function(name, partialModule)
 
     -- String name of config (from /config directory) or true
-    -- to allow modules to define their config locally with a 
+    -- to allow modules to define their config locally with a
     -- "config.lua" file mapped to the module name.
     if not (isstring(partialModule.config) or partialModule.config == true) then return end
-    
+
     -- Is the config file required hook. Default to required.
     local is_config_required = partialModule:IsConfigRequired()
     if not isbool(is_config_required) then is_config_required = true end
-    
+
     -- Handle local config file for module.
     if partialModule.config == true then
 
@@ -200,12 +200,12 @@ end)
 
 hook.Add("GNIL.Modules.FirstLoaded", "gnil_config_net_loaded", function(name, module)
     if name != "net" then return end
-    
+
     if SERVER then
         GNIL.Net.AddNetworkString("config_recieve")
     else
         GNIL.Net.ReceiveChunked("config_recieve", function(data)
-            
+
             -- Parse the recieved config file data, return error
             -- back to server if this fails via chunk recv callback.
             local out = util.JSONToTable(data)
@@ -220,7 +220,7 @@ hook.Add("GNIL.Modules.FirstLoaded", "gnil_config_net_loaded", function(name, mo
                     config = v
                 })
                 GNIL.log("Recieved partial config '" .. k .. "' from the server!", "debug")
-            end         
+            end
         end)
     end
 end)

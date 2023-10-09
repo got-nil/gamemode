@@ -102,7 +102,7 @@ function GNIL.Net.Chunks.Send(ply, message, data, verify_checksum, callback)
                 if verify_checksum == true then net.WriteString(GNIL.Net.Chunks["return_codes"][return_code][2]) end -- Checksum?
                 net.WriteUInt(messageid, GNIL.Net["_idsize"]) -- Target message id
 
-                -- If the data contains a header with individual length data, then we should 
+                -- If the data contains a header with individual length data, then we should
                 -- inform the client of this and give the header size so it can decode.
                 net.WriteBool(has_header)
                 if has_header then

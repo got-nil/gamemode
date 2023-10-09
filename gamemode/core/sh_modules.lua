@@ -27,7 +27,7 @@ end
 -- Return all cached modules.
 function GNIL.Modules.GetAll(associative, just_names, ignore_disabled)
     local modules = {}
-    
+
     for k, v in pairs(GNIL.Modules["_cached_modules"]) do
         if not ignore_disabled and v._disabled then continue end
         modules[associative and k or (#modules + 1)] = just_names and k or v
@@ -40,7 +40,7 @@ end
 -- If associative is false, just_names can be true which makes a sequential array of string names.
 function GNIL.Modules.FindAll(associative, just_names)
     local modules = {}
-    
+
     local _, directories = file.Find(GNIL.Utils.ResolveGamemodePath("modules/*"), "LUA")
     for i, name in ipairs(directories) do
         if name[1] == "_" then continue end
@@ -70,7 +70,7 @@ function GNIL.Modules._Initialize(name, _dependency_chain, _reload, _returnLastM
             if i == iRealm then table.insert(initFiles, v) end                  -- If its correct realm, add it as initFile.
             if SERVER and i == 2 then GNIL.Utils.Include(filepath, "cl_") end   -- If its client only, add CSLuaFile.
         end
-    end 
+    end
 
     -- Once the init file has been found, we should load it individually.
     -- Ensuring that the dependency chain is passed through to the module.
@@ -104,7 +104,7 @@ function GNIL.Modules._Initialize(name, _dependency_chain, _reload, _returnLastM
     -- being returned (keep open if callback is requested).
     local _hasRestored = false
     local _restoreModuleFn = function()
-        
+
         -- Prevent the restoreModuleFn from being called twice.
         -- Although this shouldn't happen anyway, it does allow the
         -- function to always be called safely (even if its already closed).
@@ -157,20 +157,20 @@ function GNIL.Modules._Initialize(name, _dependency_chain, _reload, _returnLastM
             moduleInstance:log("Module load was prevented by hook after dependencies were loaded.", "debug")
             restoreModuleFn()
             return false, nil, nil
-        end        
+        end
     else
         if initFile then moduleInstance:log("Init file '" .. initFile .. "' is not suitable for the current realm.", "debug")
         else moduleInstance:log("Init file could not be found, skipping.", "debug") end
     end
-    
+
     -- GNIL.Modules.Load delays the MODULE from being reset until the end. Instead the resetter
     -- callable should be returned so the env closing can be handled when needed.
     if _returnLastModuleFn then
         return true, moduleInstance, _restoreModuleFn
     else
-        
+
         -- Restore the MODULE const to last module to handle loading inside another module.
-        restoreModuleFn()   
+        restoreModuleFn()
         return true, moduleInstance, nil
     end
 end
@@ -257,7 +257,7 @@ function GNIL.Modules.Load(name, _dependency_chain, _reload)
             -- On the root level, also ignore anything that looks like an init file.
             local ignored_files = {}
             for k, _ in pairs(base_ignored_files) do
-                ignored_files[k] = true 
+                ignored_files[k] = true
             end
             if i == 1 then
                 moduleInstance:log("Loading module top level directory contents.", "debug")
@@ -301,7 +301,7 @@ end
 -- Unload a module, recursively unloading all its dependencies.
 -- If _reload is specified, some unload steps are ignored.
 function GNIL.Modules.Unload(name_or_module, _caller, _reload)
-    
+
     -- Allow a module to be provided directly instead of name.
     local moduleInstance, name = false, false
     if istable(name_or_module) then
@@ -333,7 +333,7 @@ end
 -- the ignore_cache argument is true. Efficiency is a bitch.
 GNIL.Modules["_cached_existances"] = {}
 function GNIL.Modules.Exists(name, ignore_cache)
-    
+
     -- If we're not ignoring the cache, and there is a cached existance value for
     -- the module name then we should use that instead of re-checking.
     if not ignore_cache and GNIL.Modules["_cached_existances"][name] then
@@ -362,10 +362,10 @@ end
 -- Get a module instance from cache, or create a new one. This ensures that
 -- the same module instances are returned each time to persist class mutations.
 function GNIL.Modules.Get(name, additional, _ignore_exists) -- ?Module
-    if not GNIL.Modules["_cached_modules"][name] then 
+    if not GNIL.Modules["_cached_modules"][name] then
         if not _ignore_exists and not GNIL.Modules.Exists(name) then return nil end
 
-        -- Create/Cache the module 
+        -- Create/Cache the module
         GNIL.Modules["_cached_modules"][name] = GNIL.Classes.Module:New(name)
     end
 

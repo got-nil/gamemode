@@ -52,9 +52,9 @@ function GNIL.Net.AntiAbuse.Abusing(messageName, ply, is_default_message)
 
     -- If the players own bucket is limited, then the player has sent
     -- multiple abusive net messages (could be across multiple messages).
-    -- Here they should actually be sanctioned, kicking the player by default. 
+    -- Here they should actually be sanctioned, kicking the player by default.
     if not GNIL.Net.AntiAbuse["_p"][steamid]:Check(steamid) then
-        
+
         if hook.Run("GNIL.Net.AntiAbuse.IsAbusing", ply) == false then return end
         ply:Kick("Detected attempted network abuse patterns")
     end
@@ -75,7 +75,7 @@ function GNIL.Net.AntiAbuse.SetLimits(messageName, limits, is_default_message)
     end
 
     -- If the message bucket already exists, check if the provided config
-    -- is the same to prevent needless discarding of previous bucket.  
+    -- is the same to prevent needless discarding of previous bucket.
     local existingBucket = GNIL.Net.AntiAbuse["_r"][messageName]
     if existingBucket then
 
@@ -88,7 +88,7 @@ function GNIL.Net.AntiAbuse.SetLimits(messageName, limits, is_default_message)
     else
         MODULE:log("Creating ratelimit bucket for message '" .. messageName .. "'.", "debug")
     end
-    
+
     -- Create/Replace the bucket store.
     GNIL.Net.AntiAbuse[is_default_message && "_d" || "_r"][messageName] = GNIL.Net.Classes.Bucket:New(out.capacity, out.delay, out.amount)
     return true

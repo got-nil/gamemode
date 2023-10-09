@@ -25,7 +25,7 @@ GNIL.Net.Receive("module_commands_sync", function()
 
         -- Get the command name and if its been hashed.
         local command_plaintext, command_hash, command_arguments = net.ReadBool(), net.ReadString(), {}
-        
+
         -- If the provided command is plaintext, we should add it to
         -- the list of discovered commands and generate the actual hash
         -- for it.

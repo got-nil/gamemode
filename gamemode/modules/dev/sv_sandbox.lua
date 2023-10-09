@@ -147,7 +147,7 @@ local function createEnvironment(stdout_callback)
     local sandbox_env = {SERVER = true, CLIENT = false}
     for _, v in ipairs(globals) do sandbox_env[v] = _G[v] end
     for k, v in pairs(libaries) do sandbox_env[k] = v end
-    
+
     -- Proxy environment stdout functions to collect
     -- sandbox print outputs etc. Also prevents people
     -- from spamming messages in the server console.
@@ -161,7 +161,7 @@ local function createEnvironment(stdout_callback)
         "MsgN"
     }
     for _, v in ipairs(stdout_fns) do
-        if stdout_callback then    
+        if stdout_callback then
             sandbox_env[v] = function(...)
                 local out = {}
                 for _, v in ipairs({...}) do
@@ -183,7 +183,7 @@ local function createEnvironment(stdout_callback)
     return sandbox_env
 end
 
--- Parse a raw error string into 
+-- Parse a raw error string into
 local function parseError(err)
 
     -- If the error is not a string, still return a valid structure.

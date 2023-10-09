@@ -59,7 +59,7 @@ function Headers:GetAll(lowercase_names)
 
     local out = {}
     for k, v in pairs(self._headers) do
-        out[lowercase_names && k || v[1]] = v[2]    
+        out[lowercase_names && k || v[1]] = v[2]
     end
     return out
 end

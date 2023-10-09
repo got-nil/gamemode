@@ -38,7 +38,7 @@ return {
 
                 class:AddEventListener("event", function() A = A + 1 end)
                 class:AddSignalListener("signal", function() B = B + 1 end)
-                
+
                 class:AddEventListener("both", function() C = C + 1 end)
                 class:AddSignalListener("both", function() C = C + 1 end)
 
@@ -73,7 +73,7 @@ return {
                 -- If OnA() + below is called A = 6
                 local class = TestClass:New()
                 class:AddEventListener("test", function() A = A + 1 end)
-                
+
                 expect( class:EmitEvent("test") ).to.beNil()
                 expect( A ).to.equal(6)
             end
@@ -83,7 +83,7 @@ return {
             func = function(state)
                 local TestClass, A, B = state.Class, false, false
                 function TestClass:OnStatic() return "abc" end
-                
+
                 local class = TestClass:New()
                 class:AddEventListener("static", function() A = true return "def" end)
                 class:AddSignalListener("static", function() B = true return "ghi" end)
@@ -115,7 +115,7 @@ return {
                 expect( class:EmitSignal("other", "lmn") ).to.beNil()
 
                 expect( A ).to.equal("def") expect( B ).to.equal("lmn")
-                expect( C ).to.equal("abc") expect( D ).to.equal("def")                
+                expect( C ).to.equal("abc") expect( D ).to.equal("def")
             end
         },
         {
@@ -124,14 +124,14 @@ return {
                 local TestClass = state.Class
                 local A, B, C = false, false, false
                 local D, E, F = false, false, false
-                
+
                 function TestClass:OnStatic() A = true end
-                
+
                 local class = TestClass:New()
                 class:AddEventListener("static", function() B = true end)
                 class:AddEventListener("static", function() C = true return "abc" end)
                 class:AddEventListener("static", function() F = true end) -- this shouldn't be called
-                
+
                 class:AddSignalListener("static", function() D = true return "def" end)
                 class:AddSignalListener("static", function() E = true return "ghi" end)
 

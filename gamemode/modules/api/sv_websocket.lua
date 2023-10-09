@@ -115,7 +115,7 @@ function Websocket:OnMessage(msg)
         MODULE:log("Invalid message recieved from upstream server.", "warning")
         return
     end
-    
+
     if message_type == "#" then
 
         -- Parse the operation data.
@@ -130,7 +130,7 @@ function Websocket:OnMessage(msg)
             operations[data["o"]](self, data)
         end
     else
-        
+
         -- Read message request_id and body.
         local b64_encoded = Either(string.sub(msg, 2, 2) == "1", true, false)
         local request_id = string.sub(msg, 3, 10)
@@ -138,7 +138,7 @@ function Websocket:OnMessage(msg)
 
         -- If the body is base64 encoded, decode it.
         if b64_encoded then body = util.Base64Decode(body) end
-        
+
         -- Get the original request header from partials.
         local header = self._request_partials[request_id]
         if not header then

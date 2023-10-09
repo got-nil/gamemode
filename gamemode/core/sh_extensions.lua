@@ -28,7 +28,7 @@ end
 function GNIL.ModuleExtensions._Get(moduleInstance, name)
     local extensionClass = GNIL.ModuleExtensions["_cached_extensions"][name]
     if extensionClass == nil then return nil end
-    
+
     local extensionInstance = extensionClass:New(moduleInstance)
     return GNIL.ModuleExtensions._AddSignals(moduleInstance, extensionInstance)
 end
@@ -36,7 +36,7 @@ end
 hook.Add("GNIL.Modules.InitAfterDependencies", "modules_extensions_init", function(_, moduleInstance)
     for k, _ in pairs(moduleInstance._delayed_extensions) do
         if moduleInstance._extensions[k] != nil then continue end
-        
+
         -- Attempt to load the required missing extension.
         if not moduleInstance:UseExtension(k) then
             moduleInstance:log("Failed to load required extension '" .. k .. "' for module, refusing load.", "warning")

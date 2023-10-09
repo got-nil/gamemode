@@ -20,7 +20,7 @@ function GNIL.API.URL.Decode(str)
 end
 
 -- Remove the starting slash from a string.
-function GNIL.API.URL.RemoveStartingSlash(str)        
+function GNIL.API.URL.RemoveStartingSlash(str)
     if str[1] == "/" then
         str = string.sub(str, 2)
     end

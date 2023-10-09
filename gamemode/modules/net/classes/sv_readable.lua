@@ -15,7 +15,7 @@ function NetworkReadable:Initialize(writeable)
 end
 
 function NetworkReadable:Read(args, typeName)
-    
+
     local current = self._buffer[self._i]
     if not current then return nil end
 

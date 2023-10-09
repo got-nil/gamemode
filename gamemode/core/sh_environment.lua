@@ -85,26 +85,26 @@ if isstring(env) then
         GNIL._safeLog("Invalid provided preset name '" .. env .. "'", "error")
         return false
     end
-    
+
     -- Load the preset name provided.
     out = preset
 else
-    
+
     -- Table provided, could contain a preset however could also contain overrides.
     -- If there is a 'preset' string key, use that as a base.
     if isstring(env.preset) then
-        
+
         -- Validate the preset provided.
         local preset = getPreset(env.preset)
         if not preset then
             GNIL._safeLog("Invalid provided preset name '" .. env.preset .. "'", "error")
             return false
-        end        
+        end
         out = preset
     end
 
     -- Apply additional settings ontop of preset base (if there is one).
-    for k, v in pairs(env) do        
+    for k, v in pairs(env) do
         if not env_enums[k] then continue end
         out[k] = v
     end
@@ -119,7 +119,7 @@ end
 hook.Add("DarkRPInit", "gnil_luarefresh", function()
 
     -- If we're already loaded (luarefresh) + darkrp is already loaded + the
-    -- DARKRP_REFRESH env setting is off then the darkrp reload should be stopped. 
+    -- DARKRP_REFRESH env setting is off then the darkrp reload should be stopped.
     if GNIL._LOADED and not GNIL.ENV.DARKRP_REFRESH then
         return false
     end

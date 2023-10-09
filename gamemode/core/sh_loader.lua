@@ -41,7 +41,7 @@ function GNIL.Loader.DirectoryConst(const, directory_path, const_default)
             if not GNIL.Utils.IsFilenameForCurrentRealm(filepath) then
                 continue
             end
-            
+
             any_loaded = true
             GNIL.Utils.Include(v)
         end
@@ -61,16 +61,16 @@ end
 
 --[[
 
-    Load a directory of files into a table. Each key will be the 
+    Load a directory of files into a table. Each key will be the
     filename without extension (uppercase first if argument set).
     The value is the return value of the file. (could be nil!)
 
-    sh_pet.lua -> PetClass
-    sh_dog.lua -> DogClass
+    sh_pet.lua -> A
+    sh_dog.lua -> B
 
     ={
-        pet = PetClass,
-        dog = DogClass
+        pet = A,
+        dog = B
     }
 
 --]]
@@ -104,12 +104,12 @@ end
 
     ** EACH RETURN VALUE MUST BE NIL OR TABLE **
 
-    sh_pet.lua -> { Pet = PetClass }
-    sh_dog.lua -> { Dog = DogClass }
+    sh_whatever1.lua -> { Pet = A }
+    sh_whatever2.lua -> { Dog = B }
 
     ={
-        Pet = PetClass,
-        Dog = DogClass
+        Pet = A,
+        Dog = B
     }
 
 --]]
@@ -128,7 +128,7 @@ function GNIL.Loader.DirectoryMap(directory_path, callback, force_realm)
         local rtrn = GNIL.Utils.Include(directory_path .. "/" .. f, force_realm)
         if rtrn == nil then continue end
         assert(istable(rtrn), "File '" .. f .. "' must return nil or a table")
-        
+
         for k, v in pairs(rtrn) do
             out[k] = v
 

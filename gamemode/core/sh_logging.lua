@@ -14,10 +14,10 @@ function GNIL.Logging.Log(log, logtype, prefix)
         (logcolours[logtype == nil and "default" or logtype] != nil and logcolours[logtype] or logcolours["default"]),
         "[GNIL][" .. (SERVER and "SV" or "CL") ..  "]" .. (prefix == nil and "" or ("[" .. prefix .. "]")) .."[" .. (logtype == nil and "INFO" or string.upper(logtype)) .. "] "
     )
-    
+
     -- If the provided input is a table, and the pretty_table thirdparty
     -- utility is loaded then we should use that to print it. (Also ensure
-    -- that the thirdparty utility actually exists). 
+    -- that the thirdparty utility actually exists).
     if istable(log) and SafeTableAccess(GNIL, "Thirdparty", "pretty_table") != nil then
         GNIL.Thirdparty.pretty_table(log)
         return
@@ -58,5 +58,5 @@ hook.Add("GNIL.Modules.Loaded", "GNIL.Logging.Net", function(name)
 end)
 
 -- This is basically the only exception for the
--- no functions on base const rule. 
+-- no functions on base const rule.
 GNIL.log = GNIL.Logging.Log

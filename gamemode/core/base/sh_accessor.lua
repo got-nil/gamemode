@@ -12,7 +12,7 @@ ClassAccessorFunc(MyClass, {
         var = "country",
         force = TYPE_STRING,
         validate = function(v)
-            
+
             local acceptedCountries = {
                 ["GB"] = true,
                 ["FR"] = true
@@ -43,7 +43,7 @@ local force_setters = {
     end,
     [FORCE_VECTOR] = function(v)
         if IsColor(v) then return v:ToVector() end
-        return Vector(v) 
+        return Vector(v)
     end
 }
 
@@ -203,13 +203,13 @@ FuncAccessors = {
             set = false
         }, additions or {})
     end,
-    
+
     NumberMinMax = function(var, min, max, additions)
         local min, max = min, max
         return table.Inherit({
             var = var,
             validate = function(_, v)
-                
+
                 -- Min, Max is optional.
                 if not isnumber(v) then return false end
                 if min and min > v then return false end

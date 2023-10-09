@@ -1,7 +1,7 @@
 
 return {
     groupName = "Parser",
-    
+
     cases = {
         {
             name = "Query arguments should parse",

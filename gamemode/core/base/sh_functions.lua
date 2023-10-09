@@ -6,7 +6,7 @@ SafeTableAccess = function(tbl, ...)
     if not istable(tbl) then
         return nil
     end
-    
+
     local last = tbl
     for i, v in ipairs({...}) do
         last = last[v]
@@ -18,7 +18,7 @@ SafeTableAccess = function(tbl, ...)
 end
 
 IsPlayer = function(ply)
-    return IsValid(ply) and IsEntity(ply) and ply:IsPlayer()
+    return IsEntity(ply) and IsValid(ply) and ply:IsPlayer()
 end
 
 IsClass = function(obj, name)

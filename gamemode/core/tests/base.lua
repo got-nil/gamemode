@@ -65,12 +65,12 @@ return {
                         get = true
                     }
                 })
-                
+
                 local obj = state.Class:New()
 
                 expect( obj.SetA ).to.exist()
                 expect( obj.GetA ).to.beNil()
-                
+
                 expect( obj.SetB ).to.beNil()
                 expect( obj.GetB ).to.exist()
             end
@@ -187,7 +187,7 @@ return {
 
                 local obj = state.Class:New()
                 local a, b = targetClassA:New(), targetClassB:New()
-            
+
                 expect( obj.SetA ).to.exist() expect( obj.GetA ).to.exist() expect( obj.IsA ).to.beNil()
                 expect( obj.SetB ).to.exist() expect( obj.GetB ).to.exist() expect( obj.IsB ).to.beNil()
 
@@ -242,10 +242,10 @@ return {
                 expect( obj:SetA("abc") ).to.equal( obj )
                 expect( obj:GetA("def") ).to.beTrue()
                 expect( obj.a ).to.equal( "abc" )
-                
+
                 expect( obj:SetB("123") ).to.beTrue()
                 expect( obj:GetB(789) ).to.equal( 123 )
-                
+
                 expect( obj:SetC("abc") ).to.beTrue()
                 expect( obj:GetC() ).to.beNil()
 
@@ -274,7 +274,7 @@ return {
             func = function()
 
                 expect( _G["SafeTableAccess"] ).to.exist()
-                
+
                 local tbl = {
                     A = {
                         B = {
@@ -300,7 +300,7 @@ return {
             async = true,
             func = function()
 
-                -- The timeout should still resolve immidiately 
+                -- The timeout should still resolve immidiately
                 -- despite the timeout being longer.
 
                 local timeout = GNIL.Classes.Timeout:New(3)
@@ -308,17 +308,17 @@ return {
 
                 local start = math.Round(os.time())
                 local done, expect = done, expect
-                timeout:OnResolve(function() 
-                
+                timeout:OnResolve(function()
+
                         expect( math.Round(os.time() - start) ).to.equal( 0 )
                         done()
 
                     end)
                     :OnTimeout(function() error("This should not be called!") end)
                     :Run(function(resolve)
-                    
+
                         expect( resolve ).to.beA( TYPE_FUNCTION )
-                        expect( resolve() ).to.succeed() 
+                        expect( resolve() ).to.succeed()
 
                     end)
             end
@@ -335,7 +335,7 @@ return {
                 local done, expect = done, expect
                 timeout:OnResolve(function() error("This should not be called!") end)
                     :OnTimeout(function()
-                    
+
                         expect( math.Round(os.time() - start) ).to.equal( 3 )
                         done()
 

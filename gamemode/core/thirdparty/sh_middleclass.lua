@@ -7,7 +7,7 @@
     Method changes:
         initialize -> Initialize
         Include -> IncludeMixin
-    
+
     - morgverd
 
 --]]

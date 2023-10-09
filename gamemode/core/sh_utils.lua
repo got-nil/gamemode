@@ -70,7 +70,7 @@ function GNIL.Utils.Include(filepath, realm)
         elseif realm == currentRealm then rtrn = include(filepath)
         else GNIL.log("Realm include error state. File realm: " .. realm .. ", current: " .. currentRealm, "error") end
     end
-    
+
     -- Return the include return value, useful for allowing files to
     -- return instances for directory setup etc.
     return rtrn
@@ -107,7 +107,7 @@ end
 
 -- "Sanitize" a filename by removing any file extension and file
 -- realm prefix (optional, default: true) Makes using filenames as ids
--- relatively simple. 
+-- relatively simple.
 function GNIL.Utils.GetCleanFilename(filename, extension, includeRealmPrefix)
     if not extension then extension = "lua" end
     if not string.StartWith(extension, ".") then extension = "." .. extension end
@@ -129,7 +129,7 @@ end
 -- ** (last argument is deprecated, but is used in old code)
 function GNIL.Utils.IncludeDirectory(path, ignoredFiles, _)
     GNIL.log("Including directory '" .. path .. "'", "debug")
-    
+
     -- If a table is provided, ensure its a lookup table.
     if istable(ignoredFiles) then
         if table.IsSequential(ignoredFiles) then
@@ -146,7 +146,7 @@ function GNIL.Utils.IncludeDirectory(path, ignoredFiles, _)
             local absolute = path .. "/" .. f
             if ignoredFiles[path] == true or ignoredFiles[absolute] == true then
                 GNIL.log("Not loading filepath '" .. absolute .. "' as it is ignored.", "debug")
-                continue          
+                continue
             end
         end
 
@@ -247,7 +247,7 @@ function GNIL.Utils.RequireDLL(name, const)
         if const then return _G[const] != nil, "Global '" .. const .. "' does not exist, despite the module already being included." end
         return true, nil
     end
-    
+
     -- Get the target module filepath. If it doesn't exist,
     -- return a failure state + error message.
     local filepath = GNIL.Utils.GetDLLFilepath(name)
