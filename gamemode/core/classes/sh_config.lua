@@ -8,7 +8,7 @@ function Config:Initialize(name, struct, filepath)
 end
 
 function Config:Setup()
-    
+
     -- SERVER: If there is no check function the config
     -- file can be added normally as a lua file!
     if SERVER and not self.struct.check and self.struct.realm != "server" then
@@ -33,12 +33,17 @@ function Config:Get(key, default)
     return out
 end
 
+function Config:Set(key, value)
+    self.struct.config[key] = value
+    return self
+end
+
 function Config:Gets(struct)
     assert(not table.IsSequential(struct), "Provided config gets structure should be associative key = default")
 
     local out = {}
     for k, v in pairs(struct) do
-        out[k] = self:Get(k, v) 
+        out[k] = self:Get(k, v)
     end
     return out
 end
