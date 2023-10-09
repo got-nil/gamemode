@@ -196,6 +196,32 @@ hook.Add("GNIL.Modules.PreInit", "gnil_config_module_validation", function(name,
             return false
         end
     end
+
+    -- Ensure the module config instance actually returns something.
+    local moduleConfig = partialModule:Config()
+    if not moduleConfig and is_config_required then
+        partialModule:log("Required configuration instance could not be loaded. Disabling module.", "error")
+        return false
+    end
+
+    if moduleConfig and partialModule.config_structure != nil then
+
+        -- Do some very basic validation for the config_structure.
+        if not istable(partialModule.config_structure) then
+            partialModule:log("Module 'config_structure' argument is set, but is not a validation structure table. Disabling module.", "error")
+            return false
+        end
+
+        -- Actually apply the validation structure to the config.
+        local success, out = moduleConfig:Validate(partialModule.config_structure)
+        if not success then
+            partialModule:log("Config validation error: " .. out, is_config_required && "error" || "warning")
+            return false
+        end
+        for k, v in pairs(out) do
+            moduleConfig:Set(k, v)
+        end
+    end
 end)
 
 hook.Add("GNIL.Modules.FirstLoaded", "gnil_config_net_loaded", function(name, module)
