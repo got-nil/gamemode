@@ -8,6 +8,8 @@ function Server:Initialize(name, options)
 end
 
 function Server:IsConnected() return self._ws:IsConnected() end
+function Server:Close() return self._ws:Close() end
+function Server:CloseNow() return self._ws:CloseNow() end
 function Server:__tostring() return self._name end
 
 function Server:Connect(callback)

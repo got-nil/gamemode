@@ -77,3 +77,8 @@ MODULE.OnLoadFinished = function()
     -- Finally, include the routes!
     MODULE:IncludeDirectory("routes")
 end
+
+-- When unloading, close the global server connection.
+MODULE.OnUnload = function()
+    GNIL.API._GLOBAL_SERVER:CloseNow()
+end
