@@ -15,11 +15,9 @@ if SERVER then
     -- Support both reqwest and CHTTP. (Prefer reqwest).
     for possible_driver, const in pairs({["reqwest"] = "reqwest", ["chttp"] = "CHTTP"}) do
         if GNIL.Utils.IsDLLInstalled(possible_driver) then
-            require(possible_driver)
-
-            -- Verify that the driver was loaded correctly.
-            if not _G[const] then
-                MODULE:log("Despite HTTP driver '" .. possible_driver .. "' existing, it failed to load.", "error")
+            local success, error_message = GNIL.Utils.RequireDLL(possible_driver, const)
+            if not success then
+                MODULE:log("HTTP driver '" .. possible_driver .. "' error: " .. error_message, "error")
             else
                 GNIL.Http._driver = _G[const]
                 MODULE:log("Successfully loaded HTTP driver '" .. possible_driver .. "'.", "debug")

@@ -69,8 +69,8 @@ local function callEventFunctions(class, key, ...)
         if k:lower() == function_name then
 
             -- Call event function.
-            local out = class[k](class, ...)
-            if out != nil then return out end
+            local fn_out = class[k](class, ...)
+            if fn_out != nil then return fn_out end
         end
     end
     return nil

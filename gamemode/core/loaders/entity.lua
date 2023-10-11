@@ -8,6 +8,18 @@ local defaultEnt = {
     Author = "GNIL Development Team"
 }
 
+local function registerEntity(name, class)
+    if class == nil or class == false then
+        GNIL.log("Failed to load entity '" .. name .. "' " .. (class == nil && "with an error state" || "as it does not have any files for this realm."), class == nil && "error" || "debug")
+        return false
+    else
+        GNIL.log("Successfully registered entity '" .. name .. "'.", "debug")
+    end
+
+    scripted_ents.Register(class, name)
+    return true
+end
+
 return {
 
     Directory = "entities",
@@ -23,15 +35,7 @@ return {
                 GNIL.Utils.Include(directory_path .. "/" .. v)
             end
         end)
-        if out == nil or out == false then
-            GNIL.log("Failed to load entity '" .. classname .. "' " .. (out == nil && "with an error state" || "as it does not have any files for this realm."), out == nil && "error" || "debug")
-            return false
-        else
-            GNIL.log("Successfully registered entity '" .. classname .. "'.", "debug")
-        end
-
-        scripted_ents.Register(out, classname)
-        return true
+        return registerEntity(classname, out)
     end,
 
     -- Load a single file as an entity.
@@ -41,14 +45,6 @@ return {
         local out = GNIL.Loader.ConstWrap("ENT", defaultEnt, function()
             GNIL.Utils.Include(filepath)
         end)
-        if out == nil or out == false then
-            GNIL.log("Failed to load entity '" .. classname .. "' " .. (out == nil && "with an error state" || "as it does not have any files for this realm."), out == nil && "error" || "debug")
-            return false
-        else
-            GNIL.log("Successfully registered entity '" .. classname .. "'.", "debug")
-        end
-
-        scripted_ents.Register(out, classname)
-        return true
+        return registerEntity(classname, out)
     end
 }

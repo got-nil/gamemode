@@ -2,6 +2,12 @@
 -- designed with reloading in mind, using OnLoad, OnUnload or OnReinitialize.
 
 local Module = GNIL.Thirdparty.middleclass("Module"):IncludeMixin(GNIL.ClassMixins.Events)
+ClassAccessorFunc(Module, {
+    Name = FuncAccessors.ReadOnly("name"),
+    ModuleName = FuncAccessors.ReadOnly("_module_name"),
+    Disabled = FuncAccessors.Boolean("_disabled")
+})
+
 function Module:Initialize(name, _emit_signal)
     if _emit_signal != false then
         self:EmitSignal(self._initialized && "Reinitialize" || "Initialize", self)
@@ -75,7 +81,7 @@ function Module:Unload() return GNIL.Modules.Unload(self._module_name) end
 
 -- Get module config, set from config attribute. Either use the local
 -- module config name or a public/global one. (A little confusing I know).
-function Module:Config() return GNIL.Config.Get(Either(self.config == true, "M_" .. self:__tostring(), self.config)) end
+function Module:Config() return GNIL.Config.Get(Either(self.config == true, "M_" .. self._module_name, self.config)) end
 
 -- A functional way to set the autoload if you want to be fancy.
 -- (Although you could just change the class var directly)

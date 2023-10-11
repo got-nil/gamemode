@@ -58,8 +58,8 @@ end
 -- Can accept multiple type enums. Used for validator.
 local function _acceptedTypes(...)
     local args = {...}
-    return function(v)
-        local t = TypeID(v)
+    return function(value)
+        local t = TypeID(value)
         for _, v in ipairs(args) do
             if t == v then return true end
         end
@@ -152,21 +152,21 @@ ClassAccessorFunc = function(obj, tbl)
         -- Setter that allows default FORCE enum behaviour.
         -- Also provides a validator function before a value is set.
         if out.set != false then
-            obj["Set" .. k] = function(self, v)
+            obj["Set" .. k] = function(self, value)
                 if out.force then
-                    v = force_setters[out.force](v)
+                    value = force_setters[out.force](value)
                 end
                 local should_set = true
-                if (not (v == nil and out.nillable)) and out.validate then
-                    local fn_validate = out.validate(self, v, out)
+                if (not (value == nil and out.nillable)) and out.validate then
+                    local fn_validate = out.validate(self, value, out)
                     if isbool(fn_validate) then should_set = fn_validate end
                 end
                 if should_set then
                     if out.set then
-                        local fn_set = out.set(self, v, out)
+                        local fn_set = out.set(self, value, out)
                         if isbool(fn_set) then should_set = fn_set end
                     else
-                        self[out.var] = v
+                        self[out.var] = value
                     end
                 end
                 if out.set_return_self then

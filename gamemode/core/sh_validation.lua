@@ -31,18 +31,19 @@ function GNIL.Validation.Structure(provided, structure)
             end
             provided[k] = v[1]
         else
-            if istable(v[2]) then
+            local t = TypeID(v[2])
+            if t == TYPE_TABLE then
                 if not table.HasValue(v[2], provided[k]) then
                     return false, "Required key '" .. k .. "' is not in accepted values"
                 end
-            elseif isfunction(v[2]) then
+            elseif t == TYPE_FUNCTION then
                 local success, err = v[2](provided[k])
                 if not success then
                     return false, Either(isstring(err), err, "Key '" .. k .. "' was rejected by validator callback without reason")
                 end
             else
-                if provided[k] != v[1] and isnumber(v[2]) and TypeID(provided[k]) != v[2] then
-                    return false, "Key '" .. k .. "' is an invalid type: " .. type(provided[k])
+                if provided[k] != v[1] and t == TYPE_NUMBER and TypeID(provided[k]) != v[2] then
+                    return false, "Key '" .. k .. "' is an invalid type '" .. type(provided[k]) .. "'"
                 end
             end
         end

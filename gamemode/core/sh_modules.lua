@@ -82,17 +82,14 @@ function GNIL.Modules._Initialize(name, _dependency_chain, _reload, _returnLastM
     if #initFiles == 0 then moduleInstance:log("Couldn't find suitable realm init file for module.", "warning")
     else moduleInstance:log("Found init file(s): " ..  table.concat(initFiles, ", "), "debug") end
 
-    -- If we're reloading the module we should re-initialize it to ensure
-    -- any previous loads don't conflict (_ignored_files etc).
-    if _reload then
+    -- If we're reloading, check if the module if the module has already
+    -- been initialized. If it has, unload the module without unloading
+    -- dependencies (since we're not really unloading it). Also send
+    --- the 'Reinitialize' signal for listeners.
+    if _reload and moduleInstance._initialized then
 
-        -- If the module is already initialized, unload the module without
-        -- unloading dependencies (since we're not really unloading it).
-        -- Also send the 'Reinitialize' signal for listeners.
-        if moduleInstance._initialized then
-            moduleInstance:log("Reloading module as its already been initialized.", "debug")
-            GNIL.Modules.Unload(moduleInstance, nil, true)
-        end
+        moduleInstance:log("Reloading module as its already been initialized.", "debug")
+        GNIL.Modules.Unload(moduleInstance, nil, true)
     end
 
     -- Set the MODULE const for the module to access its local instance.
@@ -299,7 +296,7 @@ function GNIL.Modules.Load(name, _dependency_chain, _reload)
 end
 
 -- Unload a module, recursively unloading all its dependencies.
--- If _reload is specified, some unload steps are ignored.
+-- If _reload is specified, some unload steps are ignored (BOOL).
 function GNIL.Modules.Unload(name_or_module, _caller, _reload)
 
     -- Allow a module to be provided directly instead of name.
@@ -321,7 +318,7 @@ function GNIL.Modules.Unload(name_or_module, _caller, _reload)
     hook.Run("GNIL.Modules.Unloaded", name, moduleInstance)
 
     -- Call the module unloader and cleanup the module.
-    moduleInstance:EmitSignal("Unload", moduleInstance)
+    moduleInstance:EmitSignal("Unload", moduleInstance, _reload == true)
     moduleInstance:_Cleanup()
 
     GNIL.log("The module '" .. name .. "' has been unloaded.", "debug")

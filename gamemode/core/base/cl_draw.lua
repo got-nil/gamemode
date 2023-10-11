@@ -1,5 +1,5 @@
 
-function draw.DrawTexturedRectRotatedOutlined(x, y, width, height, color, rotation, outlinewidth, outlinecolour)
+draw.DrawTexturedRectRotatedOutlined = function(x, y, width, height, color, rotation, outlinewidth, outlinecolour)
     local steps = ( outlinewidth * 2 ) / 3
     if steps < 1 then steps = 1 end
 

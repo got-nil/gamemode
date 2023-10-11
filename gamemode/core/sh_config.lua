@@ -68,9 +68,9 @@ function GNIL.Config.Load(filename, _module_name)
     end
 
     -- Validate the returned config structure.
-    local isvalid, out = validateConfigStructure(out)
+    local isvalid, validate_out = validateConfigStructure(out)
     if not isvalid then
-        GNIL.log("Config filepath '" .. local_filepath .. "' validation error: " .. out .. ".", "warning")
+        GNIL.log("Config filepath '" .. local_filepath .. "' validation error: " .. validate_out .. ".", "warning")
         return false, nil
     end
 
@@ -78,7 +78,7 @@ function GNIL.Config.Load(filename, _module_name)
     local name = false
     if isstring(_module_name) then name = "M_" .. _module_name
     else name = GNIL.Utils.GetCleanFilename(filename, "lua") end
-    local obj = GNIL.Classes.Config:New(name, out, abs_filepath):Setup()
+    local obj = GNIL.Classes.Config:New(name, validate_out, abs_filepath):Setup()
     GNIL.Config["_r"][name] = obj
 
     return true, obj
@@ -144,7 +144,7 @@ local function loadModuleConfig(partialModule)
 
     -- If the local module config name is not yet loaded, validate that
     -- the file actually exists and then load it for reference later.
-    if GNIL.Config.Get("M_" .. tostring(partialModule)) == nil then
+    if GNIL.Config.Get("M_" .. partialModule:GetModuleName()) == nil then
         if SERVER then
 
             -- Make sure the local file actually exists.
@@ -154,7 +154,7 @@ local function loadModuleConfig(partialModule)
             end
 
             -- Load the module config.
-            local loaded, __ = GNIL.Config.Load(nil, tostring(partialModule))
+            local loaded, __ = GNIL.Config.Load(nil, partialModule:GetModuleName())
             if not loaded then
                 partialModule:log("Local module configuration file failed to load!", "debug")
                 return false

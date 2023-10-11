@@ -3,10 +3,36 @@ ClassAccessorFunc(Timeout, {
     Timeout = FuncAccessors.NumberMinMax("_timeout", 0)
 })
 
+--[[
+
+local seconds_timeout = 10
+local time = GNIL.Classes.Timeout:New(seconds_timeout)
+
+time:OnTimeout(function()
+
+        -- The 10 second timeout has been reached.
+        -- (The resolve() was not called).
+
+    end)
+    :OnResolve(function(...)
+
+        -- The resolve function was called, we can
+        -- recieve whatever varargs here from the
+        -- Run callback.
+
+    end)
+    :Run(function(resolve)
+
+        -- Do whatever, but eventually (within 10 seconds)
+        -- call the resolve() function.
+
+    end)
+
+--]]
+
 function Timeout:Initialize(timeout)
     self._id = GNIL.Utils.Random(18)
     self._timeout = Either(isnumber(timeout), timeout, 3)
-    self._callback = callback
 end
 
 function Timeout:OnTimeout(callback) self:AddSignalListener("_timeout", callback) return self end

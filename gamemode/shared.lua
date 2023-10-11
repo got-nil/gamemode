@@ -42,7 +42,7 @@ GNIL = GNIL or {
 -- used to inherit an environment preset, with the additional settings being overrides.
 GNIL._ENVIRONMENT = {
     preset = "dev",
-    GLUATEST = false
+    GLUATEST = true
 }
 
 --------------------------------------------------------------------------------------------

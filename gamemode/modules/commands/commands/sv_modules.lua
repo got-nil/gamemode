@@ -13,6 +13,6 @@ GNIL.Commands.AddFromTable({
         end
 
         local success = GNIL.Modules.Reload(args[1])
-        return GNIL.log("Successfully loaded/reloaded module '" .. args[1] .. "'!", "success")
+        return GNIL.log((success && "Successfully loaded/reload" || "Failed to load/reload") .. " module '" .. args[1] .. "'!", success && "success" || "warning")
     end
 })
