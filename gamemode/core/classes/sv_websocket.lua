@@ -28,7 +28,7 @@ ClassAccessorFunc(Websocket, {
 
     Events:
         open (url: string) - Websocket about to be opened. (return false to block)
-        write (message: string) - Message about to be written. (return false to block)
+        write (message: string, original: Any) - Message about to be written. (return false to block)
 
     Signals:
         message (message: string) - Message recieved.
@@ -47,11 +47,7 @@ local function ResolveOpenCallbacks(self, ...)
     self.__open_callbacks = {}
 end
 
-local function GWSocketsExists()
-
-    -- Check if the DLL has already been loaded by another module.
-    -- (If its using websockets, it really should load it itself).
-    if GNIL.Utils.IsDLLIncluded("gwsockets") then return true end
+local function GWSocketsExists(self)
 
     -- Attempt to require the sockets DLL.
     local success, errorMessage = GNIL.Utils.RequireDLL("gwsockets", "GWSockets")
@@ -63,10 +59,17 @@ local function GWSocketsExists()
     return true
 end
 
-local function WebsocketReconnect(self, state)
+local function WebsocketReconnect(self, ws_state)
 
     local timerName = "gnil_ws_" .. self.__identifier
-    if state then
+    local stopReconnecting = function()
+        self.__reconnecting = false
+        if timer.Exists(timerName) then
+            timer.Remove(timerName)
+        end
+    end
+
+    if ws_state then
 
         -- If theres no retry_delay, or we're already reconnecting ignore.
         if self.retry_delay == nil or self.__reconnecting then return end
@@ -75,11 +78,12 @@ local function WebsocketReconnect(self, state)
         -- The websocket connection has terminated. Start a timer that
         -- runs every retry_delay to attempt a websocket connection.
         timer.Create(timerName, self.retry_delay, 0, function()
-            self:Open(function(state)
+            self:Open(function(open_state)
 
                 -- Log the state from re-connection if successful.
-                if state then
+                if open_state then
                     GNIL.log("Successfully re-connected to websocket '" .. self.url .. "'.", "debug")
+                    stopReconnecting()
                 end
             end)
         end)
@@ -87,11 +91,7 @@ local function WebsocketReconnect(self, state)
 
         -- The websocket connection has resumed. Remove the connection
         -- retry timer to prevent it from continuing to run.
-        if not self.__reconnecting then return end
-        self.__reconnecting = false
-        if timer.Exists(timerName) then
-            timer.Remove(timerName)
-        end
+        stopReconnecting()
     end
 end
 
@@ -132,7 +132,7 @@ function Websocket:Open(callback)
 
     -- Initialize the GWSocket connection.
     assert(callback == nil or isfunction(callback), "Provided callback argument must either be nil or a function")
-    if not GWSocketsExists() then
+    if not GWSocketsExists(self) then
         if calback then callback(false, "Failed to load GWSockets module") end
         return self
     end
@@ -194,9 +194,10 @@ function Websocket:Open(callback)
     return self
 end
 
-function Websocket:Write(message)
+function Websocket:Write(data)
 
     -- If a table is provided, convert it to a string.
+    local message = data
     if istable(message) then
         message = util.TableToJSON(message)
     end
@@ -204,7 +205,7 @@ function Websocket:Write(message)
 
     -- Emit an event when we're writing something to allow the message
     -- to be blocked by a listener directly on the websocket connection.
-    if self:EmitEvent("write", message) == false then
+    if self:EmitEvent("write", message, data) == false then
         return false
     end
 
@@ -215,6 +216,6 @@ end
 function Websocket:Close() self.__closed = true return self.__socket:close() end
 function Websocket:CloseNow() self.__closed = true return self.__socket:closeNow() end
 function Websocket:ClearQueue() return self.__socket:clearQueue() end
-function Websocket:IsConnected() return self.__connected end
+function Websocket:IsConnected() return self.__connected and not self.__closed end
 
 return Websocket
