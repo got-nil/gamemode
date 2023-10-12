@@ -32,6 +32,11 @@ GNIL = GNIL or {
             ["name"] = "sparib",
             ["id64"] = "76561198306789611",
             ["title"] = "Web Lead + Backend Developer"
+        },
+        {
+            ["name"] = "blazzy",
+            ["id64"] = "76561198881071680",
+            ["title"] = "Map Lead + Backend Developer"
         }
     }
 }

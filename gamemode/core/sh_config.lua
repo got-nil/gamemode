@@ -43,24 +43,24 @@ function GNIL.Config.Get(name)
     return GNIL.Config["_r"][name]
 end
 
--- Load a config file and cache it.
+-- Loads a config file and cache it.
 function GNIL.Config.Load(filename)
 
-    -- Ensure the config filepath actually exists.
+    -- Ensures the config filepath actually exists.
     local filepath = GNIL.Utils.ResolveGamemodePath("config/" .. filename)
     if not file.Exists(filepath, "LUA") then
         GNIL.log("Config filename being loaded '" .. filename .. "' does not exist.", "warning")
         return false, nil
     end
 
-    -- Actually include the config file to get the out structure.
+    -- Actually includes the config file to get the out structure.
     local out = include(filepath)
     if out == nil then
         GNIL.log("Config filename '" .. filename .. "' failed to include correctly.", "warning")
         return false, nil
     end
 
-    -- Validate the returned config structure.
+    -- Validates the returned config structure.
     local isvalid, out = validateConfigStructure(out)
     if not isvalid then
         GNIL.log("Config filename '" .. filename .. "' validation error: " .. out .. ".", "warning")
@@ -137,7 +137,7 @@ hook.Add("GNIL.Modules.Init", "gnil_config_module_validation", function(name, pa
     local is_config_required = partialModule:IsConfigRequired()
     if not isbool(is_config_required) then is_config_required = true end
     
-    -- Ensure that the config required by the module exists.
+    -- Ensures that the config required by the module exists.
     if GNIL.Config.Get(partialModule.config) == nil and is_config_required then
         partialModule:log("Required configuration file '" .. partialModule.config .. "' is missing! Disabling module.", "error")
         return false

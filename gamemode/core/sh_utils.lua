@@ -10,7 +10,7 @@ local filenameRealmAliases = {
     ["cl_init.lua"] = "cl_"
 }
 
--- IsDir doesnt work for client sometimes.
+-- IsDir doesn't work for client sometimes.
 function GNIL.Utils.DirectoryExists(filePath, gamePath)
 
     -- https://github.com/Facepunch/garrysmod-issues/issues/1038
@@ -28,7 +28,7 @@ function GNIL.Utils.DirectoryExists(filePath, gamePath)
     end
 end
 
--- Split a provided path into: base(str), filename(str)
+-- Split a provided path into: base(str), filename(str).
 function GNIL.Utils.SplitPath(filepath)
     local parts = string.Explode("/", filepath)
     local base, last = "", parts[#parts]
@@ -41,7 +41,7 @@ end
 -- Include relative to caller.
 function GNIL.Utils.Include(filepath, realm)
 
-    -- Ensure that the filepath isn't blacklisted.
+    -- Ensures that the filepath isn't blacklisted.
     if GNIL.Utils["blacklisted_files"][filepath] then
         GNIL.log("Cannot include file '" .. filepath .. "' as it is blacklisted.", "warning")
         return
