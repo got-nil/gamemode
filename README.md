@@ -1,7 +1,7 @@
 # City RP Gamemode
 
-This is the core gamemode for our CityRP server. The structure is relatively simple:
- - `gamemode/config` - Core configuration files.
+This is the core gamemode for the CityRP server. The structure is relatively simple:
+ - `gamemode/config` - Core configuration files
  - `gamemode/core` - The core files used by the gamemode including utilities.
  - `gamemode/core/thirdparty` - All thirdparty libaries used by the gamemode.
  - `gamemode/core/classes` - Core/Gamemode classes using the middleclass thirdparty lib.

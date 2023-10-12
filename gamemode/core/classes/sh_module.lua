@@ -1,4 +1,4 @@
--- Handles the loading & management of modules.
+-- Handle the loading and management of modules.
 
 local Module = GNIL.Thirdparty.middleclass("Module")
 function Module:Initialize(name)
@@ -15,14 +15,14 @@ function Module:Initialize(name)
     self._loaded_dependencies = {}
     self._disabled = false
 
-    -- If a config is set, config_required determines if the module should
+    -- If config is set, config_required determines if the module should
     -- be automatically disabled if the config is not found.
     self.config = false
     self.config_required = true
 
     self._hooks = {
-        {}, -- seq
-        {}  -- unique
+        {}, --seq
+        {}  --unique
     }
 
     self._added_delayed = false
@@ -35,9 +35,9 @@ function Module:Initialize(name)
     self._ignored_files = {}
 end
 
--- Simply calls the modules utility with the current module name
+-- Simply call the modules utility with the current module name
 -- as the ID argument. This could've just been functional but we're
--- sticking it to OOP layout out here.
+-- sticking to OOP layout here.
 function Module:IsLoaded() return GNIL.Modules.IsLoaded(self._module_name) end
 function Module:Load() return GNIL.Modules.Load(self._module_name) end
 function Module:Unload() return GNIL.Modules.Unload(self._module_name) end
@@ -50,20 +50,20 @@ function Module:Config() return GNIL.Config.Get(self.config) end
 function Module:SetAutoload(boolean) assert(isbool(boolean), "The argument must be boolean") self.autoload = boolean end
 function Module:SetDisabled(boolean) assert(isbool(boolean), "The argument must be boolean") self._disabled = boolean end
 
--- "Resolve"'s a required module. Basically load it and prevent loops.
+-- "Resolve" a required module. Basically load it and prevent loops.
 function Module:_ResolveRequirement(requirement)
     if self._loaded_dependencies[requirement] then return end
     if requirement == self._module_name then return end
     self:log("Resolving dependency '" .. requirement .. "'", "debug")
 
-    -- Ensures that the module has not yet been loaded.
+    -- Ensure that the module has not yet been loaded.
     if GNIL.Modules.IsLoaded(requirement) then
         self._loaded_dependencies[requirement] = true
         self:log("Dependency '" .. requirement .. "' is already loaded.", "debug")
         return
     end
 
-    -- Ensures that we're not attempting to load a dependency that is already
+    -- Ensure that we're not attempting to load a dependency that is already
     -- apart of the created dependency chain (prevent dependency loops).
     if self._dependency_chain and self._dependency_chain[requirement] then
         self._loaded_dependencies[requirement] = true
@@ -74,18 +74,18 @@ function Module:_ResolveRequirement(requirement)
         self._dependency_chain[requirement] = true
     end
 
-    -- Loads the dependency module, passing through the current dependency chain.
+    -- Load the dependency module, passing through the current dependency chain.
     GNIL.Modules.Load(requirement, self._dependency_chain)
     self._loaded_dependencies[requirement] = true
 end
 
--- Returns a table of all other modules that this module needs to operate.
+-- Return a table of all other modules this module needs to operate.
 function Module:GetDependencies() return self.dependencies and table.GetKeys(self.dependencies) or {} end
 
--- Requires a module. These modules are loaded before OnLoad.
+-- Require a module. These modules are loaded before OnLoad.
 function Module:Require(requirement)
 
-    -- Retard dectection, just incase someone
+    -- Retard dectection (raptor is a dumbass) just incase someone
     -- tries to use this as Requires and they give a table despite
     -- me making it very clear that theres a seperate function for it.
     if istable(requirement) then return self:Requires(requirement) end
@@ -104,9 +104,9 @@ function Module:Requires(requirements)
     return true
 end
 
--- Adds a module-based hook.
--- Either pass event name and callback for a non-unique name hook,
--- or pass event name, unique id, and callback for a removeable hook.
+-- Add a module-based hook
+-- Either pass event name and callback for a non-unique name hook
+-- or pass event name, unique id, and callback for a removeable hook
 function Module:AddHook(eventName, idOrCallback, callback)
     assert((callback == nil or isfunction(idOrCallback)) or (callback != nil and isstring(idOrCallback) and isfunction(callback)), "Arguments must be string, function or string, string, function")
 
@@ -138,10 +138,10 @@ function Module:AddHook(eventName, idOrCallback, callback)
     hook.Add(eventName, hookId, hookCallback)
 end
 
--- Removes hook(s) that were made through the module.
+-- Removes hook(s) that were made through the module
 -- Second argument is optional.
--- Without it, all events attached to the module for specified hook are removed.
--- With it, that specific event is remove only.
+-- Without it, all events attached to the module for specified hook are removed
+-- With it, that specific event is remove only
 function Module:RemoveHook(eventName, hookIdentifier)
     local hooks = self._hooks[2][eventName]
     if hooks == nil then return end

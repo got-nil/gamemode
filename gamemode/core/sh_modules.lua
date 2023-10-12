@@ -5,12 +5,12 @@ GNIL.Modules = GNIL.Modules or {
     ["_first_loaded"] = {}
 }
 
--- Clears all loaded modules each time theres a LUA refresh.
+-- Clear all loaded modules each time theres a LUA refresh.
 if GNIL.ENV.MODULES_RESET then
     GNIL.Modules["_loaded"] = {}
 end
 
--- A helper function for the shared gamemode files to use when loading
+-- A helper function for the shared gamemode file to use when loading
 -- all modules at once. It constantly checks to ensure that the module
 -- isnt loaded incase of dependency loading.
 function GNIL.Modules.LoadAll(_reload)
@@ -47,7 +47,7 @@ function GNIL.Modules.Load(name, _dependency_chain, _reload)
     if not _reload and GNIL.Modules.IsLoaded(name) then GNIL.log("Refusing to load module '" .. name .. "' as it is already loaded.", "debug") return false end
     if not GNIL.Modules.Exists(name) then GNIL.log("Refusing to load module '" .. name .. "' as it does not exist.", "warning") return false end
 
-    -- Finds the module init file to allow it to setup other things.
+    -- Find the module init file to allow it to setup other things.
     local initFilesOrder, initFile = {
         "init.lua",     -- sv_init alias
         "sv_init.lua",
@@ -79,7 +79,7 @@ function GNIL.Modules.Load(name, _dependency_chain, _reload)
     local lastModule = _G["MODULE"] or nil
     _G["MODULE"] = moduleInstance
 
-    -- Actually includes the init file if the init file is suitable for the
+    -- Actually include the init file if the init file is suitable for the
     -- current execution realm (can be server or client).
     if initFile and GNIL.Utils.IsFilenameForCurrentRealm(initFile == "init.lua" and "sv_init.lua" or initFile) then
 
@@ -117,7 +117,7 @@ function GNIL.Modules.Load(name, _dependency_chain, _reload)
     end
 
     -- Include the rest of the module directory without any of the init files.
-    -- Also calls OnLoad hook, allowing a final chance to reject a load.
+    -- Also call OnLoad hook, allowing a final chance to reject a load.
     if moduleInstance:OnLoad() == false or hook.Run("GNIL.Modules.Load", moduleInstance) == false then
         moduleInstance:log("Module refused to load.", "warning")
         return false
@@ -136,7 +136,7 @@ function GNIL.Modules.Load(name, _dependency_chain, _reload)
             end
         end
 
-        -- Loads all of the directories that were gathered above. Ensure that
+        -- Load all of the directories that were gathered above. Ensure that
         -- the module init file is not included on the base directory as it will
         -- always be first. Ignore any files already included.
         local ignored_root_files, base_ignored_files = {"init.lua", "sv_init.lua", "sh_init.lua", "cl_init.lua"}, moduleInstance._ignored_files
@@ -153,7 +153,7 @@ function GNIL.Modules.Load(name, _dependency_chain, _reload)
                 -- to the temp developer files table (until the dev module is loaded).
                 if v[1] == "~" then
 
-                    -- If the developer module is loaded, just call the add dev file directly;
+                    -- If the developer module is loaded, just call the add dev file directly
                     -- if its not yet loaded, then store it temporarily until its loaded.
                     moduleInstance:log("Adding developer only file '" .. v .. "'", "debug")
                     if GNIL.Modules.IsLoaded("dev") then
@@ -166,12 +166,12 @@ function GNIL.Modules.Load(name, _dependency_chain, _reload)
             end
         end
 
-        -- Adds any already included files and add to ignored root files.
+        -- Add any already included files and add to ignored root files.
         for i, directory_path in ipairs(directories) do
 
             -- Ensure that the ignored files table is persisted while loading the
             -- top level directory and any other requested directories by the init.
-            -- On the root level, also ignores anything that looks like an init file.
+            -- On the root level, also ignore anything that looks like an init file.
             local ignored_files = {}
             for k, _ in pairs(base_ignored_files) do
                 ignored_files[k] = true 
@@ -183,14 +183,14 @@ function GNIL.Modules.Load(name, _dependency_chain, _reload)
                 end
             end
 
-            -- Loads the directory removing ignored files.
+            -- Load the directory removing ignored files.
             GNIL.Utils.IncludeDirectory(directory_path, ignored_files, true)
         end
     else
         moduleInstance:log("Default autoload disabled.", "debug")
     end
 
-    -- Finally includes the rest of the delayed files.
+    -- Finally include the rest of the delayed files.
     if moduleInstance._added_delayed then
         for path, _ in pairs(moduleInstance._delayed_autoload[1]) do
             GNIL.Utils.Include(path)
@@ -203,7 +203,7 @@ function GNIL.Modules.Load(name, _dependency_chain, _reload)
     moduleInstance:OnLoadFinished()
 
     -- Call the FirstLoaded hook once per module load, even if the modules loaded have been
-    -- cleared on refresh. The hook should still be called at most once per server runtime.
+    -- cleared on refresh the hook should still be called at most once per server runtime.
     if not GNIL.Modules["_first_loaded"][name] then
         hook.Run("GNIL.Modules.FirstLoaded", name, moduleInstance)
         GNIL.Modules["_first_loaded"][name] = true
@@ -268,13 +268,13 @@ function GNIL.Modules.Exists(name, ignore_cache)
     return rtrn
 end
 
--- Gets a module instance from cache, or create a new one. This ensures that
+-- Get a module instance from cache, or create a new one. This ensures that
 -- the same module instances are returned each time to persist class mutations.
 function GNIL.Modules.Get(name, additional) -- ?Module
     if not GNIL.Modules["_cached_modules"][name] then 
         if not GNIL.Modules.Exists(name) then return nil end
 
-        -- Create/Cache the module.
+        -- Create/Cache the module 
         GNIL.Modules["_cached_modules"][name] = GNIL.Classes.Module:New(name)
     end
 
@@ -288,5 +288,5 @@ function GNIL.Modules.Get(name, additional) -- ?Module
     return GNIL.Modules["_cached_modules"][name]
 end
 
--- Remove hooks from module if it is being unloaded.
+-- Remove hooks from module if it is being unloaded
 hook.Add("GNIL.Modules.Unloaded", "gnil_module_unload_clearhooks", function(_, m) m:ClearHooks() end)

@@ -1,10 +1,10 @@
 local PlayerMeta = FindMetaTable("Player")
 
--- Allows for logging directly to a player instance.
+-- Allow for logging directly to a player instance
 function PlayerMeta:log(log, logtype) GNIL.Logging.LogToPlayer(self, log, logtype) end
 PlayerMeta.Log = PlayerMeta.log
 
--- Adds IsDeveloper check similar to IsAdmin. Uses the
+-- Add IsDeveloper check similar to IsAdmin. Uses the
 -- steamid64 information from the server credits table.
 local DeveloperSteamIDs = {}
 for _, v in ipairs(GNIL._CREDITS) do

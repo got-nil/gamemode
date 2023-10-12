@@ -28,7 +28,7 @@ function GNIL.Loader.ConstWrap(const, const_default, fn)
     return out
 end
 
--- Loads directory files wrapped as a const. The
+-- Load directory files wrapped as a const. The
 -- return value is the modified const_default or nil.
 function GNIL.Loader.DirectoryConst(const, directory_path, const_default)
     return GNIL.Loader.ConstWrap(const, const_default or {}, function()

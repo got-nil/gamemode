@@ -1,11 +1,11 @@
 -- https://github.com/meepen/gmodutil/blob/master/lua/gmodutil/sh_printtable.lua
--- Used to print tables in a pretty way.
+-- Used to print tables in a pretty way
 
 local MsgC = MsgC;
 local type = type;
 
 --[[---------------------------------
-	Make it available Server-side.
+	Make it available Server-side
 ---------------------------------]]--
 local function GetTextSize(x)
 	if(SERVER) then
@@ -16,7 +16,7 @@ local function GetTextSize(x)
 end
 
 --[[-------------------------------
-	Make a good version of type.
+	Make a good version of type
 -------------------------------]]--
 
 local function PrintType(x)
@@ -35,7 +35,7 @@ end
 local function FixTabs(x, width)
 	local curw = GetTextSize(x);
 	local ret = "";
-	while(curw < width) do -- Not using string.rep since linux.
+	while(curw < width) do -- not using string.rep since linux
 		x 		= x.." ";
 		ret 	= ret.." ";
 		curw 	= GetTextSize(x);
@@ -44,7 +44,7 @@ local function FixTabs(x, width)
 end
 
 --[[----------------------------------------------------
-	Font based on default ClientScheme resource file.
+	Font based on default ClientScheme resource file
 ----------------------------------------------------]]--
 														
 local linux = system.IsLinux();
@@ -62,9 +62,9 @@ end
 
 --[[---------------------------------------------------------------------
 	Editable Variables:
-		typecol: change and/or add types and colors it prints.
-		DebugFixToString: Add or change how it prints things.
-		DebugFixToStringColored: Add or change colors/printing styles.
+		typecol: change and/or add types and colors it prints
+		DebugFixToString: Add or change how it prints things
+		DebugFixToStringColored: Add or change colors/printing styles
 ---------------------------------------------------------------------]]--
 
 local typecol = {
@@ -91,7 +91,7 @@ local replacements = {
 
 local ConversionLookupTable = {
 	string = function(obj, iscom)
-		return {typecol.string, '"'..obj:gsub(".", replacements)..'"'}; -- Took from string.lua.
+		return {typecol.string, '"'..obj:gsub(".", replacements)..'"'}; -- took from string.lua
 	end,
 	Vector = function(obj, iscom)
 		return {typecol.func, "Vector", typecol.etc, "(", typecol.number, tostring(obj.x), typecol.etc, ", ",

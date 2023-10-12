@@ -34,10 +34,10 @@ local tween = {
   -- easing
   
   -- For all easing functions:
-  -- t = time == how much time has to pass for the tweening to complete.
-  -- b = begin == starting property value.
-  -- c = change == ending - beginning.
-  -- d = duration == running time. How much time has passed *right now*.
+  -- t = time == how much time has to pass for the tweening to complete
+  -- b = begin == starting property value
+  -- c = change == ending - beginning
+  -- d = duration == running time. How much time has passed *right now*
   
   local pow, sin, cos, pi, sqrt, abs, asin = math.pow, math.sin, math.cos, math.pi, math.sqrt, math.abs, math.asin
   
