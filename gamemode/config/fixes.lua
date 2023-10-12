@@ -6,7 +6,7 @@ return {
     },
     config = {
             
-        -- Disable/Enable certain fix modules.
+        -- Disables/Enables certain fix modules.
         Modules = {
             Optimizers = true,
             Entities = true,

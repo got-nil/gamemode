@@ -10,13 +10,13 @@ local env_options = {
 
     -- Luadev access.
     ["LUADEV_ALLOWED"] = true,  -- Can luadev be used by developers? (default to true since the addon has to be installed).
-    ["LUADEV_SNITCH"] = false,  -- Should we snitch on developers using luadev (for production).
+    ["LUADEV_SNITCH"] = false,  -- Should we snitch on developers using luadev (for production teehee).
 
     -- Lua refresh handling.
     ["LUA_REFRESH"] = false,         -- Can the gamemode be lua refreshed?
     ["REFRESH_CORE"] = false,        -- Should the core utilities be refreshed?
     ["REFRESH_ALL_MODULES"] = false, -- Should all modules be refreshed (if LUA_REFRESH is true)?
-    ["REFRESH_MODULES"] = {}         -- Certain modules that should be refreshed (if LUA_REFRESH is true, and REFRESH_ALL_MODULES is false)
+    ["REFRESH_MODULES"] = {}         -- Certain modules that should be refreshed (if LUA_REFRESH is true, and REFRESH_ALL_MODULES is false).
 }
 local env_enums = {}
 for _, v in ipairs(table.GetKeys(env_options)) do
@@ -89,7 +89,7 @@ else
         out = preset
     end
 
-    -- Apply additional settings ontop of preset base (if there is one).
+    -- Applies additional settings ontop of preset base (if there is one).
     for k, v in pairs(env) do        
         if not env_enums[k] then continue end
         out[k] = v
@@ -97,20 +97,20 @@ else
 end
 
 
--- Used to prevent darkrp gamemode from lua refreshing.
+-- Used to prevent DarkRP gamemode from lua refreshing.
 -- Edit: At the top of both files, add the hook line.
 -- Files: darkrp/gamemode/<init.lua, cl_init.lua>
 -- Code:
 --   if hook.Run("DarkRPInit") == false then return end
 hook.Add("DarkRPInit", "gnil_luarefresh", function()
 
-    -- If we're already loaded (luarefresh) + darkrp is already loaded + the
+    -- If we've already loaded (luarefresh) + darkrp is already loaded + the
     -- DARKRP_REFRESH env setting is off then the darkrp reload should be stopped. 
     if GNIL._LOADED and not GNIL.ENV.DARKRP_REFRESH then
         return false
     end
 end)
 
--- If we get here, the environment is valid!
+-- If we get here, than the environment is valid!
 GNIL.ENV = out
 return true
