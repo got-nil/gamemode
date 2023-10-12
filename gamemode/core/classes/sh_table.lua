@@ -1,4 +1,4 @@
--- Table modifications/extensions
+-- Table modifications/extensions.
 
 function table.slice(tbl, first, last, step)
     local sliced = {}
