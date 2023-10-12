@@ -85,7 +85,7 @@ function Module:GetDependencies() return self.dependencies and table.GetKeys(sel
 -- Requires a module. These modules are loaded before OnLoad.
 function Module:Require(requirement)
 
-    -- Retard dectection, just incase someone
+    -- Retard dectection (raptor is a bumbling spastic), just incase someone
     -- tries to use this as Requires and they give a table despite
     -- me making it very clear that theres a seperate function for it.
     if istable(requirement) then return self:Requires(requirement) end
