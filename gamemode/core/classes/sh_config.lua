@@ -8,8 +8,7 @@ function Config:Initialize(name, struct)
 end
 
 function Config:Setup()
-    -- SERVER:
-    -- If there is no check function, the config
+    -- SERVER: If there is no check function, the config
     -- file can be added normally as a lua file!
     if SERVER and not self.struct.check and self.struct.realm != "server" then
         AddCSLuaFile(self.filepath)

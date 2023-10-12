@@ -1,6 +1,6 @@
-# StarWarsRP Gamemode
+# Got-Nil Gamemode
 
-This is the core gamemode for our StarWarsRP server. The structure is relatively simple:
+This is the core gamemode for our servers. The structure is relatively simple:
  - `gamemode/config` - Core configuration files.
  - `gamemode/core` - The core files used by the gamemode including utilities.
  - `gamemode/core/thirdparty` - All Thirdparty libaries used by the gamemode.
