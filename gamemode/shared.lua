@@ -125,7 +125,7 @@ if GNIL._LOADED then
     -- If we haven't reloaded all modules, attempt to load specific ones instead.
     if not GNIL.ENV.REFRESH_ALL_MODULES and GNIL.ENV.REFRESH_MODULES then
         for _, v in ipairs(GNIL.ENV.REFRESH_MODULES) do
-            GNIL.Modules.Load(v, nil, true)
+            GNIL.Modules.Reload(v)
         end
     end
     hook.Run("GNIL.LuaRefresh")

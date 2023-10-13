@@ -57,6 +57,8 @@ hook.Add("GNIL.Modules.Loaded", "GNIL.Logging.Net", function(name)
     end
 end)
 
--- This is basically the only exception for the
--- no functions on base const rule.
+-- This is basically the only exception for the no functions
+-- on base const rule. DEBUG_LOG is so I can make sure any
+-- temp debug lines are easy to find before being committed.
 GNIL.log = GNIL.Logging.Log
+DEBUG_LOG = function(a, b) GNIL.log(a, b or "debug") end

@@ -38,7 +38,7 @@ hook.Add("GNIL.Modules.InitAfterDependencies", "modules_extensions_init", functi
         if moduleInstance._extensions[k] != nil then continue end
 
         -- Attempt to load the required missing extension.
-        if not moduleInstance:UseExtension(k) then
+        if not moduleInstance:LoadExtension(k) then
             moduleInstance:log("Failed to load required extension '" .. k .. "' for module, refusing load.", "warning")
             return false
         end

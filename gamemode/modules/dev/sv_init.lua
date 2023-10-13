@@ -178,7 +178,7 @@ MODULE.OnLoad = function()
         -- content. The handler is provided in net module and already exists for all players.
         local setup_nm = GNIL.Net.Create("file_include")
         for k, _ in pairs(setupFiles) do
-            local content = file.Read(GNIL.Utils.ResolveGamemodePath("modules/dev") .. "/" .. k, "LUA")
+            local content = file.Read(MODULE:ResolvePath(k), "LUA")
             if content == nil then
                 MODULE:log("Setup file '" .. k .. "' does not exist within dev module, or is invalid. Skipping.", "warning")
                 continue
@@ -203,7 +203,7 @@ MODULE.OnLoad = function()
         GNIL.Modules["_tmp_dev_files"] = {}
 
         -- Load files within the dev module as dev files.
-        local module_base = GNIL.Utils.ResolveGamemodePath("modules/dev")
+        local module_base = MODULE:GetBasePath()
         local files, _ = file.Find(module_base .. "/*.lua", "LUA")
 
         for _, v in ipairs(files) do
