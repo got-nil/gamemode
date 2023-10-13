@@ -44,17 +44,30 @@ function GNIL.Config.Get(name)
 end
 
 -- Load a config file and cache it.
-function GNIL.Config.Load(filename, _module_name)
+function GNIL.Config.Load(filename, _partialModule)
 
     -- Determine the target filepath. Instead of allowing arbitary
     -- filepaths instead filter down to only acceptable inputs.
     -- Maybe for security? I honestly don't know just seemed right.
-    local local_filepath = false
-    if _module_name != nil and isstring(_module_name) then local_filepath = "modules/" .. _module_name .. "/config.lua"
-    else local_filepath = "config/" .. filename end
+    local local_filepath, abs_filepath = false, false
+    if _partialModule != nil then
+
+        -- If there is a moduleInstance provided, it must have
+        -- a _base_path defined for to find the config file.
+        if not _partialModule._base_path then
+            moduleInstance:log("Could not find config file as there is no base_path set!", "debug")
+            return false, nil
+        end
+        local_filepath = "config.lua"
+        abs_filepath = _partialModule:ResolvePath("config.lua")
+    else
+
+        -- String filename, using the global config directory.
+        local_filepath = "config/" .. filename
+        abs_filepath = GNIL.Utils.ResolveGamemodePath(local_filepath)
+    end
 
     -- Ensure the config filepath actually exists.
-    local abs_filepath = GNIL.Utils.ResolveGamemodePath(local_filepath)
     if not file.Exists(abs_filepath, "LUA") then
         GNIL.log("Config filepath being loaded '" .. local_filepath .. "' does not exist.", "warning")
         return false, nil
@@ -76,7 +89,7 @@ function GNIL.Config.Load(filename, _module_name)
 
     -- Cache the collected config as Config object.
     local name = false
-    if isstring(_module_name) then name = "M_" .. _module_name
+    if _partialModule != nil then name = "M_" .. _partialModule._module_name
     else name = GNIL.Utils.GetCleanFilename(filename, "lua") end
     local obj = GNIL.Classes.Config:New(name, validate_out, abs_filepath):Setup()
     GNIL.Config["_r"][name] = obj
@@ -147,6 +160,12 @@ local function loadModuleConfig(partialModule)
     if GNIL.Config.Get("M_" .. partialModule:GetModuleName()) == nil then
         if SERVER then
 
+            -- There must be a _base_path defined to find the config file.
+            if not partialModule._base_path then
+                partialModule:log("Could not find config file as there is no base_path set!", "debug")
+                return false
+            end
+
             -- Make sure the local file actually exists.
             if file.Exists(partialModule:ResolvePath("config.lua"), "GAME") then
                 partialModule:log("Local module configuration file 'config.lua' is missing!", "debug")
@@ -154,7 +173,7 @@ local function loadModuleConfig(partialModule)
             end
 
             -- Load the module config.
-            local loaded, __ = GNIL.Config.Load(nil, partialModule:GetModuleName())
+            local loaded, __ = GNIL.Config.Load(nil, partialModule)
             if not loaded then
                 partialModule:log("Local module configuration file failed to load!", "debug")
                 return false
