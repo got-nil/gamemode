@@ -1,5 +1,34 @@
 -- https://github.com/CFC-Servers/GLuaTest
 
+-- Shared testing utilities.
+do
+    local function cleanTable(tbl)
+        if not tbl then return end
+        local out = {}
+        for k, _ in pairs(tbl) do
+            if string.sub(k, 1, 9) == "gluatest-" then
+                table.insert(out, k)
+            end
+        end
+        for i = 1, #out do
+            tbl[out[i]] = nil
+        end
+    end
+
+    GNIL.TestUtils = {
+        CreateModule = function(name)
+            return GNIL.Classes.Module:New("gluatest-" .. name):SetQuiet(true)
+        end,
+        CleanupModules = function()
+            cleanTable(GNIL.Modules["_loaded"])
+            cleanTable(GNIL.Modules["_cached_modules"])
+        end,
+        CleanupExtensions = function()
+            cleanTable(GNIL.ModuleExtensions["_cached_extensions"])
+        end
+    }
+end
+
 hook.Add("GLuaTest_RunTestFiles", "GNIL.GLuaTest.AddTests", function(testFiles)
 
     -- If GLuaTest is disabled, stop the tests from running
@@ -14,14 +43,14 @@ hook.Add("GLuaTest_RunTestFiles", "GNIL.GLuaTest.AddTests", function(testFiles)
         if not v.tests then continue end
 
         -- Make sure the module test directory actually exists.
-        local test_dir = v:ResolvePath(v.test_dir or "tests")
-        if not file.IsDir(test_dir, "LUA") then
-            v:log("Could not find GLuaTests in directory '" .. test_dir .. "'.", "warning")
+        local test_directory = v:ResolvePath(v.test_directory or "tests")
+        if not file.IsDir(test_directory, "LUA") then
+            v:log("Could not find GLuaTests in directory '" .. test_directory .. "'.", "warning")
             continue
         end
 
         -- Set the project to the module name and add the tests.
-        for _, t in ipairs(GLuaTest.loader(test_dir)) do
+        for _, t in ipairs(GLuaTest.loader(test_directory)) do
             t.project = v._module_name
             t.gnil_module = v._module_name
             table.insert(testFiles, t)
