@@ -213,9 +213,9 @@ function Websocket:Write(data)
     return true
 end
 
-function Websocket:Close() self.__closed = true return self.__socket:close() end
-function Websocket:CloseNow() self.__closed = true return self.__socket:closeNow() end
-function Websocket:ClearQueue() return self.__socket:clearQueue() end
+function Websocket:Close() self.__closed = true if self.__socket then self.__socket:close() end return self end
+function Websocket:CloseNow() self.__closed = true if self.__socket then self.__socket:closeNow() end return self end
+function Websocket:ClearQueue() if self.__socket then self.__socket:clearQueue() end return self end
 function Websocket:IsConnected() return self.__connected and not self.__closed end
 
 return Websocket
