@@ -138,13 +138,15 @@ function Router:Call(request, callback)
 
         -- Provide the request promise with the callback.
         local already_responded = false
-        out(function(...)
+        out(function(response)
 
             -- Prevent something from calling with response more than once.
             if already_responded then return end
             already_responded = true
 
-            return callback(...)
+            return callback(
+                GNIL.API.Validators.ToResponse(route, response)
+            )
         end)
         return
     end

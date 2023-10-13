@@ -82,13 +82,6 @@ function Route:_Match(fragments)
     return true, arguments
 end
 
-local RouteCallbackTypeConverters = {
-    [TYPE_FUNCTION] = function(v) return v end, -- for promises.
-    [TYPE_NUMBER] = function(v) return GNIL.API.Responses.Empty(v) end,
-    [TYPE_STRING] = function(v) return GNIL.API.Responses.Text(v) end,
-    [TYPE_BOOL] = function(v) return GNIL.API.Responses.Empty(v && 200 || 500) end
-}
-
 -- Call the route callback with given arguments.
 -- Returns either a Response instance or promise function.
 function Route:_Call(request, arguments)
@@ -122,22 +115,9 @@ function Route:_Call(request, arguments)
         return self._callback(request, arguments)
     end)
 
+    -- Ensure the return argument is a response.
     if success then
-
-        local type_converter = RouteCallbackTypeConverters[TypeID(out)]
-        if type_converter then
-
-            -- Run the type converter.
-            out = type_converter(out)
-        else
-
-            -- If we're not handling type conversion ourselves, then make
-            -- sure that the callback actually returns a Response instance.
-            if not (out.IsInstanceOf and out:IsInstanceOf(GNIL.API.Response)) then
-                MODULE:log("Route '" .. self:__tostring() .. "' did not return a Response value. Returning an empty 500 status.", "error")
-                out = GNIL.API.Responses.Empty(500)
-            end
-        end
+        out = GNIL.API.Validators.ToResponse(self, out)
     else
 
         -- If the route callback errors, return an empty 500 response

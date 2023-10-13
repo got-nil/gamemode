@@ -18,6 +18,21 @@ local function createRouter()
 end
 
 local function createRequest(...) return GNIL.API.Request:New(...) end
+local RouteResponseTypeValidators = {
+    bool = {
+        {true, function(v) return v.status == 200 end},
+        {false, function(v) return v.status == 500 end}
+    },
+    num = {
+        {SUCCESS_STATUS, function(v) return v.status == SUCCESS_STATUS end},
+        {400, function(v) return v.status == 400 end},
+        {503, function(v) return v.status == 503 end}
+    },
+    str = {
+        {"Hello! How are you?", function(v) return v.status == 200 and v.body == "Hello! How are you?" end},
+        {"abc\ndef", function(v) return v.status == 200 and v.body == "abc\ndef" end}
+    }
+}
 
 return {
     groupName = "Router",
@@ -159,29 +174,47 @@ return {
 
                 -- Test different return types.
                 -- {route_return_value, response_validator}
-                local types = {
-                    bool = {
-                        {true, function(v) return v.status == 200 end},
-                        {false, function(v) return v.status == 500 end}
-                    },
-                    num = {
-                        {SUCCESS_STATUS, function(v) return v.status == SUCCESS_STATUS end},
-                        {400, function(v) return v.status == 400 end},
-                        {503, function(v) return v.status == 503 end}
-                    },
-                    str = {
-                        {"Hello! How are you?", function(v) return v.status == 200 and v.body == "Hello! How are you?" end},
-                        {"abc\ndef", function(v) return v.status == 200 and v.body == "abc\ndef" end}
-                    }
-                }
-                for type_name, cases in pairs(types) do
+                for type_name, cases in pairs(RouteResponseTypeValidators) do
                     for i, v in ipairs(cases) do
 
-                        local route_name = "/converter/" .. type_name .. "/" .. tostring(i)
-                        state.router:Get(route_name, function() return v[1] end)
+                        local route_name = "/converter/sync/" .. type_name .. "/" .. tostring(i)
+                        state.router:Get(route_name, function()
+                            return v[1]
+                        end)
 
-                        local response = state.router:Call(createRequest("GET", route_name))
+                        local request = createRequest("GET", route_name)
+                        local response = state.router:Call(request)
                         expect( v[2](response) ).to.beTrue()
+                    end
+                end
+            end
+        },
+        {
+            name = "Router converts async non-response types into responses",
+            async = true,
+            func = function(state)
+
+                local type_i, types_max = 0, table.Count(RouteResponseTypeValidators)
+                for type_name, cases in pairs(RouteResponseTypeValidators) do
+                    type_i = type_i + 1
+                    local cases_max = #cases
+                    for i, v in ipairs(cases) do
+
+                        local route_name = "/converter/async/" .. type_name .. "/" .. tostring(i)
+                        state.router:Get(route_name, function()
+                            return function(respond)
+                                respond(v[1])
+                            end
+                        end)
+
+                        state.router:Call(createRequest("GET", route_name), function(response)
+                            expect( v[2](response) ).to.beTrue()
+
+                            -- Resolve on the last case on the last type.
+                            if type_i == types_max and i == cases_max then
+                                done()
+                            end
+                        end)
                     end
                 end
             end
