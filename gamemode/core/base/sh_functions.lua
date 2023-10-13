@@ -25,3 +25,11 @@ IsClass = function(obj, name)
     if not obj or not obj.class or not obj.class.name then return false end
     return obj.class.name == name
 end
+
+IsInstanceOf = function(obj, class)
+    return istable(obj) and obj.IsInstanceOf and obj:IsInstanceOf(class)
+end
+
+IsSubclassOf = function(obj, class)
+    return istable(obj) and obj.IsSubclassOf and obj:IsSubclassOf(class)
+end
