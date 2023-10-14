@@ -67,8 +67,8 @@ return {
                 state.CloseEnvironment()
             end,
             cleanup = function(state)
-                if state.CloseEnvironment then state.CloseEnvironment() end
                 if state.CloseEnvironment2 then state.CloseEnvironment2() end
+                if state.CloseEnvironment then state.CloseEnvironment() end
             end
         },
         {
