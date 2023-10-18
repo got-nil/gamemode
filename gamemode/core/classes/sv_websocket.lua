@@ -13,6 +13,10 @@ ClassAccessorFunc(Websocket, {
     }
 })
 
+-- TODO: Change to using a socket state (CONNECTED, CLOSED, OPENING, RECONNECTING)
+-- That way we can just update/track a single variable instead of the
+-- current __reconnecting, __opening etc.
+
 --[[
 
     This is basically just a class wrapper around GWSockets.
@@ -78,6 +82,13 @@ local function WebsocketReconnect(self, ws_state)
         -- The websocket connection has terminated. Start a timer that
         -- runs every retry_delay to attempt a websocket connection.
         timer.Create(timerName, self.retry_delay, 0, function()
+
+            -- Check that we're still reconnecting.
+            if not (self and self.__reconnecting) then
+                stopReconnecting()
+                return
+            end
+
             self:Open(function(open_state)
 
                 -- Log the state from re-connection if successful.
@@ -194,6 +205,7 @@ function Websocket:Open(callback)
     return self
 end
 
+-- lua_run GNIL.Modules.Get("gpt-npc"):Config():Set("ws_debug", false)
 function Websocket:Write(data)
 
     -- If a table is provided, convert it to a string.
@@ -213,8 +225,19 @@ function Websocket:Write(data)
     return true
 end
 
-function Websocket:Close() self.__closed = true if self.__socket then self.__socket:close() end return self end
-function Websocket:CloseNow() self.__closed = true if self.__socket then self.__socket:closeNow() end return self end
+local function safeClose(self, name)
+    self.__closed = true
+    self.__reconnecting = false
+
+    local socket = self.__socket
+    if socket then
+        socket[name](socket)
+    end
+    return self
+end
+
+function Websocket:Close() return safeClose(self, "close") end
+function Websocket:CloseNow() return safeClose(self, "closeNow") end
 function Websocket:ClearQueue() if self.__socket then self.__socket:clearQueue() end return self end
 function Websocket:IsConnected() return self.__connected and not self.__closed end
 
