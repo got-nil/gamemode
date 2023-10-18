@@ -53,7 +53,6 @@ MODULE.OnLoad = function()
         }
         for _, v in ipairs(classes) do
             local filename = v[2] .. ".lua"
-            if not GNIL.Utils.IsFilenameForCurrentRealm(filename) then continue end
             GNIL.Net.Classes[v[1]] = MODULE:Include("classes/" .. filename)
         end
         GNIL.Net.Classes["_loaded"] = true

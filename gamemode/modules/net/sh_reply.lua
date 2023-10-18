@@ -182,7 +182,7 @@ timer.Create("gnil_net_reply_gc", 1, 0, function()
     local toDelete = {}
     for k, v in pairs(GNIL.Net.Reply["_waiting"]) do
         if os.time() > (v.time + v.timeout) then
-            MODULE:log("NetworkReply '" .. k .. "' has timedout.", "warning")
+            MODULE:log("NetworkReply '" .. k .. "' has timedout.", "debug")
 
             if SERVER then
 
