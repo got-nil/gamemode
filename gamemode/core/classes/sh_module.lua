@@ -337,6 +337,7 @@ function Module:LoadDirectories(directory, handler)
             end
         end
         if not handler then
+            self:log("Could not find any valid handler for LoadDirectories '" .. directory .. "'", "debug")
             return false
         end
     end

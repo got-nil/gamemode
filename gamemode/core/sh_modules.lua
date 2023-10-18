@@ -164,7 +164,7 @@ local function LoadModule(value, base_path, _reload, _dependency_chain)
         -- Get the cached module from name if there is one, or create
         -- a new module and cache it.
         local moduleInstance = GNIL.Modules.Get(value, {
-                _base_path = base_path
+            _base_path = base_path
         })
         if not moduleInstance then
             moduleInstance = CreateAndCacheModule(value, base_path)
@@ -220,13 +220,14 @@ local function LoadModule(value, base_path, _reload, _dependency_chain)
             -- Since this runs on the root it should only be ran once.
             local files, _ = file.Find(moduleBasePath .. "/*.lua", "LUA")
             for _, v in ipairs(files) do
-                if v[1] == "_" or v[1] == "~" then
+                local l = v[1]
+                if l == "_" or l == "~" then
                     local path = moduleBasePath .. "/" .. v
                     base_ignored_files[path] = true
 
                     -- If its a developer file (tilde prefix) then we should add the path
                     -- to the temp developer files table (until the dev module is loaded).
-                    if v[1] == "~" then
+                    if l == "~" then
 
                         -- If the developer module is loaded, just call the add dev file directly
                         -- if its not yet loaded, then store it temporarily until its loaded.
@@ -387,7 +388,9 @@ function GNIL.Modules.Reload(name)
     if not GNIL.Modules.IsLoaded(name) then
         return false
     end
-    return LoadModule(GNIL.Modules["_cached_modules"][name], nil, true)
+    local moduleInstance = GNIL.Modules["_cached_modules"][name]
+    hook.Run("GNIL.Modules.Reload", name, moduleInstance)
+    return LoadModule(moduleInstance, nil, true)
 end
 
 -- Get a module instance from cache. Module must be loaded beforehand.

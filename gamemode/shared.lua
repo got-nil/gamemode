@@ -78,7 +78,7 @@ end
 if GNIL._LOADED then
     if (GNIL.ENV == nil or not GNIL.ENV.LUA_REFRESH) then
         hook.Run("GNIL.LuaRefreshBlocked")
-        GNIL._safeLog("Lua refresh blocked due to environment settings.", "debug")
+        GNIL._safeLog("Lua refresh blocked due to environment settings.")
         return
     end
     GNIL._safeLog("Lua refreshing gamemode!", "warning")
@@ -116,6 +116,7 @@ end
 -- Once all basic utilities have set up etc, we should load all modules.
 -- Only if: First load or REFRESH_ALL_MODULES env setting is on.
 if not GNIL._LOADED or GNIL.ENV.REFRESH_ALL_MODULES then
+    GNIL._safeLog("Loading all modules.")
     GNIL.Modules.LoadAll(GNIL._LOADED == true) -- If we're already loaded reload the modules.
 end
 
@@ -132,5 +133,5 @@ if GNIL._LOADED then
 end
 
 -- Finished loading gamemode.
-GNIL.log("Gamemode finished loading!", "debug")
+GNIL._safeLog("Gamemode finished loading!", "success")
 GNIL._LOADED = true

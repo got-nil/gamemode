@@ -63,12 +63,12 @@ local function callEventFunctions(class, key, ...)
         out = class.class.__instanceDict
     end
 
-    -- TODO: Implement caching.
+    -- Find event functions.
     for k, v in pairs(out) do
-        if not isfunction(v) then continue end
         if k:lower() == function_name then
 
             -- Call event function.
+            if not isfunction(v) then continue end
             local fn_out = class[k](class, ...)
             if fn_out != nil then return fn_out end
         end
