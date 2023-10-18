@@ -38,12 +38,12 @@ function GNIL.Loader.DirectoryConst(const, directory_path, const_default)
         local any_loaded = false
         local _, files = file.Find(directory_path .. "/*.lua", "LUA")
         for _, v in ipairs(files) do
+
+            GNIL.Utils.Include(v)
             if not GNIL.Utils.IsFilenameForCurrentRealm(filepath) then
                 continue
             end
-
             any_loaded = true
-            GNIL.Utils.Include(v)
         end
 
         -- If nothing was loaded, then theres no modification to default.
@@ -83,12 +83,12 @@ function GNIL.Loader.DirectoryFilenameMap(directory_path, key_uppercase_first, f
     local files, _ = file.Find(directory_path .. "/*.lua", "LUA")
     if files == nil then return nil end
     for _, f in ipairs(files) do
-        if not force_realm and not GNIL.Utils.IsFilenameForCurrentRealm(f) then
-            continue
-        end
 
         local name = GNIL.Utils.GetCleanFilename(f, extension or "lua")
         local rtrn = GNIL.Utils.Include(directory_path .. "/" .. f, force_realm)
+        if not force_realm and not GNIL.Utils.IsFilenameForCurrentRealm(f) then
+            continue
+        end
         if rtrn != nil then
             out[key_uppercase_first && ucfirst(name) || name] = rtrn
         end
@@ -121,12 +121,13 @@ function GNIL.Loader.DirectoryMap(directory_path, callback, force_realm)
     local files, _ = file.Find(directory_path .. "/*." .. (extension or "lua"), "LUA")
     if files == nil then return nil end
     for _, f in ipairs(files) do
+
+        -- Include all files regardless of realm to make sure its being loaded on client too.
+        local rtrn = GNIL.Utils.Include(directory_path .. "/" .. f, force_realm)
+        if rtrn == nil then continue end
         if not force_realm and not GNIL.Utils.IsFilenameForCurrentRealm(f) then
             continue
         end
-
-        local rtrn = GNIL.Utils.Include(directory_path .. "/" .. f, force_realm)
-        if rtrn == nil then continue end
         assert(istable(rtrn), "File '" .. f .. "' must return nil or a table")
 
         for k, v in pairs(rtrn) do
