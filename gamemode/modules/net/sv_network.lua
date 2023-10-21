@@ -92,7 +92,14 @@ end
 -- broadcast instead of sending each message individually.
 function GNIL.Net.Broadcast(_nm)
     if _nm then
-        _nm:_WriteToStream(player.GetAll())
+
+        -- Make sure there are actually players online before broadcasting.
+        local players = player.GetAll()
+        if #players == 0 then
+            MODULE:log("Cannot broadcast message '" .. _nm.name .. "' as there are no players connected.", "debug")
+            return
+        end
+        _nm:_WriteToStream(players)
     end
     net.Broadcast()
 end
