@@ -118,7 +118,7 @@ function GNIL.Net.Send(ply, _nm, _allowqueue)
         -- the players that apply to the filter, and iteratively send the message
         -- to each of them.
         for _, v in ipairs(ply:GetPlayers()) do
-            MODULE:log("Player in recipient filter for '" .. _nm.name .. "': " .. ply:ToString(), "debug")
+            MODULE:log("Player in recipient filter for '" .. _nm.name .. "': " .. v:ToString(), "debug")
             GNIL.Net.Send(v, _nm)
         end
 
