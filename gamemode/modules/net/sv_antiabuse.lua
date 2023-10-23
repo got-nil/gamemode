@@ -70,7 +70,7 @@ function GNIL.Net.AntiAbuse.SetLimits(messageName, limits, is_default_message)
         ["amount"] = {defaults.amount, TYPE_NUMBER, false} -- Token refill amount per delay.
     })
     if not isvalid then
-        MODULE:log("Ratelimits configuration for message '" .. messageName .. "': " .. out, "warning")
+        MODULE:log("Ratelimits configuration for message '" .. messageName .. "': " .. out, "error")
         return false
     end
 

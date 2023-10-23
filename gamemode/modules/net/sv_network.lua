@@ -65,24 +65,31 @@ function GNIL.Net.AddNetworkString(str, ratelimits, _d)
     return l
 end
 
--- Add multiple network ids, with each argument being a string
--- network ID that should be pooled. (This is also better for
--- adding multiple delayed network ids, as it only resyncs once
--- the last message has been added, Although you shouldn't ever
--- need to add late messages anyway).
+
+-- Add multiple network ids in this format:
+--   ( { messageName = rateLimits, ... } )
+--   ( "messageName", "messageName", ... )
+--
+-- (This is also better for adding multiple delayed network
+-- ids, as it only resyncs once the last message has been added,
+-- Although you shouldn't ever need to add late messages anyway).
 function GNIL.Net.AddNetworkStrings(...)
     local args, out = {...}, {}
 
-    -- If the first argument is a table, use that instead.
-    if #args >= 1 and istable(args[1]) then
-        args = args[1]
+    -- Use the correct iterator if we're getting ratelimits.
+    local iter, using_tbl = ipairs, #args == 1 and istable(args[1])
+    if using_tbl then
+        iter, args = pairs, args[1]
     end
-    for i, v in ipairs(args) do
 
-        -- Add the network ID, while also only allowing the
-        -- network ids to be resynced on the last message.
-        -- (Although they shouldn't be added late anyway)
-        out[v] = GNIL.Net.AddNetworkString(v, nil, i == #args)
+    for k, v in iter(args) do
+
+        -- We can only get ratelimits when supplied a table.
+        local str, ratelimits = v, nil
+        if using_tbl then
+            str, ratelimits = k, v
+        end
+        out[v] = GNIL.Net.AddNetworkString(str, ratelimits, i == #args)
     end
     return out
 end
