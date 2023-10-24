@@ -10,9 +10,6 @@
 
 return {
 
-    -- When included, initialize a write buffer.
-    Included = function(self) self.__write_buffer = {} self.__write_size = 0 end,
-
     -- Each function should expect the write buffer to possibly
     -- not exist just incase the parent class is doing some fuckery.
     _FlushWriteBuffer = function(self) self.__write_buffer = {} end,

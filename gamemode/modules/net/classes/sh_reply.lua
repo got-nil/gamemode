@@ -23,11 +23,11 @@ end
 -- and then NetworkReply when possible.
 function NetworkReply:Send()
     assert(isstring(self.id), "Cannot send an uninitialized NetworkReply.")
-    GNIL.Net.NetworkReply._StartReplyMessage(self.id, self._error.enum == false, self._error.enum, self._error.int)
+    GNIL.Net.Reply._StartReplyMessage(self.id, self._error.enum == false, self._error.enum, self._error.int)
     self:_WriteBufferToStream()
     if SERVER then net.Send(self.ply) else net.SendToServer() end
 end
-NetworkReply.SendToServer = NetworkReply.Send
+--NetworkReply.SendToServer = NetworkReply.Send
 
 -- Error interface.
 function NetworkReply:SetError(error_enum, error_int)
@@ -44,7 +44,7 @@ function NetworkReply:RemoveError() self._error.enum = false return self end
 
 -- Class metafunctions.
 function NetworkReply:__tostring()
-    return "<NetworkReply '" .. self.name .. "'>"
+    return "<NetworkReply '" .. self.id .. "'>"
 end
 
 return NetworkReply
