@@ -47,7 +47,7 @@ local function _createIndexWrapper(aClass, f)
 
             if value != nil then
                 return value
-            elseif type(f) == "function" then
+            elseif isfunction(f) then
                 return (f(self, name))
             else
                 return f[name]
@@ -68,6 +68,7 @@ local function _propagateInstanceMethod(aClass, name, f)
 end
 
 local function _declareInstanceMethod(aClass, name, f)
+    if not aClass.__declaredMethods then return end
     aClass.__declaredMethods[name] = f
 
     if f == nil and aClass.super then
@@ -128,7 +129,7 @@ local function _createClass(name, super)
 end
 
 local function _includeMixin(aClass, mixin)
-    assert(type(mixin) == 'table', "mixin must be a table")
+    assert(istable(mixin), "mixin must be a table")
 
     for name, method in pairs(mixin) do
         if name != "Included" and name != "static" then
@@ -140,7 +141,7 @@ local function _includeMixin(aClass, mixin)
         aClass.static[name] = method
     end
 
-    if type(mixin.Included) == "function" then
+    if isfunction(mixin.Included) then
         mixin:Included(aClass)
     end
     return aClass
@@ -155,29 +156,29 @@ local DefaultMixin = {
     end,
 
     IsInstanceOf = function(self, aClass)
-        return type(aClass) == 'table' and type(self) == 'table' and
-                   (self.class == aClass or type(self.class) == 'table' and type(self.class.IsSubclassOf) == 'function' and
+        return istable(aClass) and istable(self) and
+                   (self.class == aClass or istable(self.class) and isfunction(self.class.IsSubclassOf) and
                        self.class:IsSubclassOf(aClass))
     end,
 
     static = {
         Allocate = function(self)
-            assert(type(self) == 'table', "Make sure that you are using 'Class:Allocate' instead of 'Class.Allocate'")
+            assert(istable(self), "Make sure that you are using 'Class:Allocate' instead of 'Class.Allocate'")
             return setmetatable({
                 class = self
             }, self.__instanceDict)
         end,
 
         New = function(self, ...)
-            assert(type(self) == 'table', "Make sure that you are using 'Class:New' instead of 'Class.New'")
+            assert(istable(self), "Make sure that you are using 'Class:New' instead of 'Class.New'")
             local instance = self:Allocate()
             instance:Initialize(...)
             return instance
         end,
 
         Subclass = function(self, name)
-            assert(type(self) == 'table', "Make sure that you are using 'Class:Subclass' instead of 'Class.Subclass'")
-            assert(type(name) == "string", "You must provide a name(string) for your class")
+            assert(istable(self), "Make sure that you are using 'Class:Subclass' instead of 'Class.Subclass'")
+            assert(isstring(name), "You must provide a name(string) for your class")
 
             local subclass = _createClass(name, self)
 
@@ -198,12 +199,12 @@ local DefaultMixin = {
         end,
 
         IsSubclassOf = function(self, other)
-            return type(other) == 'table' and type(self.super) == 'table' and
+            return istable(other) and istable(self.super) and
                        (self.super == other or self.super:IsSubclassOf(other))
         end,
 
         IncludeMixin = function(self, ...)
-            assert(type(self) == 'table', "Make sure you that you are using 'Class:Include' instead of 'Class.Include'")
+            assert(istable(self), "Make sure you that you are using 'Class:Include' instead of 'Class.Include'")
             for _, mixin in ipairs({...}) do
                 _includeMixin(self, mixin)
             end
@@ -213,7 +214,7 @@ local DefaultMixin = {
 }
 
 function middleclass.class(name, super)
-    assert(type(name) == 'string', "A name (string) is needed for the new class")
+    assert(isstring(name), "A name (string) is needed for the new class")
     return super and super:Subclass(name) or _includeMixin(_createClass(name), DefaultMixin)
 end
 
