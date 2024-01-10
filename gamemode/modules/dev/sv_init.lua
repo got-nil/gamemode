@@ -1,21 +1,20 @@
 local MODULE = MODULE
 
-MODULE.name = "Development Tools"
-MODULE.description  = "A misc set of development tools/utilities."
+MODULE.name = "dev"
 MODULE.author = "morgverd"
+MODULE.description = "Development tools and scripts."
+
+MODULE.config = true
+MODULE.config_structure = {
+    client_refresh_modules = {false, TYPE_BOOL, false},
+    reload_type = {false, TYPE_STRING, false}
+}
 
 -- This module requires the network module to send chunked file data.
 MODULE:RequireModule("net")
-MODULE:SetAutoload(false) -- Handle loading ourselves.
+MODULE:RequireModule("commands")
 
 --[[
-
-    Since this is a development module, client and shared files within it
-    should only be sent to developers. (With all server files ran as usual).
-    To do this, we can use the fancy new Net include functions!
-
-    (This file was also made as a working example/test of using advanced net
-    features in an actual module, relying heavily on cached netmessages and chunking).
 
     Environment specific behaviour:
         - prod: Files are read once, cached and resent to connecting developers.
@@ -29,6 +28,7 @@ GNIL.Dev = GNIL.Dev or {
     ["_setup_nm"] = false,
     ["_devfiles_nm"] = false,
     ["_setup"] = false,
+    ["VFS"] = {}
 }
 
 -- These are the first files loaded by the developer before
@@ -171,26 +171,25 @@ MODULE.OnLoad = function()
 
     -- Create/cache the setup netmessage. This is sent first to developers once they connect
     -- as is used to actually send the handlers required to load the other developer scripts.
-    GNIL.Net.AddNetworkString("dev_files")
-    if not GNIL.Dev["_setup_nm"] then
+    GNIL.Net.AddNetworkStrings("dev_files", "dev_module_reload")
 
-        -- Use the existing 'file_include' net handler to recieve and execute the setup file
-        -- content. The handler is provided in net module and already exists for all players.
-        local setup_nm = GNIL.Net.Create("file_include")
-        for k, _ in pairs(setupFiles) do
-            local content = file.Read(MODULE:ResolvePath(k), "LUA")
-            if content == nil then
-                MODULE:log("Setup file '" .. k .. "' does not exist within dev module, or is invalid. Skipping.", "warning")
-                continue
-            end
-
-            -- Write the setup script data directly.
-            setup_nm:WriteData(content, #content)
+    -- Use the existing 'file_include' net handler to recieve and execute the setup file
+    -- content. The handler is provided in net module and already exists for all players.
+    local setup_nm = GNIL.Net.Create("file_include")
+    for k, _ in pairs(setupFiles) do
+        MODULE:Ignore(k)
+        local content = file.Read(MODULE:ResolvePath(k), "LUA")
+        if content == nil then
+            MODULE:log("Setup file '" .. k .. "' does not exist within dev module, or is invalid. Skipping.", "warning")
+            continue
         end
 
-        GNIL.Dev["_setup_nm"] = setup_nm
-        MODULE:log("Generated setup netmessage.", "debug")
+        -- Write the setup script data directly.
+        setup_nm:WriteData(content, #content)
     end
+
+    GNIL.Dev["_setup_nm"] = setup_nm
+    MODULE:log("Generated setup netmessage.", "debug")
 
     -- Only run this code once (to protect against lua refreshes somehow on a prod server).
     if not GNIL.Dev["_setup"] then
@@ -202,34 +201,6 @@ MODULE.OnLoad = function()
         end
         GNIL.Modules["_tmp_dev_files"] = {}
 
-        -- Load files within the dev module as dev files.
-        local module_base = MODULE:GetBasePath()
-        local files, _ = file.Find(module_base .. "/*.lua", "LUA")
-
-        for _, v in ipairs(files) do
-            if setupFiles[v] or v == "sv_init.lua" then continue end
-            local absolute = module_base .. "/" .. v
-
-            -- Ensure the file isn't a server file or unprefixed.
-            local prefix = GNIL.Utils.GetFilepathRealmPrefix(v)
-            if prefix == nil then continue end
-
-            -- If the file is shared or serverside, it should still be included
-            -- by the server on intial load (like standard autoload).
-            if prefix == "sh_" or prefix == "sv_" then
-                include(absolute)
-            end
-
-            -- If the prefix isnt serverside then we should add it as a file that
-            -- should be sent to all developers on load (shared and client files).
-            if prefix != "sv_" then
-
-                -- Finally, add it as a developer only file that should be
-                -- sent to connecting developers.
-                GNIL.Dev.AddDeveloperOnlyFile(absolute)
-            end
-        end
-
         -- If there are currently connected developers send the files out.
         for _, v in ipairs(player.GetAll()) do
             if v:IsDeveloper() then
@@ -239,6 +210,7 @@ MODULE.OnLoad = function()
 
         GNIL.Dev["_setup"] = true
     end
+    MODULE:IncludeDirectory("vfs")
 end
 
 -- When a developer has finished connecting, send them all developer files.
