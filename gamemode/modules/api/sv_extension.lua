@@ -75,4 +75,4 @@ for _, v in ipairs({"Post", "Get", "Put", "Patch", "Delete", "Create", "Add"}) d
 end
 
 -- Add the extension class to Modules handler.
-GNIL.ModuleExtensions.Add("api", APIExtension)
+GNIL.Modules.Extensions.Add("api", APIExtension)

@@ -77,7 +77,7 @@ function Module:_Cleanup()
     -- Add all the events back to the extension after cleanup.
     -- (Since the extension listeners would be removed above).
     for _, v in pairs(self._extensions) do
-        GNIL.ModuleExtensions._Initialize(self, v)
+        GNIL.Modules.Extensions._Initialize(self, v)
     end
 end
 
@@ -408,11 +408,11 @@ function Module:LoadExtension(name)
     if self._extension_classes[name] then
 
         -- Initialize the extension and add the passthrough events.
-        extensionInstance = GNIL.ModuleExtensions._Initialize(self, self._extension_classes[name]:New(self))
+        extensionInstance = GNIL.Modules.Extensions._Initialize(self, self._extension_classes[name]:New(self))
     else
 
         -- Get the extension normally through global registration.
-        extensionInstance = GNIL.ModuleExtensions._Get(self, name)
+        extensionInstance = GNIL.Modules.Extensions._Get(self, name)
         if not extensionInstance then
             self:log("Could not find module extension '" .. name .. "'", "error")
             return false

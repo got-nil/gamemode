@@ -37,4 +37,4 @@ function NetExtension:ReceiveChunked(messageName, ...)
     GNIL.Net.ReceiveChunked(messageName, ...)
 end
 
-GNIL.ModuleExtensions.Add("net", NetExtension)
+GNIL.Modules.Extensions.Add("net", NetExtension)

@@ -24,7 +24,7 @@ do
             cleanTable(GNIL.Modules["_cached_modules"])
         end,
         CleanupExtensions = function()
-            cleanTable(GNIL.ModuleExtensions["_cached_extensions"])
+            cleanTable(GNIL.Modules.Extensions["_cached_extensions"])
         end
     }
 end

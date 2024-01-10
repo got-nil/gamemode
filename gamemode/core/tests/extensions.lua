@@ -72,7 +72,7 @@ return {
                     self.value = GNIL.Utils.Random(12)
                 end
                 function Extension:OnLoad() A = A + 1 end
-                GNIL.ModuleExtensions.Add("gluatest-modules-extension-3", Extension)
+                GNIL.Modules.Extensions.Add("gluatest-modules-extension-3", Extension)
 
                 local testModule = GNIL.TestUtils.CreateModule("extension-loads-1")
                 expect( testModule:HasExtension("gluatest-modules-extension-3") ).to.beFalse()
