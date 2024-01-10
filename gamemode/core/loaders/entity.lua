@@ -20,6 +20,14 @@ local function registerEntity(name, class)
     return true
 end
 
+-- Only actually try to include the target filepath if it exists.
+local function includeIfExists(filepath)
+    if not file.Exists(filepath, "LUA") then
+        return
+    end
+    return GNIL.Utils.Include(filepath)
+end
+
 return {
 
     Directory = "entities",
@@ -30,9 +38,9 @@ return {
 
         -- Load realm init file and shared if it exists.
         local out = GNIL.Loader.ConstWrap("ENT", defaultEnt, function()
-            if SERVER then GNIL.Utils.Include(directory_path .. "/init.lua") end
+            if SERVER then includeIfExists(directory_path .. "/init.lua") end
             for _, v in ipairs({"cl_init.lua", "shared.lua"}) do
-                GNIL.Utils.Include(directory_path .. "/" .. v)
+                includeIfExists(directory_path .. "/" .. v)
             end
         end)
         return registerEntity(classname, out)
