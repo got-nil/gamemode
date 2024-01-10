@@ -1,9 +1,15 @@
-GNIL.Modules = GNIL.Modules or {
+GNIL.Modules = GNIL.Modules or {}
+local _defaults = {
     ["_loaded"] = {},
     ["_tmp_dev_files"] = {},
     ["_first_loaded"] = {},
     ["_cached_modules"] = {}
 }
+for k, v in pairs(_defaults) do
+    if GNIL.Modules[k] == nil then
+        GNIL.Modules[k] = v
+    end
+end
 
 local function EmitModuleEvent(eventName, moduleInstance)
     return not (
@@ -14,7 +20,7 @@ local function EmitModuleEvent(eventName, moduleInstance)
 end
 
 local function CreateAndCacheModule(name, base_path)
-    moduleInstance = GNIL.Classes.Module:New(name, base_path)
+    local moduleInstance = GNIL.Classes.Module:New(name, base_path)
     GNIL.Modules["_cached_modules"][name] = moduleInstance
     return moduleInstance
 end

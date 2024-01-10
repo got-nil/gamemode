@@ -168,5 +168,6 @@ function GNIL.Loader.LoadBase()
     GNIL.Classes        = GNIL.Loader.DirectoryFilenameMap(GNIL.Utils.ResolveGamemodePath("core/classes"), true)
 
     -- Prevent this function from being called again.
+    GNIL.Utils.IncludeDirectory(GNIL.Utils.ResolveGamemodePath("core/module"))
     GNIL.Loader["_init"] = true
 end
