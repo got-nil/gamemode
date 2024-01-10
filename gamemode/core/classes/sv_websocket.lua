@@ -205,7 +205,6 @@ function Websocket:Open(callback)
     return self
 end
 
--- lua_run GNIL.Modules.Get("gpt-npc"):Config():Set("ws_debug", false)
 function Websocket:Write(data)
 
     -- If a table is provided, convert it to a string.
