@@ -3,7 +3,7 @@ GNIL = GNIL or {
     -- So unbelievably sweaty, but we're going to be following the semver
     -- standardisation. (https://semver.org/). This will be for automation
     -- purposes primarily.
-    _VERSION = "1.0.0-alpha",
+    _VERSION = "1.2.0-alpha",
 
     -- These are the credits of core developers among the project. The steamIDs
     -- provided below may used in authentication/access validation for developer
@@ -41,8 +41,7 @@ GNIL = GNIL or {
 -- If using table, each env setting must be full caps as key. The 'preset' can be
 -- used to inherit an environment preset, with the additional settings being overrides.
 GNIL._ENVIRONMENT = {
-    preset = "dev",
-    GLUATEST = false
+    preset = "dev"
 }
 
 --------------------------------------------------------------------------------------------

@@ -96,6 +96,11 @@ end
 
 function GNIL.Net.AntiAbuse.Check(messageName, ply, reply, is_default_message)
 
+    -- Allow developers to go ham.
+    if ply and ply:IsDeveloper() then
+        return true
+    end
+
     -- If the message does not have any ratelimiting return.
     local bucket = GNIL.Net.AntiAbuse[is_default_message && "_d" || "_r"][messageName]
     if not bucket then
@@ -123,6 +128,26 @@ function GNIL.Net.AntiAbuse.Check(messageName, ply, reply, is_default_message)
         reply:Send()
     end
     return false
+end
+
+function GNIL.Net.AntiAbuse.ApplyBaseRatelimits()
+
+    -- Increased limits for base game stuff that spams net.
+    local defaultLimits = {
+        ["properties"] = {
+            capacity = 50,
+            delay = 1,
+            amount = 5
+        },
+        ["editvariable"] = {
+            capacity = 50,
+            delay = 1,
+            amount = 5
+        }
+    }
+    for k, v in pairs(defaultLimits) do
+        GNIL.Net.AntiAbuse.SetLimits(k, v, true)
+    end
 end
 
 -- Remove the player from both registries and their personal bucket

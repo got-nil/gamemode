@@ -44,7 +44,7 @@ function NetworkReply:RemoveError() self._error.enum = false return self end
 
 -- Class metafunctions.
 function NetworkReply:__tostring()
-    return "<NetworkReply '" .. self.id .. "'>"
+    return "NetworkReply<" .. self.id .. ">"
 end
 
 return NetworkReply

@@ -9,7 +9,7 @@ local defaultEnt = {
 }
 
 local function registerEntity(name, class)
-    if class == nil or class == false then
+    if not class then
         GNIL.log("Failed to load entity '" .. name .. "' " .. (class == nil && "with an error state" || "as it does not have any files for this realm."), class == nil && "error" || "debug")
         return false
     else

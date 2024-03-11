@@ -18,7 +18,7 @@ SafeTableAccess = function(tbl, ...)
 end
 
 IsPlayer = function(ply)
-    return IsEntity(ply) and IsValid(ply) and ply:IsPlayer()
+    return IsValid(ply) and ply.IsPlayer and ply:IsPlayer()
 end
 
 IsClass = function(obj, name)

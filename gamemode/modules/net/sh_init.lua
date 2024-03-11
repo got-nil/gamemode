@@ -55,11 +55,16 @@ MODULE.OnLoad = function()
             classes[#classes + 1] = {"Bucket", "sv_bucket"}
             classes[#classes + 1] = {"Readable", "sv_readable"}
         end
-
         for _, v in ipairs(classes) do
             local filename = v[2] .. ".lua"
             GNIL.Net.Classes[v[1]] = MODULE:Include("classes/" .. filename)
         end
+
+        -- Apply base game rate limits.
+        if SERVER then
+            GNIL.Net.AntiAbuse.ApplyBaseRatelimits()
+        end
+
         GNIL.Net.Classes["_loaded"] = true
     end
 end

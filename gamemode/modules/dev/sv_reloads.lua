@@ -26,6 +26,7 @@ MODULE:AddHook("GNIL.Modules.Reload", "module_vfs_reload", function(name, module
     if reload_type == "vfs" then
 
         -- Send VFS reload to all players.
+        MODULE:log("Using VFS to refresh module '" .. moduleInstance:GetModuleName() .. "'! This should only be used in development.", "warning")
         GNIL.Dev.VFS.SendReload(moduleInstance, players)
 
     elseif reload_type == "luarefresh" then
