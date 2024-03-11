@@ -26,6 +26,7 @@ function Body:__tostring() return self._body end
 function Body:Parse(content_type)
 
     -- Parse/convert for specific content types.
+    -- Returns: {post_data}, {files_data}
     local content_type_parsers = {
         ["multipart/form-data"] = function(body, content_type)
             local parsed, out = GNIL.Thirdparty.formdata(body, content_type), {{}, {}}
@@ -62,7 +63,7 @@ function Body:Parse(content_type)
                 MODULE:log("Failed to parse provided body for content type '" .. k .. "'", "debug")
                 return
             end
-            
+
             -- Set the class variables once parsed.
             self._post = post
             self._files = files

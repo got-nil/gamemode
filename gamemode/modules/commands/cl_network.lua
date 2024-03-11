@@ -1,3 +1,4 @@
+local MODULE = MODULE
 
 -- Recieve serverside commands manifest and store on the client, allowing
 -- for basic autocomplete to be handled as the client knows the argument structure.
@@ -14,7 +15,7 @@ GNIL.Net.Receive("module_commands_sync", function()
 
     -- Check if we're actually recieving any commands.
     if not net.ReadBool() then
-        GNIL.log("The server sent no commands", "debug")
+        MODULE:log("The server sent no commands", "debug")
         GNIL.Commands["_r"] = {}
         return
     end
@@ -24,29 +25,29 @@ GNIL.Net.Receive("module_commands_sync", function()
 
         -- Get the command name and if its been hashed.
         local command_plaintext, command_hash, command_arguments = net.ReadBool(), net.ReadString(), {}
-        
+
         -- If the provided command is plaintext, we should add it to
         -- the list of discovered commands and generate the actual hash
         -- for it.
         if command_plaintext then
             new_hash = util.SHA256(command_hash)
             discovered[command_hash] = new_hash
-            GNIL.log("Discovered plaintext command '" .. command_hash .. "'", "debug")
+            MODULE:log("Discovered plaintext command '" .. command_hash .. "'", "debug")
         end
 
         if net.ReadBool() then
             for x = 1, net.ReadUInt(8) do
                 command_arguments[x] = net.ReadUInt(7)
             end
-            GNIL.log("Found " .. #command_arguments .. " arguments for command '" .. command_hash .. "'", "debug")
+            MODULE:log("Found " .. #command_arguments .. " arguments for command '" .. command_hash .. "'", "debug")
         else
             command_arguments = true -- cant be nil
-            GNIL.log("Command '" .. command_hash .. "' does not provide any arguments.", "debug")
+            MODULE:log("Command '" .. command_hash .. "' does not provide any arguments.", "debug")
         end
 
         commands[command_plaintext and new_hash or command_hash] = command_arguments
     end
-    GNIL.log("Successfully synchronised " .. command_count .. " commands. " .. (flush and "Flushing registry" or "Appending to registry") .. ".", "debug")
+    MODULE:log("Successfully synchronised " .. command_count .. " commands. " .. (flush and "Flushing registry" or "Appending to registry") .. ".", "debug")
 
     if flush then
         GNIL.Commands["_r"] = commands

@@ -13,10 +13,10 @@ function GNIL.Fixes.FromConfig()
     for i = 1, GNIL_FIXES_ENT_COUNT do
         out[i] = {}
     end
-  
+
     for classname, enums in pairs(MODULE:Config():Get("Entities", {})) do
         for _, enum in ipairs(istable(enums) && enums || {enums}) do
-            out[enum][classname] = true         
+            out[enum][classname] = true
         end
     end
     return out
@@ -26,7 +26,7 @@ end
 -- once the config file has been parsed.
 local function setupHooks()
     MODULE:AddHook("OnEntityCreated", "bannedEntities", function(ent)
-        if not IsValid(ent) then return end 
+        if not IsValid(ent) then return end
         local class = ent:GetClass()
 
         -- If the entity is banned remove it, if it should
@@ -39,7 +39,7 @@ local function setupHooks()
             return false
         end
     end)
-    MODULE:AddHook("ShouldCollide", "antiCollision", function(ent1, ent2) 
+    MODULE:AddHook("ShouldCollide", "antiCollision", function(ent1, ent2)
         if ((IsValid(ent1) and IsValid(ent2)) and (GNIL.Fixes["_entities"][GNIL_FIXES_ENT_NOCOLIDE][ent1:GetClass()] and GNIL.Fixes["_entities"][GNIL_FIXES_ENT_NOCOLIDE][ent2:GetClass()])) then
             return false
         end

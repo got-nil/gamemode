@@ -25,9 +25,9 @@ local function sendPlayerCommandStructure(ply, command_name, flush)
     -- Change the command_pool depending on if a command_name was provided.
     local command_pool = GNIL.Commands["_r"]
     if command_name then
-        if not GNIL.Commands["_r"][command_name] then GNIL.log("Provided command name is unknown, cannot send command net structure.", "warning") return end
+        if not GNIL.Commands["_r"][command_name] then MODULE:log("Provided command name is unknown, cannot send command net structure.", "warning") return end
 
-        GNIL.log("Sending " .. ply:Nick() .. " command structure for '" .. command_name .. "'", "debug")
+        MODULE:log("Sending " .. ply:Nick() .. " command structure for '" .. command_name .. "'", "debug")
         command_pool = {[command_name] = GNIL.Commands["_r"][command_name]}
     end
 
@@ -76,7 +76,7 @@ end
 -- instead of having to resend all of them (used for late commands).
 local function broadcastCommandsStructure(command_name, flush)
     if flush == nil then flush = true end
-    GNIL.log("Broadcasting commands structure to clients. " .. (flush and "Flushing registries." or "Appending to registries."), "debug")
+    MODULE:log("Broadcasting commands structure to clients. " .. (flush and "Flushing registries." or "Appending to registries."), "debug")
     for _, v in ipairs(player.GetAll()) do
         sendPlayerCommandStructure(v, command_name, flush)
     end
@@ -120,7 +120,7 @@ function GNIL.Commands.CanAccess(command_name, ply)
         if genericAccessValidators[command[3]] then
             return genericAccessValidators[command[3]](ply)
         else
-            GNIL.log("Invalid generic access validator used for command '" .. command_name .. "'", "warning")
+            MODULE:log("Invalid generic access validator used for command '" .. command_name .. "'", "warning")
             return false
         end
     end
@@ -192,7 +192,7 @@ function GNIL.Commands.Add(name, callback, arguments, access_check, public, flag
 
     -- Actually push the command
     name = string.lower(name)
-    GNIL.log("Created command '" .. name .. "' in server reference.", "debug")
+    MODULE:log("Created command '" .. name .. "' in server reference.", "debug")
     GNIL.Commands._r[name] = {
         callback,       -- Callback for command execution
         arguments,      -- Arguments the command uses
@@ -204,7 +204,7 @@ function GNIL.Commands.Add(name, callback, arguments, access_check, public, flag
     -- If a new command has just been pushed, we should broadcast if we've already
     -- initialised and sent the original command set (delayed command setup).
     if SHOULD_BROADCAST_NEW_COMMANDS then
-        GNIL.log("Broadcasting newly created command '" .. name .. "' structure to clients. For optimisation commands should be added before server initialization.", "warning")
+        MODULE:log("Broadcasting newly created command '" .. name .. "' structure to clients. For optimisation commands should be added before server initialization.", "warning")
         broadcastCommandsStructure(name, false)
     end
 
@@ -217,7 +217,7 @@ MODULE:AddHook("PlayerNetLoad", "load_send", function(ply) sendPlayerCommandStru
 
 -- Broadcast the command structure whenever theres a lua refresh.
 if _broadcastLuaRefresh then
-    GNIL.log("Broadcasting command structure due to LUA refresh.", "success")
+    MODULE:log("Broadcasting command structure due to LUA refresh.", "success")
     broadcastCommandsStructure()
 else
     _broadcastLuaRefresh = true

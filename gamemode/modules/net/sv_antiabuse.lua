@@ -52,9 +52,9 @@ function GNIL.Net.AntiAbuse.Abusing(messageName, ply, is_default_message)
 
     -- If the players own bucket is limited, then the player has sent
     -- multiple abusive net messages (could be across multiple messages).
-    -- Here they should actually be sanctioned, kicking the player by default. 
+    -- Here they should actually be sanctioned, kicking the player by default.
     if not GNIL.Net.AntiAbuse["_p"][steamid]:Check(steamid) then
-        
+
         if hook.Run("GNIL.Net.AntiAbuse.IsAbusing", ply) == false then return end
         ply:Kick("Detected attempted network abuse patterns")
     end
@@ -70,12 +70,12 @@ function GNIL.Net.AntiAbuse.SetLimits(messageName, limits, is_default_message)
         ["amount"] = {defaults.amount, TYPE_NUMBER, false} -- Token refill amount per delay.
     })
     if not isvalid then
-        MODULE:log("Ratelimits configuration for message '" .. messageName .. "': " .. out, "warning")
+        MODULE:log("Ratelimits configuration for message '" .. messageName .. "': " .. out, "error")
         return false
     end
 
     -- If the message bucket already exists, check if the provided config
-    -- is the same to prevent needless discarding of previous bucket.  
+    -- is the same to prevent needless discarding of previous bucket.
     local existingBucket = GNIL.Net.AntiAbuse["_r"][messageName]
     if existingBucket then
 
@@ -88,13 +88,18 @@ function GNIL.Net.AntiAbuse.SetLimits(messageName, limits, is_default_message)
     else
         MODULE:log("Creating ratelimit bucket for message '" .. messageName .. "'.", "debug")
     end
-    
+
     -- Create/Replace the bucket store.
     GNIL.Net.AntiAbuse[is_default_message && "_d" || "_r"][messageName] = GNIL.Net.Classes.Bucket:New(out.capacity, out.delay, out.amount)
     return true
 end
 
 function GNIL.Net.AntiAbuse.Check(messageName, ply, reply, is_default_message)
+
+    -- Allow developers to go ham.
+    if ply and ply:IsDeveloper() then
+        return true
+    end
 
     -- If the message does not have any ratelimiting return.
     local bucket = GNIL.Net.AntiAbuse[is_default_message && "_d" || "_r"][messageName]
@@ -123,6 +128,26 @@ function GNIL.Net.AntiAbuse.Check(messageName, ply, reply, is_default_message)
         reply:Send()
     end
     return false
+end
+
+function GNIL.Net.AntiAbuse.ApplyBaseRatelimits()
+
+    -- Increased limits for base game stuff that spams net.
+    local defaultLimits = {
+        ["properties"] = {
+            capacity = 50,
+            delay = 1,
+            amount = 5
+        },
+        ["editvariable"] = {
+            capacity = 50,
+            delay = 1,
+            amount = 5
+        }
+    }
+    for k, v in pairs(defaultLimits) do
+        GNIL.Net.AntiAbuse.SetLimits(k, v, true)
+    end
 end
 
 -- Remove the player from both registries and their personal bucket

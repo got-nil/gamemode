@@ -22,7 +22,7 @@ Message._attributes = {
 
     -- Response Specific
     ["status"]      = TYPE_NUMBER,
-    
+
     -- Shared
     ["body"]        = function(v) return isstring(v) or GNIL.API.Classes.Is(v, "Body") end,
     ["method"]      = function(v) return isstring(v) and Message._validMethods[string.upper(v)] == true end,

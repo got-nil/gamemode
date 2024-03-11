@@ -1,1 +1,3 @@
 /*.txt
+/gamemode/modules/_*
+/gamemode/modules/*/config.lua

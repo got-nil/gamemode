@@ -2,8 +2,8 @@ GNIL = GNIL or {
 
     -- So unbelievably sweaty, but we're going to be following the semver
     -- standardisation. (https://semver.org/). This will be for automation
-    -- purposes primarily. 
-    _VERSION = "1.0.0-alpha",
+    -- purposes primarily.
+    _VERSION = "1.2.0-alpha",
 
     -- These are the credits of core developers among the project. The steamIDs
     -- provided below may used in authentication/access validation for developer
@@ -12,7 +12,7 @@ GNIL = GNIL or {
 
         -- Copy my structure, and paste your own stuff over it.
         -- IF YOU DON'T KNOW YOUR TITLE, ASK MORG OR RAPTOR, DONT MAKE ONE UP.
-        -- ADD SEQUENTIALLY, YOUR PR WILL BE REJECTED IF YOU TRY ALTER ORDER. 
+        -- ADD SEQUENTIALLY, YOUR PR WILL BE REJECTED IF YOU TRY ALTER ORDER.
         {
             ["name"] = "morgverd",
             ["id64"] = "76561198301284223",
@@ -45,7 +45,9 @@ GNIL = GNIL or {
 -- handling etc. The value can be a string preset name, or a table of env settings.
 -- If using table, each env setting must be full caps as key. The 'preset' can be
 -- used to inherit an environment preset, with the additional settings being overrides.
-GNIL._ENVIRONMENT = "core-dev"
+GNIL._ENVIRONMENT = {
+    preset = "dev"
+}
 
 --------------------------------------------------------------------------------------------
 
@@ -68,8 +70,8 @@ end
 -- Load the environment handler first. This allows the gamemode to be halted
 -- if there is an invalid environment provided (instead of failing later).
 -- Loaded on all loads including refreshes to validate/change environment.
-if SERVER and not GNIL._LOADED then AddCSLuaFile("core/sh_env.lua") end
-if not include("core/sh_env.lua") then
+if SERVER and not GNIL._LOADED then AddCSLuaFile("core/sh_environment.lua") end
+if not include("core/sh_environment.lua") then
     ErrorNoHalt("GNIL - Invalid gamemode environment, failed to start.\n")
     return
 end
@@ -80,7 +82,7 @@ end
 if GNIL._LOADED then
     if (GNIL.ENV == nil or not GNIL.ENV.LUA_REFRESH) then
         hook.Run("GNIL.LuaRefreshBlocked")
-        GNIL._safeLog("Lua refresh blocked due to environment settings.", "warning")
+        GNIL._safeLog("Lua refresh blocked due to environment settings.")
         return
     end
     GNIL._safeLog("Lua refreshing gamemode!", "warning")
@@ -104,15 +106,21 @@ if not GNIL._LOADED or GNIL.ENV.REFRESH_CORE then
         include(path)
     end
 
-    -- Include all other files within the core directory. We also exclude
-    -- the requiredSharedUtilities from being re-loaded as they are included
-    -- seperately above.
+    -- Include core base directory before anything else, these contain core
+    -- functions used by anything/everything else. Once the base directory
+    -- has been loaded, load the Thirdparty, Classes and Integrations before
+    -- also Initializing the configuration files (so the core can use configs).
+    GNIL.Utils.IncludeDirectory(GNIL.Utils.ResolveGamemodePath("core/base"))
+    GNIL.Loader.LoadBase() GNIL.Config.LoadAll()
+
+    -- Include the rest of the core.
     GNIL.Utils.IncludeDirectory(GNIL.Utils.ResolveGamemodePath("core"), requiredSharedUtilities)
 end
 
 -- Once all basic utilities have set up etc, we should load all modules.
 -- Only if: First load or REFRESH_ALL_MODULES env setting is on.
 if not GNIL._LOADED or GNIL.ENV.REFRESH_ALL_MODULES then
+    GNIL._safeLog("Loading all modules.")
     GNIL.Modules.LoadAll(GNIL._LOADED == true) -- If we're already loaded reload the modules.
 end
 
@@ -122,12 +130,12 @@ if GNIL._LOADED then
     -- If we haven't reloaded all modules, attempt to load specific ones instead.
     if not GNIL.ENV.REFRESH_ALL_MODULES and GNIL.ENV.REFRESH_MODULES then
         for _, v in ipairs(GNIL.ENV.REFRESH_MODULES) do
-            GNIL.Modules.Load(v, nil, true)
+            GNIL.Modules.Reload(v)
         end
     end
     hook.Run("GNIL.LuaRefresh")
 end
 
 -- Finished loading gamemode.
-GNIL.log("Gamemode finished loading!", "debug")
+GNIL._safeLog("Gamemode finished loading!", "success")
 GNIL._LOADED = true

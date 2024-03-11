@@ -3,7 +3,7 @@ local MODULE = MODULE
 MODULE.name = "Fixes"
 MODULE.author = "morgverd"
 MODULE.description = "A set of fixes and optimisations for the server and clients."
-MODULE.config = "fixes"
+MODULE.config = true
 
 GNIL.Fixes = GNIL.Fixes or {
     ["_optimizers"] = {}

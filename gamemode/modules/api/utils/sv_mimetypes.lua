@@ -3,7 +3,7 @@ GNIL.API.Mimetypes = GNIL.API.Mimetypes or {
 }
 
 -- These are all recognised/supported file mimetypes. Format:
---  mimetype extension ...(additional extensions seperated by spaces)... 
+--  mimetype extension ...(additional extensions seperated by spaces)...
 local mimetypes = [[
 # Audio
 audio/midi mid midi kar
@@ -111,7 +111,7 @@ text/x-component htc
 text/x-vcard vcf
 
 # Lua is not officially supported, this is the unofficial type
-application/x-lua lua  
+application/x-lua lua
 ]]
 
 -- Parse mimetypes
@@ -121,7 +121,7 @@ function GNIL.API.Mimetypes.Parse(in_mimetypes)
     for line in string.gmatch(in_mimetypes, "[^\n\r]+") do
         if line[1] == "#" then continue end
         local parts = string.Explode(" ", line)
-        
+
         -- A mimetype can have multiple extensions, simply anything
         -- past the first index (the mimetype) is an extension.
         local extensions = {}
@@ -129,7 +129,7 @@ function GNIL.API.Mimetypes.Parse(in_mimetypes)
             extensions[i] = parts[i+1]
         end
         out_mimetypes[parts[1]] = extensions
-        
+
         -- Reverse map the mimetype to all found extensions for pre-cached
         -- reverse searching (finding mime by extension).
         for _, v in ipairs(extensions) do
@@ -148,7 +148,7 @@ function GNIL.API.Mimetypes.GetMimetype(extension) return GNIL.API.Mimetypes["_e
 -- If the mimetypes text has not yet been parsed, do so now.
 if not GNIL.API.Mimetypes["_parsed"] then
     local parsed_mimetypes, parsed_extensions = GNIL.API.Mimetypes.Parse(mimetypes)
-    
+
     -- Cache parsed mimetypes.
     GNIL.API.Mimetypes["_mime"] = parsed_mimetypes
     GNIL.API.Mimetypes["_exts"] = parsed_extensions

@@ -1,8 +1,28 @@
--- Handles the loading & management of modules.
+-- Handle the loading and management of modules. All modules should be
+-- designed with reloading in mind, using OnLoad, OnUnload or OnReinitialize.
 
-local Module = GNIL.Thirdparty.middleclass("Module")
-function Module:Initialize(name)
+local Module = GNIL.Thirdparty.middleclass("Module"):IncludeMixin(GNIL.ClassMixins.Events)
+ClassAccessorFunc(Module, {
+    Name = FuncAccessors.ReadOnly("name"),
+    BasePath = FuncAccessors.ReadOnly("_base_path"),
+    ModuleName = FuncAccessors.ReadOnly("_module_name"),
+    Disabled = FuncAccessors.Boolean("_disabled"),
+    Quiet = FuncAccessors.Boolean("_quiet")
+})
+
+function Module:Initialize(name, base_path, _emit_signal)
+
+    -- Just incase.
+    assert(isstring(name), "The module name argument must be a string")
+    assert(base_path == nil or isstring(base_path), "The module base_path argument must be nil or a string")
+
+    if _emit_signal != false then
+        self:EmitSignal(self._initialized && "Reinitialize" || "Initialize", self)
+    end
+
+    self._initialized = true
     self._module_name = name
+    self._base_path = base_path
 
     self.name = name
     self.description = "No Description Defined"
@@ -13,9 +33,16 @@ function Module:Initialize(name)
     self.autoload = true
     self.dependencies = false
     self._loaded_dependencies = {}
+    self._delayed_extensions = {}
     self._disabled = false
 
-    -- If a config is set, config_required determines if the module should
+    -- Static values that should not change between reinitializations.
+    self._static = self._static or {}
+    self._extensions = self._extensions or {}
+    self._extension_classes = self._extension_classes or {}
+    self._quiet = Either(self._quiet != nil, self._quiet, false)
+
+    -- If config is set, config_required determines if the module should
     -- be automatically disabled if the config is not found.
     self.config = false
     self.config_required = true
@@ -35,15 +62,35 @@ function Module:Initialize(name)
     self._ignored_files = {}
 end
 
--- Simply calls the modules utility with the current module name
+-- Cleanup the module after being unloaded. This is very important as
+-- it ensures that reloads don't pool a bunch of old callbacks etc.
+-- This can be overriden, but it REALLY shouldn't unless theres a VERY
+-- good reason. The "Unload" signal should be used instead.
+function Module:_Cleanup()
+
+    self:ClearAllListeners()
+    self:ClearHooks()
+
+    -- Reinitialize the module without sending Reinitialization signal.
+    self:Initialize(self._module_name, self._base_path, false)
+
+    -- Add all the events back to the extension after cleanup.
+    -- (Since the extension listeners would be removed above).
+    for _, v in pairs(self._extensions) do
+        GNIL.Modules.Extensions._Initialize(self, v)
+    end
+end
+
+-- Simply call the modules utility with the current module name
 -- as the ID argument. This could've just been functional but we're
 -- sticking it to OOP layout out here.
 function Module:IsLoaded() return GNIL.Modules.IsLoaded(self._module_name) end
-function Module:Load() return GNIL.Modules.Load(self._module_name) end
-function Module:Unload() return GNIL.Modules.Unload(self._module_name) end
+function Module:Load() return GNIL.Modules.Load(self) end
+function Module:Unload() return GNIL.Modules.Unload(self) end
 
--- Get module config, set from config attribute.
-function Module:Config() return GNIL.Config.Get(self.config) end
+-- Get module config, set from config attribute. Either use the local
+-- module config name or a public/global one. (A little confusing I know).
+function Module:Config() return GNIL.Config.Get(Either(self.config == true, "M_" .. self._module_name, self.config)) end
 
 -- A functional way to set the autoload if you want to be fancy.
 -- (Although you could just change the class var directly)
@@ -63,45 +110,41 @@ function Module:_ResolveRequirement(requirement)
         return
     end
 
-    -- Ensures that we're not attempting to load a dependency that is already
+    -- Ensure the module name exists.
+    if not GNIL.Modules.Exists(requirement) then
+        self:log("Dependency '" .. requirement .. "' does not exist.", "warning")
+        return
+    end
+
+    -- Ensure that we're not attempting to load a dependency that is already
     -- apart of the created dependency chain (prevent dependency loops).
     if self._dependency_chain and self._dependency_chain[requirement] then
         self._loaded_dependencies[requirement] = true
         self:log("Detected dependency recursion while attempting to load '" .. requirement .. "'", "warning")
         return
     else
-        if not self._dependency_chain then self._dependency_chain = {} end
+        if not self._dependency_chain then
+            self._dependency_chain = {[self._module_name] = true}
+        end
         self._dependency_chain[requirement] = true
     end
 
-    -- Loads the dependency module, passing through the current dependency chain.
-    GNIL.Modules.Load(requirement, self._dependency_chain)
+    -- Load the requirement.
+    GNIL.Modules.Load(requirement, nil, self._dependency_chain)
     self._loaded_dependencies[requirement] = true
 end
 
 -- Returns a table of all other modules that this module needs to operate.
 function Module:GetDependencies() return self.dependencies and table.GetKeys(self.dependencies) or {} end
 
--- Requires a module. These modules are loaded before OnLoad.
-function Module:Require(requirement)
-
-    -- Retard dectection (raptor is a bumbling spastic), just incase someone
-    -- tries to use this as Requires and they give a table despite
-    -- me making it very clear that theres a seperate function for it.
-    if istable(requirement) then return self:Requires(requirement) end
-
-    if not GNIL.Modules.Exists(requirement) then self:log("Required module '" .. requirement .. "' is Missing/Invalid.", "error") end
-    if self.dependencies == false then self.dependencies = {} end
-    self.dependencies[requirement] = true
-end
-
--- Allow for multiple dependencies to be given at once.
-function Module:Requires(requirements)
-    assert(not table.IsSequential(requirements), "Requirements should be given as a sequential array of module names.")
-    for _, v in ipairs(requirements) do
-        if not self:Require(v, delayed) then return false end
+-- Require a module(s). These modules are loaded before OnLoad.
+-- Accepts multiple module names as varargs.
+function Module:RequireModule(...)
+    for _, requirement in ipairs({...}) do
+        if not GNIL.Modules.Exists(requirement) then self:log("Required module '" .. requirement .. "' is Missing/Invalid.", "error") continue end
+        if self.dependencies == false then self.dependencies = {} end
+        self.dependencies[requirement] = true
     end
-    return true
 end
 
 -- Adds a module-based hook.
@@ -201,7 +244,13 @@ end
 -- as the initial loading of the module etc.)
 function Module:Ignore(path)
     self:log("Ignorning file '" .. path .. "'", "debug")
-    _addIgnoredFile(self, GNIL.Utils.ResolveGamemodePath("modules/" .. self._module_name .. "/" .. path))
+
+    local resolved_path = self:ResolvePath(path)
+    if resolved_path then
+        _addIgnoredFile(self, resolved_path)
+    else
+        self:log("There is no base_path set! Cannot ignore files.", "debug")
+    end
 end
 
 -- Allow a module to include files or directories
@@ -209,12 +258,17 @@ end
 -- is true then the include is processed with the
 -- rest of the files.
 function Module:Include(path, delayed)
-    path = GNIL.Utils.ResolveGamemodePath("modules/" .. self._module_name .. "/" .. path)
+    path = self:ResolvePath(path)
+    if not path then
+        self:log("Cannot include relative '" .. path .. "' as there is no base_path set!", "debug")
+        return false
+    end
     if not delayed then
         if self._ignored_files[path] == true then
-            return self:log("Refusing to include '" .. path .."' as it is ignored", "debug")
+            self:log("Refusing to include '" .. path .."' as it is ignored.", "debug")
+            return false
         end
-        
+
         _addIgnoredFile(self, path)
         return GNIL.Utils.Include(path)
 
@@ -226,9 +280,13 @@ end
 -- (which is important for actually ignoring files). So use
 -- this as much as possible when dealing with a module directly.
 function Module:IncludeDirectory(directory, ignoredFiles, delayed)
-    local path = GNIL.Utils.ResolveGamemodePath("modules/" .. self._module_name .. "/" .. directory)
+    local path = self:ResolvePath(directory)
+    if not path then
+        self:log("Cannot include relative '" .. directory .. "/' as there is no base_path set!", "debug")
+        return false
+    end
     if not delayed then
-        
+
         local ignored_files = nil
         if ignoredFiles or self._added_ignored_file then
             ignored_files = self._ignored_files
@@ -245,22 +303,29 @@ function Module:IncludeDirectory(directory, ignoredFiles, delayed)
                 end
             end
         end
-        return GNIL.Utils.IncludeDirectory(path, ignored_files, true)    
-        
-    else self._added_delayed = true self._delayed_autoload[2][path] = true end
+        return GNIL.Utils.IncludeDirectory(path, ignored_files, true)
+
+    else
+        self._added_delayed = true
+        self._delayed_autoload[2][path] = true
+    end
 end
 
 -- Resolve a module path to a full gamemode path.
+-- !!! Returns false if there is no base_path set.
 function Module:ResolvePath(path)
-    return GNIL.Utils.ResolveGamemodePath("modules/" .. self._module_name) .. "/" .. path
+    if not self._base_path then return false end
+    return self._base_path .. "/" .. path
 end
 
 -- Alias of file.Find with the resolved gamemode module path.
 function Module:Find(path, sorting)
-    return file.Find(self:ResolvePath(path), "LUA", sorting)
+    path = self:ResolvePath(path)
+    if not path then return nil, nil end
+    return file.Find(path, "LUA", sorting)
 end
 
--------------------------
+---------------------------------------------------------------------------
 
 -- Directory MUST be a directory supported by a load handler.
 -- Eg: 'entities'. If the directory has a weird name, use LoadDirectory.
@@ -272,13 +337,18 @@ function Module:LoadDirectories(directory, handler)
             end
         end
         if not handler then
+            self:log("Could not find any valid handler for LoadDirectories '" .. directory .. "'", "debug")
             return false
         end
     end
 
     local path = self:ResolvePath(directory)
+    if not path then
+        self:log("Cannot load relative directory '" .. directory .. "' (" .. handler .. ") as there is no base_path set!", "debug")
+        return false
+    end
     local files, directories = file.Find(path .. "/*", "LUA")
-    
+
     for _, v in ipairs(directories) do
         self:log("Found '" .. handler .. "' '" .. v .. "' at '" .. path .. "'", "debug")
         self:LoadDirectory(path, v, handler)
@@ -297,29 +367,95 @@ function Module:LoadDirectory(base, directory, handler)
 
     -- Use the load handler to actually load the directory.
     local success = loader.LoadDirectory(directory, path)
-    self:log((success && "Successfully loaded" || "Failed to load") .. " '" .. handler .. "' directory '" .. path .. "'!", success && "success" || "warning")
+    self:log((success && "Successfully loaded" || "Failed to load") .. " '" .. handler .. "' directory '" .. path .. "'!", success && "debug" || "warning")
     return success
 end
 
--------------------------
+---------------------------------------------------------------------------
+
+-- Add an extension with a name and extensionClass. This should be
+-- used for modules that require a non-global extension (also for testing).
+function Module:AddExtensionByClass(name, extensionClass)
+    assert(isstring(name), "Provided extension name must be a string")
+    assert(extensionClass:IsSubclassOf(GNIL.Classes.Extension), "Extension class must inherit from BaseModuleExtension")
+
+    -- Do not allow existing extensions to be overwritten.
+    if self._extensions[name] then return false end
+    if self._extension_classes[name] then return false end
+
+    -- Cache the extension class.
+    self._extension_classes[name] = extensionClass
+    return true
+end
+
+-- Require an extension(s) (is loaded after dependencies in load).
+function Module:RequireExtension(...)
+    for _, name in ipairs({...}) do
+        assert(isstring(name), "Provided extension name must be a string")
+        self._delayed_extensions[name:lower()] = true
+    end
+end
+
+-- Load an extension by name on the Module.
+-- ** THIS ACTUALLY LOADS THE EXTENSION, IT DOESNT RETURN IT **
+function Module:LoadExtension(name)
+    assert(isstring(name), "Provided extension name must be a string")
+    if self:HasExtension(name) then return false end
+
+    -- Prioritise a modules local reference of extension classes
+    -- over the global registry (for testing mainly).
+    local extensionInstance = false
+    if self._extension_classes[name] then
+
+        -- Initialize the extension and add the passthrough events.
+        extensionInstance = GNIL.Modules.Extensions._Initialize(self, self._extension_classes[name]:New(self))
+    else
+
+        -- Get the extension normally through global registration.
+        extensionInstance = GNIL.Modules.Extensions._Get(self, name)
+        if not extensionInstance then
+            self:log("Could not find module extension '" .. name .. "'", "error")
+            return false
+        end
+    end
+
+    -- Sanity check just incase.
+    if not extensionInstance then
+        self:log("Failed to initialize extension '" .. name .. "' for some reason.", "error")
+        return false
+    end
+
+    -- Cache the extension.
+    self._extensions[name] = extensionInstance
+    return true
+end
+
+function Module:HasExtension(name) return self._extensions[name] != nil end
+function Module:GetExtension(name)
+    local name, ext = tostring(name), self._extensions[name]
+    if ext == nil then
+        self:log("Attempted to get unloaded/uninitialized extension '" .. name .. "'", "error")
+    end
+    return ext
+end
+
+---------------------------------------------------------------------------
 
 -- Logging passthrough with module name as prefix.
-function Module:log(log, logtype) GNIL.log(log, logtype, self._module_name) end
+function Module:log(log, logtype)
+    if self._quiet then return end
+    GNIL.log(log, logtype, self._module_name)
+end
 
+-- These functions can be used, however the EventEmitter can also be used.
 -- Load hooks (in order of call).
-function Module:OnInit() end          -- 1. Called when a module has been initialized, before dependencies. [false=(Module load halted before dependencies)] 
+function Module:OnInit() end          -- 1. Called when a module has been initialized, before dependencies. [false=(Module load halted before dependencies)]
 function Module:OnLoad() end          -- 2. Called while the module is being loaded, after dependencies.    [false=(Module load halted before main autoload)]
-function Module:OnLoadFinished() end  -- 3. Called once the module has finished loading everything. 
+function Module:OnLoadFinished() end  -- 3. Called once the module has finished loading everything.
 function Module:OnUnload() end        -- 4. Called when the module is being unloaded.
 
 -- Additional module hooks.
 function Module:IsConfigRequired() end -- If a config is set, is it required? Default: true.                [true=(Module is disabled if config missing)]
-
--- Middleclass allows us to directly overwrite the default tostring handler,
--- allowing us to insert the module name and author if one is defined.
-function Module:__tostring()
-    return "Module " .. self._module_name .. " by " .. self.author
-end
-
+function Module:__tostring() return self._module_name end
 
 return Module

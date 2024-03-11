@@ -89,7 +89,7 @@ local convarStates = {
     ["mat_disable_lightwarp"] = 1,
     ["mat_envmapsize"] = 8,
     ["mat_reduceparticles"] = 1
-    
+
 }
 
 return {

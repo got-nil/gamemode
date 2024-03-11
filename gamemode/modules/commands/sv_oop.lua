@@ -31,7 +31,7 @@ end
 
 -- Flag aliases
 function GNCommand:SetFlag(flag, value)
-    assert(isstring(flag), "The flag provided must be a string") 
+    assert(isstring(flag), "The flag provided must be a string")
     if not self._data["flags"] then self._data["flags"] = {} end
     self._data["flags"][string.upper(flag)] = value
     return self
@@ -39,7 +39,7 @@ end
 function GNCommand:AllowServer(boolean) assert(isbool(boolean), "The argument provided must be true or false") return self:SetFlag("SERVER_EXECUTION_ALLOWED", boolean) end
 
 function GNCommand:End()
-    
+
     -- Directly pass constructed arguments to the commands add function
     -- this entire OOP setup is just an interface for this one method.
     return GNIL.Commands.Add(

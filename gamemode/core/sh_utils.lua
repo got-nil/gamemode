@@ -1,5 +1,6 @@
 GNIL.Utils = GNIL.Utils or {
-    ["blacklisted_files"] = {}
+    ["blacklisted_files"] = {},
+    ["_loaded_dlls"] = {}
 }
 
 -- Filename realm aliaes, these are used by default
@@ -69,7 +70,7 @@ function GNIL.Utils.Include(filepath, realm)
         elseif realm == currentRealm then rtrn = include(filepath)
         else GNIL.log("Realm include error state. File realm: " .. realm .. ", current: " .. currentRealm, "error") end
     end
-    
+
     -- Return the include return value, useful for allowing files to
     -- return instances for directory setup etc.
     return rtrn
@@ -106,8 +107,9 @@ end
 
 -- "Sanitize" a filename by removing any file extension and file
 -- realm prefix (optional, default: true) Makes using filenames as ids
--- relatively simple. 
+-- relatively simple.
 function GNIL.Utils.GetCleanFilename(filename, extension, includeRealmPrefix)
+    if not extension then extension = "lua" end
     if not string.StartWith(extension, ".") then extension = "." .. extension end
     local filename = string.Left(filename, #filename - #extension)
     if not includeRealmPrefix and GNIL.Utils.GetFilepathRealmPrefix(filename) != nil then
@@ -124,31 +126,31 @@ end
 -- Load all realm prefixed files within a directory, non-recursive
 -- Absolute LUA paths are required, when working in gamemode ensure
 -- the path is locally resolved (see above)
-function GNIL.Utils.IncludeDirectory(path, ignoredFiles, absoluteIgnoredFiles)
+-- ** (last argument is deprecated, but is used in old code)
+function GNIL.Utils.IncludeDirectory(path, ignoredFiles, _)
     GNIL.log("Including directory '" .. path .. "'", "debug")
 
+    -- If a table is provided, ensure its a lookup table.
+    if istable(ignoredFiles) then
+        if table.IsSequential(ignoredFiles) then
+            ignoredFiles = table.Lookup(ignoredFiles)
+        end
+    else
+        ignoredFiles = false
+    end
+
     for _, f in ipairs(file.Find(path .. "/*.lua", "LUA")) do
-        if istable(ignoredFiles) then
 
-            -- If there is a set of ignored files, we should check to
-            -- make sure that the file path isn't in the table. Both
-            -- relative and absolute paths are checked.
-            local seq = table.IsSequential(ignoredFiles)
-            
-            -- Allow for all ignored to be already declared as absolute,
-            -- this means we dont even have to bother checking the relative
-            -- path (which for large ignore sets would be more efficient). 
-            local ignored, absolute = false, path .. "/" .. f
-            for _, v in ipairs(absoluteIgnoredFiles == true and {absolute} or {f, absolute}) do
-                if seq then ignored = table.HasValue(ignoredFiles, v)
-                else ignored = ignoredFiles[v] == true end
-                if ignored then break end
+        -- Allow some files in the directory to be ignored.
+        if ignoredFiles then
+            local absolute = path .. "/" .. f
+            if ignoredFiles[path] == true or ignoredFiles[absolute] == true then
+                GNIL.log("Not loading filepath '" .. absolute .. "' as it is ignored.", "debug")
+                continue
             end
+        end
 
-            -- If the file is ignored, then continue to the next one.
-            if ignored then GNIL.log("Not loading filepath '" .. absolute .. "' as it is ignored.", "debug") continue end           
-        end 
-
+        -- Make sure the file has a valid realm prefix/filename.
         local realm = GNIL.Utils.GetFilepathRealmPrefix(f)
         if realm == nil then continue end
 
@@ -223,8 +225,43 @@ end
 -- Check if a lua bin module is installed.
 local suffix = ({"osx64", "osx", "linux64", "linux", "win64", "win32"})[(system.IsWindows() and 4 or 0) + (system.IsLinux() and 2 or 0) + (jit.arch == "x86" and 1 or 0) + 1]
 local fmt = "lua/bin/gm" .. (CLIENT and "cl" or "sv") .. "_%s_%s.dll"
-function GNIL.Utils.IsInstalled(name)
-    if file.Exists(string.format(fmt, name, suffix), "GAME") then return true end
-    if jit.versionnum != 20004 and jit.arch == "x86" and system.IsLinux() then return file.Exists(string.format(fmt, name, "linux32"), "GAME") end
-    return false
+function GNIL.Utils.GetDLLFilepath(name)
+    name = string.lower(name)
+    if jit.versionnum != 20004 and jit.arch == "x86" and system.IsLinux() and file.Exists(string.format(fmt, name, "linux32"), "GAME") then
+        return string.format(fmt, name, "linux32")
+    end
+    return string.format(fmt, name, suffix)
+end
+
+-- Check if a DLL is installed or already included.
+function GNIL.Utils.IsDLLInstalled(name) return file.Exists(GNIL.Utils.GetDLLFilepath(name), "GAME") end
+function GNIL.Utils.IsDLLIncluded(name) return GNIL.Utils["_loaded_dlls"][string.lower(name)] == true end
+
+-- Require a DLL. This ensures that the module actually exists,
+-- and will not allow modules that have already been included to
+-- be loaded twice. Can also verify that global const exists.
+function GNIL.Utils.RequireDLL(name, const)
+
+    -- If the DLL is already included, return early.
+    if GNIL.Utils.IsDLLIncluded(name) then
+        if const then return _G[const] != nil, "Global '" .. const .. "' does not exist, despite the module already being included." end
+        return true, nil
+    end
+
+    -- Get the target module filepath. If it doesn't exist,
+    -- return a failure state + error message.
+    local filepath = GNIL.Utils.GetDLLFilepath(name)
+    if not file.Exists(filepath, "GAME") then
+        local _, filename = GNIL.Utils.SplitPath(filepath)
+        return false, "Module '" .. name .. "' (" .. filename .. ") does not exist."
+    end
+
+    -- Actually require/load the DLL. This is done in a pcall
+    -- just incase (prevent ugly errors for broken modules).
+    local success, _ = pcall(require, name)
+    if not success then return false, "Could not require module " .. name end
+
+    GNIL.Utils["_loaded_dlls"][string.lower(name)] = true
+    if const then return _G[const] != nil, "Global '" .. const .. "' does not exist after requiring module." end
+    return true, nil
 end

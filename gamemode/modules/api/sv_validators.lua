@@ -1,8 +1,34 @@
+local MODULE = MODULE
 GNIL.API.Validators = GNIL.API.Validators or {}
 
 function GNIL.API.Validators.IsNumeric(str)
     if string.match(str, "%D") then return false end
     return true
+end
+
+local ResponseTypeConverters = {
+    [TYPE_FUNCTION] = function(v) return v end, -- for promises.
+    [TYPE_NUMBER] = function(v) return GNIL.API.Responses.Empty(v) end,
+    [TYPE_STRING] = function(v) return GNIL.API.Responses.Text(v) end,
+    [TYPE_BOOL] = function(v) return GNIL.API.Responses.Empty(v && 200 || 500) end
+}
+
+function GNIL.API.Validators.ToResponse(route, out)
+    local type_converter = ResponseTypeConverters[TypeID(out)]
+    if type_converter then
+
+        -- Run the type converter.
+        out = type_converter(out)
+    else
+
+        -- If we're not handling type conversion ourselves, then make
+        -- sure that the callback actually returns a Response instance.
+        if not IsInstanceOf(out, GNIL.API.Response) then
+            MODULE:log("Route '" .. route:__tostring() .. "' did not return a Response value. Returning an empty 500 status.", "error")
+            out = GNIL.API.Responses.Empty(500)
+        end
+    end
+    return out
 end
 
 GNIL.API.Validators._argumentValidators = {
@@ -21,17 +47,18 @@ GNIL.API.Validators._argumentValidators = {
         end
         return nil
     end,
-    
+
     -- Patterns provided by Virtualraptor.
     ["steamid64"] = function(v)
-        if string.find(v, "(7656119%d+)") then
+        if string.find(v, "^(7656119%d%d%d%d%d%d%d%d%d%d)$") then
             return v
         end
         return nil
     end,
     ["steamid"] = function(v)
-        if string.find(v, "(STEAM_[0-3]:[01]:%d+)") then
-            return v
+        local startPos, _, str = string.find(v, "(STEAM_[0-3]:[01]:%d+)")
+        if startPos == 1 then
+            return str
         end
         return nil
     end

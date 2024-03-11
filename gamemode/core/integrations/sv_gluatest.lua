@@ -1,0 +1,89 @@
+-- https://github.com/CFC-Servers/GLuaTest
+
+-- Shared testing utilities.
+do
+    local function cleanTable(tbl)
+        if not tbl then return end
+        local out = {}
+        for k, _ in pairs(tbl) do
+            if string.sub(k, 1, 9) == "gluatest-" then
+                table.insert(out, k)
+            end
+        end
+        for i = 1, #out do
+            tbl[out[i]] = nil
+        end
+    end
+
+    GNIL.TestUtils = {
+        CreateModule = function(name)
+            return GNIL.Classes.Module:New("gluatest-" .. name):SetQuiet(true)
+        end,
+        CleanupModules = function()
+            cleanTable(GNIL.Modules["_loaded"])
+            cleanTable(GNIL.Modules["_cached_modules"])
+        end,
+        CleanupExtensions = function()
+            cleanTable(GNIL.Modules.Extensions["_cached_extensions"])
+        end
+    }
+end
+
+hook.Add("GLuaTest_RunTestFiles", "GNIL.GLuaTest.AddTests", function(testFiles)
+
+    -- If GLuaTest is disabled, stop the tests from running
+    -- by emptying any collected test case files.
+    if not GNIL.ENV.GLUATEST then
+        GNIL.log("GLuaTest disabled by environment variable, removing test cases.", "warning")
+        return table.Empty(testFiles)
+    end
+
+    -- Add tests from modules.
+    for _, v in ipairs(GNIL.Modules.FindAll()) do
+        if not v.tests then continue end
+
+        -- Make sure the module test directory actually exists.
+        local test_directory = v:ResolvePath(v.test_directory or "tests")
+        if not file.IsDir(test_directory, "LUA") then
+            v:log("Could not find GLuaTests in directory '" .. test_directory .. "'.", "warning")
+            continue
+        end
+
+        -- Set the project to the module name and add the tests.
+        for _, t in ipairs(GLuaTest.loader(test_directory)) do
+            t.project = v._module_name
+            t.gnil_module = v._module_name
+            table.insert(testFiles, t)
+        end
+    end
+
+    -- Add core gamemode tests.
+    for _, t in ipairs(GLuaTest.loader(GNIL.Utils.ResolveGamemodePath("core/tests"))) do
+        t.project = "core"
+        table.insert(testFiles, t)
+    end
+end)
+
+hook.Add("GLuaTest_Finished", "GNIL.GLuaTest.FinishedTests", function(_, allResults)
+
+    local errorModules = {}
+    for _, v in ipairs(allResults) do
+
+        -- Get moduleName from result testGroup.
+        local moduleName = v.gnil_module
+        if not moduleName then continue end
+
+        -- Get the moduleInstance from moduleName.
+        local moduleInstance = GNIL.Modules.Get(moduleName)
+        if not moduleInstance then continue end
+
+        -- Count the amount of errors for the module.
+        if not errorModules[moduleName] then errorModules[moduleName] = {moduleInstance, 0} end
+        errorModules[moduleName][2] = errorModules[moduleName][2] + 1
+    end
+
+    -- Log error count to module.
+    for _, v in pairs(errorModules) do
+        v[1]:log(tostring(v[2]) .. " tests failed!", "error")
+    end
+end)

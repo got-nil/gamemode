@@ -1,5 +1,5 @@
 
-local internal_messages = {}
+local MODULE, internal_messages = MODULE, {}
 for _, v in ipairs(GNIL.Net["_netstrings"]) do
     internal_messages[v] = true
 end
@@ -20,16 +20,24 @@ local GNIL_Net_AntiAbuse_Check = GNIL.Net.AntiAbuse.Check
 
 -- Detour all incomming messages and read header.
 net.Incoming = function(len, ply)
-    
+
     -- Get the original message name.
     local messageName = util_NetworkIDToString(net_ReadHeader())
     if not messageName then
-        
+
         -- If the player is requesting an invalid/unknown message
         -- we should assume that they're being abusive (as normal
         -- code shouldn't be trying to use non-existant messages).
         -- (Although im fairly sure that can't happen?)
         GNIL_Net_AntiAbuse_Abusing(messageName, ply, true)
+        return
+    end
+
+    -- Allow the server to block all incomming messages. This is
+    -- used mainly to prevent receiving messages during a test.
+    -- Only here as a sanity check, tests should not be ran live.
+    if not GNIL.Net["_receive"] then
+        MODULE:log("Message from " .. Either(ply, ply:ToString(), "'No Player'") .. " was rejected as receiver is disabled.", "warning")
         return
     end
 
@@ -42,7 +50,7 @@ net.Incoming = function(len, ply)
     if not internal_messages[messageName] and not GNIL_Net_AntiAbuse_Check(messageName, ply, nil, true) then
         return
     end
-    
+
     -- Call the original reciever if the bucket passed.
     -- Default message header is sent as 16 bit uint, should
     -- be removed from total message length to keep offset.

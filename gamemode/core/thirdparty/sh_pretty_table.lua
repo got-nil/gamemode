@@ -21,7 +21,7 @@ end
 
 local function PrintType(x)
 	if(IsColor(x)) then return "Color"; end
-	if(TypeID(x) == TYPE_ENTITY) then 
+	if(TypeID(x) == TYPE_ENTITY) then
 		if(x:IsPlayer()) then return "Player"; end
 		return "Entity";
 	end
@@ -46,7 +46,7 @@ end
 --[[----------------------------------------------------
 	Font based on default ClientScheme resource file.
 ----------------------------------------------------]]--
-														
+
 local linux = system.IsLinux();
 local mac	= system.IsOSX();
 local win	= system.IsWindows();
@@ -103,7 +103,7 @@ local ConversionLookupTable = {
 	end,
 	Color = function(obj, iscom)
 		return {typecol.func, "Color", typecol.etc, "(", typecol.number, tostring(obj.r), typecol.etc, ", ", typecol.number,
-			tostring(obj.g), typecol.etc, ", ", typecol.number, tostring(obj.b), typecol.etc, ", ", typecol.number, 
+			tostring(obj.g), typecol.etc, ", ", typecol.number, tostring(obj.b), typecol.etc, ", ", typecol.number,
 				tostring(obj.a), typecol.etc, ")", typecol.etc, "; ", typecol.com, "-- ", obj, "\xE2\x96\x88 ", typecol.com, string.format("(0x%02X%02X%02X%02X)", obj.r, obj.g, obj.b, obj.a)}, true;
 	end,
 	Player = function(obj, iscom)
@@ -157,7 +157,7 @@ function DebugPrintTable(tbl, spaces, done)
 	local str = string.rep(" ", spaces);
 	MsgC(typecol.etc, "{\n");
 	local tabbed = str..string.rep(" ", 4);
-	
+
 	for i = 1, #buffer do
 		local overridesc = false;
 		local key = rbuf[i];

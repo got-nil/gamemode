@@ -1,5 +1,7 @@
 /*
 
+    **** THIS IS OUTDATED, TODO: UPDATE TO LATEST MODULE LAYOUT ****
+
     (This example module starts with an underscore. This skips the module when
     getting all modules via GNIL.Modules.GetAll as it is treated inoperable)
 
@@ -13,7 +15,7 @@
         - sv_init/init.lua: The module is server only.
         - sh_init.lua: The module is intended for both client and server.
         - cl_init.lua: The module is clientside only.
-        
+
 */
 
 -- You don't have to do this, but you should and not doing it will make us all laugh at you
@@ -49,24 +51,24 @@ MODULE:SetAutoload(false) -- Disabled, after this file no other files will be lo
 -- Ignore allows for specific files (including files that are nested within other directories)
 -- to remain unloaded. These files are completely skipped when loading directories, and are therefore
 -- useful for files that should only be loaded in certain environments, etc. This ignore list
--- persists for subsequent Include calls on the module. 
+-- persists for subsequent Include calls on the module.
 MODULE:Ignore("relative_file.lua")
 MODULE:Ignore("nested/relative_file.lua")
 
 -- "Require" is used to signify that this module requires another module to function. When
 -- requiring a module its init file is loaded and executed, along with all top level module
 -- files. Essentially its loading the module with some added protection to prevent loops.
-MODULE:Require("OtherModule")
+MODULE:RequireModule("OtherModule")
 
--- Iterative over the require function above.
-MODULE:Requires({"ModuleTwo", "ModuleThree"})
+-- Accepts multiple modules.
+MODULE:RequireModule("ModuleTwo", "ModuleThree")
 
 -- Get all module dependencies (requirements).
 -- Returns a sequential table of required module names.
 MODULE:GetDependencies()
 
 -- Load a directory in base, calling each file with handler.
--- handler: 'core/loadears' 
+-- handler: 'core/loadears'
 MODULE:LoadDirectory(base, directory, handler)
 
 -- This is used for loading 'entities' directories etc.
@@ -76,7 +78,7 @@ MODULE:LoadDirectories(directory, handler)
 
 -- ** BY NEW DESIGN (MODULE FILE IGNORING) YOU SHOULD ALWAYS USE THE MODULE VERSIONS OF
 -- INCLUDE AND INCLUDEDIRECTORY OVER ITS GLOBAL. THE MODULE VERSION WILL HANDLE THE IGNORED
--- FILES FOR YOU, BUT USING THE GLOBAL UTILITY WILL NOT. ** 
+-- FILES FOR YOU, BUT USING THE GLOBAL UTILITY WILL NOT. **
 
 -- If your module needs to load other directories, the module class provides a simple interface
 -- for including relative directories without having to resolve it yourself. The second argument

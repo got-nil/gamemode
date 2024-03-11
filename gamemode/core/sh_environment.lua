@@ -1,0 +1,115 @@
+
+-- Default environment settings.
+local env_options = {
+
+    -- General.
+    ["DEV"] = false,            -- Catch all development flag, used for non-specific cases.
+    ["LOADER_RESET"] = false,   -- Should gamemode loaders be reset on lua refresh.
+    ["DARKRP_REFRESH"] = false, -- Should DarkRP be lua refreshed?
+    ["GLUATEST"] = true,        -- Should the GLuaTest integration be enabled?
+
+    -- Luadev access.
+    ["LUADEV_ALLOWED"] = true,  -- Can luadev be used by developers? (default to true since the addon has to be installed).
+    ["LUADEV_SNITCH"] = false,  -- Should we snitch on developers using luadev (for production).
+
+    -- Lua refresh handling.
+    ["LUA_REFRESH"] = false,         -- Can the gamemode be lua refreshed?
+    ["REFRESH_CORE"] = false,        -- Should the core utilities be refreshed?
+    ["REFRESH_ALL_MODULES"] = false, -- Should all modules be refreshed (if LUA_REFRESH is true)?
+    ["REFRESH_MODULES"] = {}         -- Certain modules that should be refreshed (if LUA_REFRESH is true, and REFRESH_ALL_MODULES is false)
+}
+local env_enums = {}
+for _, v in ipairs(table.GetKeys(env_options)) do
+    env_enums[v] = true
+end
+
+-- Preset environments.
+local env_presets = {
+
+    -- If you wanna reload modules manually (which you should).
+    ["dev"] = {
+        ["DEV"] = true
+    },
+
+    -- Working "live" allowing lua refreshes to reload all modules.
+    ["dev-live"] = {
+        ["DEV"] = true,
+        ["LOADER_RESET"] = true,
+        ["MODULES_RESET"] = true,
+        ["LUA_REFRESH"] = true,
+        ["REFRESH_ALL_MODULES"] = true,
+        ["GLUATEST"] = false
+    },
+
+    -- For the working server. (The one that hopefully has players on it)
+    ["prod"] = {
+        ["LUADEV_SNITCH"] = true,
+        ["GLUATEST"] = false
+    },
+
+    ------------------------------------------------------------------------
+    -- CUSTOM PRESETS
+
+    -- Development preset for working on the gamemode core.
+    ["core-dev"] = {
+        ["DEV"] = true,
+        ["LUA_REFRESH"] = true,
+        ["REFRESH_CORE"] = true,
+        ["LOADER_RESET"] = true
+    }
+}
+
+-- Apply the preset ontop of the default env_options set.
+local function getPreset(name)
+    if not env_presets[name] then return nil end
+    local out = env_options
+    for k, v in pairs(env_presets[name]) do
+        out[k] = v
+    end
+    return out
+end
+
+-- Validate the environment input.
+local env = GNIL._ENVIRONMENT
+if not (isstring(env) or istable(env)) then
+    GNIL._safeLog("Invalid provided environment, must be either preset name or env table.", "error")
+    return false
+end
+
+local out = {}
+if isstring(env) then
+
+    -- Validate the preset provided.
+    local preset = getPreset(env)
+    if not preset then
+        GNIL._safeLog("Invalid provided preset name '" .. env .. "'", "error")
+        return false
+    end
+
+    -- Load the preset name provided.
+    out = preset
+else
+
+    -- Table provided, could contain a preset however could also contain overrides.
+    -- If there is a 'preset' string key, use that as a base.
+    if isstring(env.preset) then
+
+        -- Validate the preset provided.
+        local preset = getPreset(env.preset)
+        if not preset then
+            GNIL._safeLog("Invalid provided preset name '" .. env.preset .. "'", "error")
+            return false
+        end
+        out = preset
+    end
+
+    -- Apply additional settings ontop of preset base (if there is one).
+    for k, v in pairs(env) do
+        if not env_enums[k] then continue end
+        out[k] = v
+    end
+end
+
+-- If we get here, the environment is valid!
+GNIL.ENV = out
+return true

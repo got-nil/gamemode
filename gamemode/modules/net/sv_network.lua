@@ -7,7 +7,7 @@ GNIL.Net["_netstrings"] = {
     "gnilc",  -- GNIL Chunked (chunked messages for large datasets)
     "gnils",  -- GNIL Sync (sync pooled netstrings between client and server)
     "gnilr"   -- GNIL Reply (message reply system)
-} 
+}
 for _, v in ipairs(GNIL.Net["_netstrings"]) do
     util.AddNetworkString(v)
 end
@@ -35,7 +35,7 @@ function GNIL.Net.AddNetworkString(str, ratelimits, _d)
 
     -- Prevent messages from being re-synced to clients.
     if GNIL.Net["_i"][str] then
-        
+
         -- Allow ratelimits to be modified after the message creation.
         GNIL.Net.AntiAbuse.SetLimits(str, ratelimits)
         return false
@@ -49,7 +49,7 @@ function GNIL.Net.AddNetworkString(str, ratelimits, _d)
     else
         GNIL.Net["_r"][l] = str
         GNIL.Net["_i"][str] = l
-        
+
         -- Set any provided ratelimits for the message.
         GNIL.Net.AntiAbuse.SetLimits(str, ratelimits)
     end
@@ -65,25 +65,33 @@ function GNIL.Net.AddNetworkString(str, ratelimits, _d)
     return l
 end
 
--- Add multiple network ids, with each argument being a string
--- network ID that should be pooled. (This is also better for
--- adding multiple delayed network ids, as it only resyncs once
--- the last message has been added, Although you shouldn't ever
--- need to add late messages anyway).
+
+-- Add multiple network ids in this format:
+--   ( { messageName = rateLimits, ... } )
+--   ( "messageName", "messageName", ... )
+--
+-- (This is also better for adding multiple delayed network
+-- ids, as it only resyncs once the last message has been added,
+-- Although you shouldn't ever need to add late messages anyway).
 function GNIL.Net.AddNetworkStrings(...)
-    local args = {...}
+    local args, out = {...}, {}
 
-    -- If the first argument is a table, use that instead.
-    if #args >= 1 and istable(args[1]) then
-        args = args[1]
+    -- Use the correct iterator if we're getting ratelimits.
+    local iter, using_tbl = ipairs, #args == 1 and istable(args[1])
+    if using_tbl then
+        iter, args = pairs, args[1]
     end
-    for i, v in ipairs(args) do
 
-        -- Add the network ID, while also only allowing the
-        -- network ids to be resynced on the last message.
-        -- (Although they shouldn't be added late anyway)
-        GNIL.Net.AddNetworkString(v, nil, i == #args)
+    for k, v in iter(args) do
+
+        -- We can only get ratelimits when supplied a table.
+        local str, ratelimits = v, nil
+        if using_tbl then
+            str, ratelimits = k, v
+        end
+        out[v] = GNIL.Net.AddNetworkString(str, ratelimits, i == #args)
     end
+    return out
 end
 
 -- Send the network message to all players.
@@ -91,7 +99,14 @@ end
 -- broadcast instead of sending each message individually.
 function GNIL.Net.Broadcast(_nm)
     if _nm then
-        _nm:_WriteToStream(player.GetAll())
+
+        -- Make sure there are actually players online before broadcasting.
+        local players = player.GetAll()
+        if #players == 0 then
+            MODULE:log("Cannot broadcast message '" .. _nm.name .. "' as there are no players connected.", "debug")
+            return
+        end
+        _nm:_WriteToStream(players)
     end
     net.Broadcast()
 end
@@ -110,7 +125,7 @@ function GNIL.Net.Send(ply, _nm, _allowqueue)
         -- the players that apply to the filter, and iteratively send the message
         -- to each of them.
         for _, v in ipairs(ply:GetPlayers()) do
-            MODULE:log("Player in recipient filter for '" .. _nm.name .. "': " .. ply:ToString(), "debug")
+            MODULE:log("Player in recipient filter for '" .. _nm.name .. "': " .. v:ToString(), "debug")
             GNIL.Net.Send(v, _nm)
         end
 

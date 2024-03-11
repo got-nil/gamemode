@@ -105,7 +105,13 @@ function GNIL.API.Parser.Route(raw_route)
 
 	local fragments = {}
 	for i, v in ipairs(string.Explode("/", raw_route)) do
-		
+
+		-- Ignore empty parts, this could be a trailing slash or
+		-- incorrect formatting (double slashes etc).
+		if v == "" then
+			continue
+		end
+
 		local frag_type, arg_type = GNIL_API_ARGUMENT_STR, nil
 		if (v[1] == "{" and v[#v] == "}") then
 			frag_type = GNIL_API_ARGUMENT_ARG
@@ -126,7 +132,7 @@ function GNIL.API.Parser.Route(raw_route)
 
 				-- Ensure the requested argument validator actually exists.
 				if not GNIL.API.Validators.Exists(arg_type) then
-					MODULE:log("Route '" .. raw_route .. "', argument '" .. v .. "' uses invalid/unknown type '" .. arg_parts .. "'. Defaulting to string.", "warning")
+					MODULE:log("Route '" .. raw_route .. "', argument '" .. v .. "' uses invalid/unknown type '" .. arg_type .. "'. Defaulting to string.", "warning")
 					arg_type = "str"
 				end
 			else

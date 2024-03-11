@@ -6,7 +6,7 @@ GNIL.Net.Reply = GNIL.Net.Reply or {
 
 function GNIL.Net.Reply._StartReplyMessage(reply_id, reply_success, error_enum, error_int)
     MODULE:log("Writing reply message '" .. reply_id .. "', state: " .. (reply_success && "success" || "unsuccessful"), "debug")
-    
+
     net.Start("gnilr")
     net.WriteUInt(tonumber(reply_id), 15)
     net.WriteBool(reply_success)
@@ -38,7 +38,7 @@ function GNIL.Net.Reply.ReceiverWrap(reply_id, reciever_out, ply)
     local error_enum, error_int = false, 0
     if reciever_out != false then
         reply_success = reciever_out._error.enum == false
-        
+
         -- If the reply was unsuccesful get the enum and int
         -- to write in the reply header.
         if not reply_success then
@@ -64,11 +64,11 @@ function GNIL.Net.Reply.WriteHeader(targets, callback, timeout)
     -- players to accept responses from.
     local message_targets = {}
     if SERVER then
-        assert(istable(targets) and table.IsSequential(targets) and #targets > 0, "Provided targets must be a table of one or more players.")
+        assert(targets == nil or (istable(targets) and table.IsSequential(targets) and #targets > 0), "Provided targets must be a table of one or more players, or nil.")
 
         -- If there are targets provided, ensure they're
         -- all players before storing.
-        if istable(targets) then
+        if targets != nil then
             for _, v in ipairs(targets) do
                 assert(IsPlayer(v), "If a table of targets is provided, they should all be players.")
                 message_targets[v] = true
@@ -121,17 +121,17 @@ net.Receive("gnilr", function(len, ply)
         -- Validate the recieved error enum.
         if error_enum == 0 or error_enum > GNIL_NET_ERRORS_COUNT then
             MODULE:log("Recieved unsuccessful reply with an invalid error_enum.", "warning")
-            
+
             -- Fallback to an error failure state.
             error_enum = GNIL_NET_ERRORS_FAIL
         end
     end
-    
+
     local reply_data = GNIL.Net.Reply["_waiting"][reply_id]
     local should_delete = true
 
     if SERVER then
-        
+
         -- Ensure the replying player is actually a target.
         if reply_data.targets[ply] == nil then
             MODULE:log("Player " .. ply:ToString() .. " attempted to reply to a message they're not a target of.", "warning")
@@ -182,8 +182,8 @@ timer.Create("gnil_net_reply_gc", 1, 0, function()
     local toDelete = {}
     for k, v in pairs(GNIL.Net.Reply["_waiting"]) do
         if os.time() > (v.time + v.timeout) then
-            MODULE:log("NetworkReply '" .. k .. "' has timedout.", "warning")
-            
+            MODULE:log("NetworkReply '" .. k .. "' has timedout.", "debug")
+
             if SERVER then
 
                 -- Run the callback with each player that is

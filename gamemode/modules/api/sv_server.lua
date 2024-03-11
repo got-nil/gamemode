@@ -8,11 +8,13 @@ function Server:Initialize(name, options)
 end
 
 function Server:IsConnected() return self._ws:IsConnected() end
+function Server:Close() return self._ws:Close() end
+function Server:CloseNow() return self._ws:CloseNow() end
 function Server:__tostring() return self._name end
 
 function Server:Connect(callback)
     if self._ws:IsConnected() then return false end
-    self._ws[callback == nil && "Open" || "OpenCallback"](self._ws, callback)
+    self._ws:Open(callback)
 end
 
 -- Alias to router call, returns response.

@@ -12,7 +12,7 @@ function GNIL.API.Classes.To(value, class_name)
     if class == nil then return nil end
     if value == nil then return class:New() end
     if value.class and value.class.name == class.name then return value end
-    
+
     -- Attempt to use the class _From converter to allow the
     -- class to convert the value itself. If that doesn't work,
     -- return empty constructed class instance instead.

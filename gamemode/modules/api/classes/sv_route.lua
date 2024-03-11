@@ -1,20 +1,20 @@
--- Route is used by the server router to define a 
+-- Route is used by the server router to define a
 -- specific route entity. It contains the route callback
 -- and provides an interface for route matching.
 -- Usually, routes should not be constructed manually, instead
 -- they should be constructed by the router and provided back
 -- to allow for additional route settings.
 
-local Route = GNIL.Thirdparty.middleclass("Route")
+local MODULE, Route = MODULE, GNIL.Thirdparty.middleclass("Route")
 
 function Route:Initialize(path, callback)
     self._id = GNIL.Utils.Random(8)
-    
+
     -- Routes must be constructed with a valid path. The callback
     -- is not necessarily required as it can be supplied afterwards.
     if not isstring(path) then error("A Route must be constructed with a valid string path") end
     if not isfunction(callback) then error("A Route must be constructed with a valid callback function") end
-    
+
     -- Parse the provided route and store since the path shouldnt change.
     self._path_parsed = GNIL.API.Parser.Route(path)
     if self._path_parsed == nil then
@@ -54,7 +54,7 @@ function Route:SetMethods(methods)
         local method = string.upper(v)
         if GNIL.API.Message._validMethods[method] then
             _methods[method] = true
-        end 
+        end
     end
     self._methods = _methods
 end
@@ -83,6 +83,7 @@ function Route:_Match(fragments)
 end
 
 -- Call the route callback with given arguments.
+-- Returns either a Response instance or promise function.
 function Route:_Call(request, arguments)
 
     -- Convert the provided arguments to their types.
@@ -90,7 +91,7 @@ function Route:_Call(request, arguments)
     for _, v in ipairs(self._path_parsed) do
         if v[1] == GNIL_API_ARGUMENT_ARG then
             local converted_value = GNIL.API.Validators.Argument(v[3], arguments[v[2]])
-            
+
             -- If the converted argument is nil, return a 400 response by default
             -- as the route argument could not be validated/converted.
             if converted_value == nil then
@@ -100,12 +101,36 @@ function Route:_Call(request, arguments)
         end
     end
     arguments = converted_arguments
-    
-    -- Set the args parameter on the request to the
-    -- arguments, incase the route wants to access it
-    -- that way instead.
-    request.args = arguments
-    return self._callback(request, arguments)
+
+    -- Run the route in a protected call. Usually I'm against
+    -- these, but in this case if there is an error in then no
+    -- response is sent back until the proxy server times-out
+    -- the request, which is slow obviously.
+    local success, out = pcall(function()
+
+        -- Set the args parameter on the request to the
+        -- arguments, incase the route wants to access it
+        -- that way instead.
+        request.args = arguments
+        return self._callback(request, arguments)
+    end)
+
+    -- Ensure the return argument is a response.
+    if success then
+        out = GNIL.API.Validators.ToResponse(self, out)
+    else
+
+        -- If the route callback errors, return an empty 500 response
+        -- and print the error. TODO: Maybe make a better exception log?
+        MODULE:log("Route '" .. self:__tostring() .. "' encountered an error in callback!", "error")
+        ErrorNoHaltWithStack(out)
+        out = GNIL.API.Responses.Empty(500)
+    end
+    return out
+end
+
+function Route:__tostring()
+    return self._path
 end
 
 GNIL.API.Classes.Route = Route

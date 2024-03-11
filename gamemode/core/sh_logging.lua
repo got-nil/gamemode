@@ -14,11 +14,11 @@ function GNIL.Logging.Log(log, logtype, prefix)
         (logcolours[logtype == nil and "default" or logtype] != nil and logcolours[logtype] or logcolours["default"]),
         "[GNIL][" .. (SERVER and "SV" or "CL") ..  "]" .. (prefix == nil and "" or ("[" .. prefix .. "]")) .."[" .. (logtype == nil and "INFO" or string.upper(logtype)) .. "] "
     )
-    
+
     -- If the provided input is a table, and the pretty_table thirdparty
     -- utility is loaded then we should use that to print it. (Also ensure
-    -- that the thirdparty utility actually exists). 
-    if istable(log) and GNIL.Thirdparty and GNIL.Thirdparty.pretty_table then
+    -- that the thirdparty utility actually exists).
+    if istable(log) and SafeTableAccess(GNIL, "Thirdparty", "pretty_table") != nil then
         GNIL.Thirdparty.pretty_table(log)
         return
     end
@@ -31,10 +31,13 @@ end
 function GNIL.Logging.LogToPlayer(ply, log, logtype)
     if not GNIL.Net then return end
 
+    assert(isstring(log), "Provided log message must be a string")
+    assert(logtype == nil or isstring(logtype), "Provided logtype must be nil or a string")
+
     -- Send the log net message to player.
     GNIL.Net.Create("log")
         :WriteString(log)
-        :WriteString(logtype)
+        :WriteString(logtype or "default")
     :Send(ply)
 end
 
@@ -54,6 +57,8 @@ hook.Add("GNIL.Modules.Loaded", "GNIL.Logging.Net", function(name)
     end
 end)
 
--- This is basically the only exception for the
--- no functions on base const rule. 
+-- This is basically the only exception for the no functions
+-- on base const rule. DEBUG_LOG is so I can make sure any
+-- temp debug lines are easy to find before being committed.
 GNIL.log = GNIL.Logging.Log
+DEBUG_LOG = function(a, b) GNIL.log(a, b or "debug") end

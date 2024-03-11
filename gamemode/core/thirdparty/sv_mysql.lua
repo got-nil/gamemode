@@ -1,12 +1,18 @@
 --[[
-	mysql - 1.0.3
-	A simple MySQL wrapper for Garry's Mod.
+	mysql - 2.0.3
+	A simple MySQL wrapper for Garry's Mod, WITH MODIFICATIONS.
 
 	Alexander Grist-Hucker
     https://github.com/alexgrist/GLua-MySQL-Wrapper/
 
 	*Modified to ensure QUERY_CLASS returns itself
-	 for chained function calls. 
+	 for chained function calls.
+
+	*Errors call provided callback. Changed callback
+	 return structure
+	   successful: (true, result, lastRow)
+	   failure:    (false, errorText)
+
 --]]
 
 mysql = mysql or {
@@ -546,8 +552,7 @@ function mysql:RawQuery(query, callback, flags, ...)
 
 		queryObj.onSuccess = function(queryObj, result)
 			if (callback) then
-				local bStatus, value = pcall(callback, result, true, tonumber(queryObj:lastInsert()))
-
+				local bStatus, value = pcall(callback, true, result, tonumber(queryObj:lastInsert()))
 				if (!bStatus) then
 					error(string.format("[mysql] MySQL Callback Error!\n%s\n", value))
 				end
@@ -555,6 +560,7 @@ function mysql:RawQuery(query, callback, flags, ...)
 		end
 
 		queryObj.onError = function(queryObj, errorText)
+			if (callback) then pcall(callback, false, errorText) end
 			ErrorNoHalt(string.format("[mysql] MySQL Query Error!\nQuery: %s\n%s\n", query, errorText))
 		end
 
@@ -563,11 +569,11 @@ function mysql:RawQuery(query, callback, flags, ...)
 		local result = sql.Query(query)
 
 		if (result == false) then
+			if (callback) then pcall(callback, false, sql.LastError()) end
 			error(string.format("[mysql] SQL Query Error!\nQuery: %s\n%s\n", query, sql.LastError()))
 		else
 			if (callback) then
-				local bStatus, value = pcall(callback, result, true, tonumber(sql.QueryValue("SELECT last_insert_rowid()")))
-
+				local bStatus, value = pcall(callback, true, result, tonumber(sql.QueryValue("SELECT last_insert_rowid()")))
 				if (!bStatus) then
 					error(string.format("[mysql] SQL Callback Error!\n%s\n", value))
 				end

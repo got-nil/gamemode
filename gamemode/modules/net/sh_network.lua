@@ -37,12 +37,12 @@ function GNIL.Net.ReceiveChunked(messageName, callback) assert(CLIENT, "Only the
 function GNIL.Net.Create(messageName)
     return GNIL.Net.Classes.Message:New(messageName)
 end
- 
+
 -- Start a net message, inserting the message id
 -- header and using the blanket gnil message name.
-function GNIL.Net.Start(messageName, unreliable, _has_reply)
+function GNIL.Net.Start(messageName, unreliable, _has_reply, _ignore_nonexistant)
     local mid = GNIL.Net.NetworkStringToID(messageName)
-    if mid == 0 then error("The provided message name '" .. messageName .. "' is unpooled. Ensure you're using GNIL.Net.AddNetworkString beforehand.") end
+    if not _ignore_nonexistant and mid == 0 then error("The provided message name '" .. messageName .. "' is unpooled. Ensure you're using GNIL.Net.AddNetworkString beforehand.") end
     if unreliable then MODULE:log("Net message '" .. messageName .. "' is being sent unreliably.", "debug") end
 
     net.Start("gnil", unreliable)
@@ -52,16 +52,18 @@ end
 
 ------------------------------------------------
 
-net.Receive("gnil", function(len, ply)
+local function recieveMessage(len, ply, _receiver)
+
+    local _debug = _receiver != nil and isfunction(_receiver)
 
     -- Get the message name string from the sent
     -- message id in the header. (Double headers)
     local mstr = GNIL.Net.NetworkIDToString(net.ReadUInt(GNIL.Net["_idsize"]))
-    if mstr == nil or GNIL.Net["_c"][mstr] == nil or GNIL.Net["_c"][mstr][1] == nil then return end
+    if not _debug and (mstr == nil or GNIL.Net["_c"][mstr] == nil or GNIL.Net["_c"][mstr][1] == nil) then return end
     local offset = GNIL.Net["_idsize"] -- Base id size.
 
     -- If the message has a reply signal, read the
-    -- reply_id for the reciever callback.
+    -- reply_id for the receiver callback.
     offset = offset + 1 -- Has reply header bool.
     local has_reply, reply_id, reply = net.ReadBool(), false, nil
     if has_reply then
@@ -79,11 +81,42 @@ net.Receive("gnil", function(len, ply)
         MODULE:log("Rejecting player " .. ply:ToString() .. " message '" .. mstr .. "' as abuse was detected.", "debug")
         return
     end
-    
+
     -- Call the associated network receiver with the
     -- provided length (- idsize) and the calling ply.
-    local out = GNIL.Net["_c"][mstr][1](len - offset, ply, reply)
-    if has_reply then
+    local out, reciever_args = false, {len - offset, ply, reply}
+    if _debug then out = _receiver(unpack(reciever_args))
+    else out = GNIL.Net["_c"][mstr][1](unpack(reciever_args)) end
+
+    -- Finally handle reply response from receiver.
+    if not _debug and has_reply then
         GNIL.Net.Reply.ReceiverWrap(reply_id, out, ply)
     end
-end)
+end
+
+net.Receive("gnil", recieveMessage)
+if SERVER then GNIL.Net._Receiver = recieveMessage end
+
+------------------------------------------------
+
+-- 30/08/2023: net.WriteUInt64 added to main branch.
+-- When the update rolls around, this can be removed.
+
+if net["WriteUInt64"] == nil then
+
+    net.WriteUInt64 = net.WriteString
+    net.ReadUInt64 = net.ReadString
+
+end
+
+------------------------------------------------
+
+-- 05/10/2023: net.WritePlayer added to main branch.
+-- When the update rolls around, this can be removed.
+
+if net["WritePlayer"] == nil then
+
+    net.WritePlayer = net.WriteEntity
+    net.ReadPlayer = net.ReadEntity
+
+end

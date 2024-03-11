@@ -19,7 +19,7 @@ function Router:AddRoute(route)
     if not route._parents[self._id] then
         route._parents[self._id] = self
     end
-    
+
     table.insert(self._routes, route)
     return true
 end
@@ -67,7 +67,13 @@ function Router:Delete(route, callback) return self:_CreateWithMethods(route, ca
 -- Get matching routes that should be used for the given raw route string.
 function Router:GetRoutes(raw_route)
     raw_route = GNIL.API.URL.RemoveStartingSlash(raw_route)
-    local routes, fragments = {}, string.Explode("/", raw_route)
+    local routes, fragments = {}, {}
+
+    -- FIX: Ignore empty fragments. This is usually the result of incorrect
+    -- URL formatting such as a trailing slash. This should really be upstream.
+    for _, v in ipairs(string.Explode("/", raw_route)) do
+        if v != "" then table.insert(fragments, v) end
+    end
 
     for _, v in ipairs(self._routes) do
         local matched, arguments = v:_Match(fragments)
@@ -115,7 +121,7 @@ function Router:Call(request, callback)
     if #validMethodRoutes == 0 then
         return respond(GNIL.API.Responses.Empty(405))
     end
-    
+
     -- Call the first (most suitable) found route to get response/promise.
     local route = validMethodRoutes[1][1]
     local out = route:_Call(request, validMethodRoutes[1][2])
@@ -131,7 +137,17 @@ function Router:Call(request, callback)
         end
 
         -- Provide the request promise with the callback.
-        out(callback)
+        local already_responded = false
+        out(function(response)
+
+            -- Prevent something from calling with response more than once.
+            if already_responded then return end
+            already_responded = true
+
+            return callback(
+                GNIL.API.Validators.ToResponse(route, response)
+            )
+        end)
         return
     end
 

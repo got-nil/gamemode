@@ -38,7 +38,7 @@ end
 -- File response with content headers.
 function GNIL.API.Responses.File(filepath, gamePath, status_code)
     local content = file.Read(filepath, gamePath)
-    
+
     -- If the file does not exist, return a 500 error response
     -- as theres basically nothing else we can do with a nonexistant file.
     if content == nil then

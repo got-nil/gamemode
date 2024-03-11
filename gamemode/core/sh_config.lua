@@ -26,7 +26,7 @@ local function validateConfigStructure(structure) -- valid(bool), out(table|stri
         -- Replace shorthand aliases
         ["cl"] = "client",
         ["sv"] = "server",
-        ["sh"] = "shared" 
+        ["sh"] = "shared"
     }
     if realms[b.realm] == nil then
         return false, "Invalid provided realm name '" .. b.realm .. "'"
@@ -34,7 +34,7 @@ local function validateConfigStructure(structure) -- valid(bool), out(table|stri
     if realms[b.realm] != true then
         b.realm = realms[b.realm]
     end
-    
+
     return a, b
 end
 
@@ -43,33 +43,55 @@ function GNIL.Config.Get(name)
     return GNIL.Config["_r"][name]
 end
 
--- Loads a config file and cache it.
-function GNIL.Config.Load(filename)
+-- Load a config file and cache it.
+function GNIL.Config.Load(filename, _partialModule)
 
-    -- Ensures the config filepath actually exists.
-    local filepath = GNIL.Utils.ResolveGamemodePath("config/" .. filename)
-    if not file.Exists(filepath, "LUA") then
-        GNIL.log("Config filename being loaded '" .. filename .. "' does not exist.", "warning")
+    -- Determine the target filepath. Instead of allowing arbitary
+    -- filepaths instead filter down to only acceptable inputs.
+    -- Maybe for security? I honestly don't know just seemed right.
+    local local_filepath, abs_filepath = false, false
+    if _partialModule != nil then
+
+        -- If there is a moduleInstance provided, it must have
+        -- a _base_path defined for to find the config file.
+        if not _partialModule._base_path then
+            moduleInstance:log("Could not find config file as there is no base_path set!", "debug")
+            return false, nil
+        end
+        local_filepath = "config.lua"
+        abs_filepath = _partialModule:ResolvePath("config.lua")
+    else
+
+        -- String filename, using the global config directory.
+        local_filepath = "config/" .. filename
+        abs_filepath = GNIL.Utils.ResolveGamemodePath(local_filepath)
+    end
+
+    -- Ensure the config filepath actually exists.
+    if not file.Exists(abs_filepath, "LUA") then
+        GNIL.log("Config filepath being loaded '" .. local_filepath .. "' does not exist.", "warning")
         return false, nil
     end
 
-    -- Actually includes the config file to get the out structure.
-    local out = include(filepath)
+    -- Actually include the config file to get the out structure.
+    local out = include(abs_filepath)
     if out == nil then
-        GNIL.log("Config filename '" .. filename .. "' failed to include correctly.", "warning")
+        GNIL.log("Config filepath '" .. local_filepath .. "' failed to include correctly.", "warning")
         return false, nil
     end
 
-    -- Validates the returned config structure.
-    local isvalid, out = validateConfigStructure(out)
+    -- Validate the returned config structure.
+    local isvalid, validate_out = validateConfigStructure(out)
     if not isvalid then
-        GNIL.log("Config filename '" .. filename .. "' validation error: " .. out .. ".", "warning")
+        GNIL.log("Config filepath '" .. local_filepath .. "' validation error: " .. validate_out .. ".", "warning")
         return false, nil
     end
 
     -- Cache the collected config as Config object.
-    local name = GNIL.Utils.GetCleanFilename(filename, "lua")
-    local obj = GNIL.Classes.Config:New(name, out):Setup()
+    local name = false
+    if _partialModule != nil then name = "M_" .. _partialModule._module_name
+    else name = GNIL.Utils.GetCleanFilename(filename, "lua") end
+    local obj = GNIL.Classes.Config:New(name, validate_out, abs_filepath):Setup()
     GNIL.Config["_r"][name] = obj
 
     return true, obj
@@ -78,7 +100,8 @@ end
 -- Load any full config files. On the server this is all files,
 -- whereas on the client this is shared/client config files.
 -- Server config files with shared attributes are sent seperately.
-if not GNIL.Config["_loaded"] then
+function GNIL.Config.LoadAll()
+    if GNIL.Config["_loaded"] then return end
     local files, _ = file.Find(GNIL.Utils.ResolveGamemodePath("config") .. "/*.lua", "LUA")
     for _, v in ipairs(files) do
         local success, conf = GNIL.Config.Load(v)
@@ -86,7 +109,6 @@ if not GNIL.Config["_loaded"] then
             GNIL.log("Successfully loaded config file '" .. conf.name .. "'!", "debug")
         end
     end
-
     GNIL.Config["_loaded"] = true
 end
 
@@ -96,7 +118,7 @@ end
 -- certain shared attributes.
 if SERVER then
     hook.Add("PlayerNetLoad", "gnil_config_net_send", function(ply)
-    
+
         -- Get all config files that the player should recieve.
         local conf = {}
         for _, v in pairs(GNIL.Config["_r"]) do
@@ -105,7 +127,7 @@ if SERVER then
             if v:ShouldSend(ply) then
                 conf[v.name] = v.struct.config
             end
-            
+
             -- Add specific shared attributes.
             for _, k in ipairs(v.struct.shared) do
                 if not conf[v.name] then conf[v.name] = {} end
@@ -130,28 +152,105 @@ if SERVER then
     end)
 end
 
-hook.Add("GNIL.Modules.Init", "gnil_config_module_validation", function(name, partialModule)
-    if not isstring(partialModule.config) then return end
-    
+-- Allow local module config.
+local function loadModuleConfig(partialModule)
+
+    -- If the local module config name is not yet loaded, validate that
+    -- the file actually exists and then load it for reference later.
+    if GNIL.Config.Get("M_" .. partialModule:GetModuleName()) == nil then
+        if SERVER then
+
+            -- There must be a _base_path defined to find the config file.
+            if not partialModule._base_path then
+                partialModule:log("Could not find config file as there is no base_path set!", "debug")
+                return false
+            end
+
+            -- Make sure the local file actually exists.
+            if file.Exists(partialModule:ResolvePath("config.lua"), "GAME") then
+                partialModule:log("Local module configuration file 'config.lua' is missing!", "debug")
+                return false
+            end
+
+            -- Load the module config.
+            local loaded, __ = GNIL.Config.Load(nil, partialModule)
+            if not loaded then
+                partialModule:log("Local module configuration file failed to load!", "debug")
+                return false
+            end
+            return true
+        else
+            partialModule:log("Missing local module config!", "debug")
+            return false
+        end
+    end
+    return true
+end
+
+hook.Add("GNIL.Modules.PreInit", "gnil_config_module_validation", function(name, partialModule)
+
+    -- String name of config (from /config directory) or true
+    -- to allow modules to define their config locally with a
+    -- "config.lua" file mapped to the module name.
+    if not (isstring(partialModule.config) or partialModule.config == true) then return end
+
     -- Is the config file required hook. Default to required.
     local is_config_required = partialModule:IsConfigRequired()
     if not isbool(is_config_required) then is_config_required = true end
-    
-    -- Ensures that the config required by the module exists.
-    if GNIL.Config.Get(partialModule.config) == nil and is_config_required then
-        partialModule:log("Required configuration file '" .. partialModule.config .. "' is missing! Disabling module.", "error")
+
+    -- Handle local config file for module.
+    if partialModule.config == true then
+
+        -- Load local module config file, if it fails and the config
+        -- is required disable the module to prevent errors later.
+        if not loadModuleConfig(partialModule) and is_config_required then
+            partialModule:log("Required module configuration failed to load. Disabling module.", "error")
+            return false
+        end
+    else
+
+        -- Ensure that the config required by the module exists.
+        if GNIL.Config.Get(partialModule.config) == nil and is_config_required then
+            partialModule:log("Required configuration file '" .. partialModule.config .. "' is missing! Disabling module.", "error")
+            return false
+        end
+    end
+
+    -- Ensure the module config instance actually returns something.
+    local moduleConfig = partialModule:Config()
+    if not moduleConfig and is_config_required then
+        partialModule:log("Required configuration instance could not be loaded. Disabling module.", "error")
         return false
+    end
+
+    if moduleConfig and partialModule.config_structure != nil then
+
+        -- Do some very basic validation for the config_structure.
+        if not istable(partialModule.config_structure) then
+            partialModule:log("Module 'config_structure' argument is set, but is not a validation structure table. Disabling module.", "error")
+            return false
+        end
+
+        -- Actually apply the validation structure to the config.
+        local success, out = moduleConfig:Validate(partialModule.config_structure)
+        if not success then
+            partialModule:log("Config validation error: " .. out, is_config_required && "error" || "warning")
+            return false
+        end
+        for k, v in pairs(out) do
+            moduleConfig:Set(k, v)
+        end
     end
 end)
 
 hook.Add("GNIL.Modules.FirstLoaded", "gnil_config_net_loaded", function(name, module)
     if name != "net" then return end
-    
+
     if SERVER then
         GNIL.Net.AddNetworkString("config_recieve")
     else
         GNIL.Net.ReceiveChunked("config_recieve", function(data)
-            
+
             -- Parse the recieved config file data, return error
             -- back to server if this fails via chunk recv callback.
             local out = util.JSONToTable(data)
@@ -166,7 +265,7 @@ hook.Add("GNIL.Modules.FirstLoaded", "gnil_config_net_loaded", function(name, mo
                     config = v
                 })
                 GNIL.log("Recieved partial config '" .. k .. "' from the server!", "debug")
-            end         
+            end
         end)
     end
 end)

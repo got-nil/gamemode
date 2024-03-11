@@ -3,6 +3,7 @@ local MODULE = MODULE
 MODULE.name = "Network Layer"
 MODULE.author = "morgverd"
 MODULE.description = "Just your standard Network Abstraction Layer."
+MODULE.tests = true
 
 GNIL.Net = GNIL.Net or {
     ["_r"] = {}, -- Network ID registry, mirrored between client and server.
@@ -12,6 +13,10 @@ GNIL.Net = GNIL.Net or {
     -- This is the size of the network ID that is used for reading/writing the
     -- ID header uint. Default 10 means a max of 1023 individual net messages.
     ["_idsize"] = 10,
+
+    -- Should network messages be recieved? This applies to all messages including
+    -- those using the normal net system. *ONLY APPLIES FOR THE SERVER*.
+    ["_receive"] = true,
 
     -- Initialize empty classes set.
     ["Classes"] = {
@@ -34,13 +39,32 @@ MODULE.OnLoad = function()
         MODULE:Include("sv_antiabuse.lua")
     end
 
-    -- Load required classes. Each must be stored globally before the next as
-    -- the message is used as a baseclass.
+    -- Load required classes. Could use DirectoryMap, but the classes
+    -- have different names. Maybe eventually make an interface for this?
     if not GNIL.Net.Classes["_loaded"] then
-        for _, v in ipairs({{"Message", "sh_message.lua"}, {"Reply", "sh_reply.lua"}, {"Bucket", "sv_bucket.lua"}}) do
-            if not GNIL.Utils.IsFilenameForCurrentRealm(v[2]) then continue end
-            GNIL.Net.Classes[v[1]] = MODULE:Include("classes/" .. v[2])
+
+        -- Looks weird, but this is to ensure the load order is preserved.
+        local classes = {
+            {"WriteableMixin", "sh_writeable"},
+            {"Message", "sh_message"},
+            {"Reply", "sh_reply"}
+        }
+
+        -- On the server, load two additional base classes.
+        if SERVER then
+            classes[#classes + 1] = {"Bucket", "sv_bucket"}
+            classes[#classes + 1] = {"Readable", "sv_readable"}
         end
+        for _, v in ipairs(classes) do
+            local filename = v[2] .. ".lua"
+            GNIL.Net.Classes[v[1]] = MODULE:Include("classes/" .. filename)
+        end
+
+        -- Apply base game rate limits.
+        if SERVER then
+            GNIL.Net.AntiAbuse.ApplyBaseRatelimits()
+        end
+
         GNIL.Net.Classes["_loaded"] = true
     end
 end
@@ -50,4 +74,4 @@ MODULE.OnLoadFinished = function()
     -- Cache max net messages for warning.
     GNIL.Net["_max_messages"] = GNIL.Net.Helpers.GetBitcountMaxValue(GNIL.Net["_idsize"], true)
     MODULE:log("Configured idsize supports a maximum of " .. tostring(GNIL.Net["_max_messages"]) .. " individual messages.", "debug")
-end 
+end
