@@ -47,10 +47,15 @@ MODULE.OnLoad = function()
         local classes = {
             {"WriteableMixin", "sh_writeable"},
             {"Message", "sh_message"},
-            {"Reply", "sh_reply"},
-            {"Bucket", "sv_bucket"},
-            {"Readable", "sv_readable"}
+            {"Reply", "sh_reply"}
         }
+
+        -- On the server, load two additional base classes.
+        if SERVER then
+            classes[#classes + 1] = {"Bucket", "sv_bucket"}
+            classes[#classes + 1] = {"Readable", "sv_readable"}
+        end
+
         for _, v in ipairs(classes) do
             local filename = v[2] .. ".lua"
             GNIL.Net.Classes[v[1]] = MODULE:Include("classes/" .. filename)

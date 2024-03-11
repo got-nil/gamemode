@@ -213,6 +213,12 @@ MODULE.OnLoad = function()
     MODULE:IncludeDirectory("vfs")
 end
 
+-- If we're unloading, reset the devfiles netmessage so it can be rebuilt if its reloaded.
+-- Aka, when the module is reloaded also rebuild all dev files allowing a lua refresh.
+MODULE.OnUnload = function()
+    GNIL.Dev["_devfiles_nm"] = false
+end
+
 -- When a developer has finished connecting, send them all developer files.
 MODULE:AddHook("PlayerNetLoad", "dev_include", function(ply)
     if ply:IsDeveloper() then
