@@ -8,12 +8,18 @@
 
 -- TODO: BytesWritten
 
-return {
+---@class NetworkWriteableMixin
+local WriteableMixin = {
 
     -- Each function should expect the write buffer to possibly
     -- not exist just incase the parent class is doing some fuckery.
     _FlushWriteBuffer = function(self) self.__write_buffer = {} end,
     _GetWriteBuffer = function(self) return self.__write_buffer or {} end,
+
+    ---@param self self
+    ---@param args table Type arguments.
+    ---@param typeName string The name of the type.
+    ---@return any
     _WriteToBuffer = function(self, args, typeName)
         if self.__write_buffer == nil then self:_FlushWriteBuffer() end
         table.insert(self.__write_buffer, {args, typeName})
@@ -27,9 +33,6 @@ return {
         end
     end,
 
-    -- Instead of using the function directly, reference
-    -- the typename since the function is just "Write<Type>".
-    -- Also makes it easier for other things to read writeables.
     WriteAngle =    function(self, ...) return self:_WriteToBuffer({...}, "Angle")  end,
     WriteBit =      function(self, ...) return self:_WriteToBuffer({...}, "Bit")    end,
     WriteBool =     function(self, ...) return self:_WriteToBuffer({...}, "Bool")   end,
@@ -48,3 +51,4 @@ return {
     WritePlayer =   function(self, ...) return self:_WriteToBuffer({...}, "Player") end
 
 }
+return WriteableMixin

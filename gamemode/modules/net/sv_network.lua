@@ -12,8 +12,10 @@ for _, v in ipairs(GNIL.Net["_netstrings"]) do
     util.AddNetworkString(v)
 end
 
--- This is used to sync the player netmessage pool between
--- the server and specified clients.
+---This is used to sync the player netmessage pool between
+---the server and specified clients.
+---@package
+---@param ply? Player
 function GNIL.Net._SyncNetworkIDs(ply)
     GNIL.Net["_sent_netids"] = true
 
@@ -28,7 +30,11 @@ function GNIL.Net._SyncNetworkIDs(ply)
     if ply then net.Send(ply) else net.Broadcast() end
 end
 
--- Add network string alias, works the exact same.
+---Add network string alias, works the exact same.
+---@param str string
+---@param ratelimits? {capacity?: integer, delay?: integer, amount?: integer}
+---@param _d? boolean Should we delay before sending out the resync?
+---@return boolean|integer
 function GNIL.Net.AddNetworkString(str, ratelimits, _d)
     assert(isstring(str), "The provided network string... must be a string.")
     assert(ratelimits == nil or istable(ratelimits), "The provided ratelimits must be nil or a ratelimits config table.")
@@ -37,7 +43,9 @@ function GNIL.Net.AddNetworkString(str, ratelimits, _d)
     if GNIL.Net["_i"][str] then
 
         -- Allow ratelimits to be modified after the message creation.
-        GNIL.Net.AntiAbuse.SetLimits(str, ratelimits)
+        if ratelimits then
+            GNIL.Net.AntiAbuse.SetLimits(str, ratelimits)
+        end
         return false
     end
 
@@ -51,7 +59,9 @@ function GNIL.Net.AddNetworkString(str, ratelimits, _d)
         GNIL.Net["_i"][str] = l
 
         -- Set any provided ratelimits for the message.
-        GNIL.Net.AntiAbuse.SetLimits(str, ratelimits)
+        if ratelimits then
+            GNIL.Net.AntiAbuse.SetLimits(str, ratelimits)
+        end
     end
 
     -- If the netids have already been sent to a player, then this is a
@@ -66,13 +76,15 @@ function GNIL.Net.AddNetworkString(str, ratelimits, _d)
 end
 
 
--- Add multiple network ids in this format:
---   ( { messageName = rateLimits, ... } )
---   ( "messageName", "messageName", ... )
---
--- (This is also better for adding multiple delayed network
--- ids, as it only resyncs once the last message has been added,
--- Although you shouldn't ever need to add late messages anyway).
+---Add multiple network ids in this format:
+---  ( { messageName = rateLimits, ... } )
+---  ( "messageName", "messageName", ... )
+---
+---(This is also better for adding multiple delayed network
+---ids, as it only resyncs once the last message has been added,
+---Although you shouldn't ever need to add late messages anyway).
+---@param ... table|string
+---@return table<string, integer>
 function GNIL.Net.AddNetworkStrings(...)
     local args, out = {...}, {}
 
@@ -89,14 +101,18 @@ function GNIL.Net.AddNetworkStrings(...)
         if using_tbl then
             str, ratelimits = k, v
         end
-        out[v] = GNIL.Net.AddNetworkString(str, ratelimits, i == #args)
+        local value = GNIL.Net.AddNetworkString(str, ratelimits, i == #args)
+        if value != false then
+            out[v] = value
+        end
     end
     return out
 end
 
--- Send the network message to all players.
--- If a netmessage is provided, write it to stream and use the default
--- broadcast instead of sending each message individually.
+---Send the network message to all players.
+---If a netmessage is provided, write it to stream and use the default
+---broadcast instead of sending each message individually.
+---@param _nm? NetworkMessage
 function GNIL.Net.Broadcast(_nm)
     if _nm then
 
@@ -111,11 +127,14 @@ function GNIL.Net.Broadcast(_nm)
     net.Broadcast()
 end
 
--- Send the net message to a given player. Like the
--- original send function this also supports CRecipientFilter
--- if you want to get fancy. (You can also use a table of players)
--- NetMessage instance can be provided as second argument to allow
--- for message queuing (and just being OOP which is automatically cool)
+---Send the net message to a given player. Like the
+---original send function this also supports CRecipientFilter
+---if you want to get fancy. (You can also use a table of players)
+---NetMessage instance can be provided as second argument to allow
+---for message queuing (and just being OOP which is automatically cool)
+---@param ply CRecipientFilter|table|Player
+---@param _nm? NetworkMessage
+---@param _allowqueue? boolean
 function GNIL.Net.Send(ply, _nm, _allowqueue)
 
     local t = TypeID(ply)
@@ -125,14 +144,14 @@ function GNIL.Net.Send(ply, _nm, _allowqueue)
         -- the players that apply to the filter, and iteratively send the message
         -- to each of them.
         for _, v in ipairs(ply:GetPlayers()) do
-            MODULE:log("Player in recipient filter for '" .. _nm.name .. "': " .. v:ToString(), "debug")
+            MODULE:log("Player in recipient filter for '" .. (Either(_nm != nil, _nm.name, "UNKNOWN")) .. "': " .. v:ToString(), "debug")
             GNIL.Net.Send(v, _nm)
         end
 
     elseif t == TYPE_TABLE then
 
         -- If a table is provided, it must be a sequential table of players.
-        assert(table.IsSequential(t), "If a table is provided, it must be a sequential table of players.")
+        assert(table.IsSequential(ply), "If a table is provided, it must be a sequential table of players.")
         for i, v in ipairs(ply) do
 
             -- Don't bother validating the table value since the send functions
@@ -144,6 +163,7 @@ function GNIL.Net.Send(ply, _nm, _allowqueue)
 
         -- If an entity is provided, then it must be a player.
         assert(ply:IsPlayer(), "If an entity is provided, it must be a player.")
+        ---@cast ply Player
 
         -- If a NetMessage instance is provided, and the player has not yet had
         -- their networking loaded then we should add the nm instance to the queue.
@@ -196,4 +216,5 @@ MODULE:AddHook("PlayerNetLoad", "sendQueue", function(ply)
 end)
 
 -- Add an alias to the chunked send function.
+---@see GNIL.Net.Chunks.Send
 function GNIL.Net.SendChunkedData(...) return GNIL.Net.Chunks.Send(...) end

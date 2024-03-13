@@ -14,13 +14,16 @@ if SERVER then
 
     -- Server setup stuff.
     GNIL.Net.AddNetworkStrings("file_include", "chat_message")
+
+    ---@class Player
     local PlayerMeta = FindMetaTable("Player")
 
-    -- Send code data to player, codes should either be the luacode
-    -- to execute, or a table of luastrings that should be sent.
+    ---Send code data to player, codes should either be the luacode
+    ---to execute, or a table of luastrings that should be sent.
+    ---@param codes string|string[]
     function PlayerMeta:Execute(codes)
         local nm = GNIL.Net.Create("file_include")
-        for _, v in ipairs(istable(codes) and codes or {codes}) do
+        for _, v in ipairs(Either(istable(codes), codes, {codes})) do
             nm:WriteData(v, #v)
         end
         nm:SendChunked(self, true, function(success, output)
@@ -30,13 +33,16 @@ if SERVER then
         end)
     end
 
-    -- Include a file (given by absolute path) on a player. When
-    -- including multiple files it is more efficient to call this
-    -- function with a table of filepaths instead of re-running
-    -- as it sends all the files as a single message.
+    ---Include a file (given by absolute path) on a player. When
+    ---including multiple files it is more efficient to call this
+    ---function with a table of filepaths instead of re-running
+    ---as it sends all the files as a single message.
+    ---@param absolute_filepaths string|string[]
+    ---@param allow_server_files? boolean
+    ---@return boolean
     function PlayerMeta:Include(absolute_filepaths, allow_server_files)
         local codes = {}
-        for _, filepath in ipairs(istable(absolute_filepaths) and absolute_filepaths or {absolute_filepaths}) do
+        for _, filepath in ipairs(Either(istable(absolute_filepaths), absolute_filepaths, {absolute_filepaths})) do
             if not file.Exists(filepath, "LUA") then return false end
             if not allow_server_files then
                 local realm_prefix = GNIL.Utils.GetFilepathRealmPrefix(filepath)
@@ -54,9 +60,11 @@ if SERVER then
 
         -- Once all files have been read, include all the files together.
         self:Execute(codes)
+        return true
     end
 
-    -- Send Colors and strings to send PrintMessage
+    ---Send Colors and strings to send PrintMessage.
+    ---@param ... string|Color|Player
     function PlayerMeta:ChatMessage(...)
         local chat_net, tbl = GNIL.Net.Create("chat_message"), {...}
 
@@ -64,7 +72,7 @@ if SERVER then
         for _, v in ipairs(tbl) do
 
             -- Find the argument type from validator.
-            local type_id, type_name = 0, false
+            local type_id, type_name = 0, "String"
             for i, data in ipairs(ChatMessageTypes) do
                 if data[1](v) then
                     type_id, type_name = i, data[2]
@@ -108,15 +116,15 @@ else
 
             local type_id = net.ReadUInt(2)
             local type_data = ChatMessageTypes[type_id]
-            if type_id == 0 or type_data == nil then
-                continue
-            end
 
-            -- Read the type directly, ignore it if
-            -- the value is nil to prevent weird messages.
-            local value = net["Read" .. type_data[2]]()
-            if value then
-                table.insert(out, value)
+            if type_id != 0 and type_data != nil then
+
+                -- Read the type directly, ignore it if
+                -- the value is nil to prevent weird messages.
+                local value = net["Read" .. type_data[2]]()
+                if value then
+                    table.insert(out, value)
+                end
             end
         end
 

@@ -41,6 +41,10 @@ GNIL.Net.AntiAbuse = GNIL.Net.AntiAbuse or {
 
 --]]
 
+---Act on a player that is currently abusing network messages.
+---@param messageName string
+---@param ply Player
+---@param is_default_message? boolean
 function GNIL.Net.AntiAbuse.Abusing(messageName, ply, is_default_message)
     MODULE:log(ply:ToString() .. " is abusing " .. (is_default_message && "default" || "internal") .. " message '" .. messageName .. "'.", "debug")
 
@@ -60,6 +64,11 @@ function GNIL.Net.AntiAbuse.Abusing(messageName, ply, is_default_message)
     end
 end
 
+---Set the rate limits for a message name.
+---@param messageName string
+---@param limits {capacity?: integer, delay?: integer, amount?: integer}
+---@param is_default_message? boolean
+---@return boolean
 function GNIL.Net.AntiAbuse.SetLimits(messageName, limits, is_default_message)
 
     -- Validate the ratelimits configuration structure.
@@ -94,6 +103,12 @@ function GNIL.Net.AntiAbuse.SetLimits(messageName, limits, is_default_message)
     return true
 end
 
+---Check if the player is abusing this message name (called in reciever.)
+---@param messageName string
+---@param ply Player
+---@param reply? NetworkReply
+---@param is_default_message? boolean
+---@return boolean
 function GNIL.Net.AntiAbuse.Check(messageName, ply, reply, is_default_message)
 
     -- Allow developers to go ham.
@@ -124,12 +139,13 @@ function GNIL.Net.AntiAbuse.Check(messageName, ply, reply, is_default_message)
     if reply and not is_default_message then
 
         -- seconds_till: Seconds until message can be resent.
-        reply:SetError(GNIL_NET_ERRORS_RATELIMITED, bucket.delay)
+        reply:SetError(GNIL_NET_ERRORS.RATELIMITED, bucket.delay)
         reply:Send()
     end
     return false
 end
 
+---Apply ratelimiting to basegame network messages.
 function GNIL.Net.AntiAbuse.ApplyBaseRatelimits()
 
     -- Increased limits for base game stuff that spams net.
