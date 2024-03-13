@@ -104,7 +104,7 @@ function NetworkMessage:SendOmit(ply)
     for i, v in ipairs(omitted_seq) do
         omitted[v] = true
     end
-    for _, v in ipairs(player.GetAll()) do
+    for _, v in player.Iterator() do
         if not omitted[v] then
             table.insert(targets, v)
         end

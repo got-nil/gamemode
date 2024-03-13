@@ -77,7 +77,7 @@ end
 local function broadcastCommandsStructure(command_name, flush)
     if flush == nil then flush = true end
     MODULE:log("Broadcasting commands structure to clients. " .. (flush and "Flushing registries." or "Appending to registries."), "debug")
-    for _, v in ipairs(player.GetAll()) do
+    for _, v in player.Iterator() do
         sendPlayerCommandStructure(v, command_name, flush)
     end
 end
