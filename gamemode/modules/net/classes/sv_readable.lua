@@ -1,3 +1,7 @@
+
+---@class NetworkReadable
+---@field private _buffer table Read buffer.
+---@field _i integer Current index position.
 local NetworkReadable = GNIL.Thirdparty.middleclass("NetworkReadable")
 ClassAccessorFunc(NetworkReadable, {
     Buffer = FuncAccessors.ReadOnly("_buffer")
@@ -14,6 +18,9 @@ function NetworkReadable:Initialize(writeable)
     self._i = 1
 end
 
+---@param args table
+---@param typeName string
+---@return any
 function NetworkReadable:Read(args, typeName)
 
     local current = self._buffer[self._i]

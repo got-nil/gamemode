@@ -7,8 +7,10 @@ local MODULE = MODULE
 
 GNIL.Net["_pnl"] = GNIL.Net["_pnl"] or {}
 
--- Used by the server send to queue messages for players that have not
--- fully loaded in (although the table is global anyway, this is just pretty).
+---Used by the server send to queue messages for players that have not
+---fully loaded in (although the table is global anyway, this is just pretty).
+---@param ply_or_steamid Player|string
+---@return boolean
 function GNIL.Net.HasPlayerNetLoaded(ply_or_steamid)
     local sid = isstring(ply_or_steamid) and ply_or_steamid or ply_or_steamid:SteamID()
     return GNIL.Net["_pnl"][sid] == true

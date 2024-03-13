@@ -18,7 +18,9 @@ local net_ReadHeader = net.ReadHeader
 local GNIL_Net_AntiAbuse_Abusing = GNIL.Net.AntiAbuse.Abusing
 local GNIL_Net_AntiAbuse_Check = GNIL.Net.AntiAbuse.Check
 
--- Detour all incomming messages and read header.
+---Detour all incomming messages and read header.
+---@param len integer
+---@param ply Player
 net.Incoming = function(len, ply)
 
     -- Get the original message name.

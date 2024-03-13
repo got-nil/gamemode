@@ -2,15 +2,21 @@ local MODULE = MODULE
 
 -- Uses WriteableMixin (sh_writeable.lua).
 
--- The NetworkMessage is an OOP interface for writing network data
--- to a write buffer instead of directly to the write stream. This
--- allows for messages to be queued etc.
+---The NetworkMessage is an OOP interface for writing network data
+---to a write buffer instead of directly to the write stream. This
+---allows for messages to be queued etc.
+---@class NetworkMessage: NetworkWriteableMixin
+---@field name string The internal messaage name.
+---@field unreliable boolean Is the message being sent unreliably?
+---@field protected _debug boolean[default=false] Only for debugging.
 local NetworkMessage = GNIL.Thirdparty.middleclass("NetworkMessage"):IncludeMixin(GNIL.Net.Classes.WriteableMixin)
 ClassAccessorFunc(NetworkMessage, {
     Name = FuncAccessors.ReadOnly("name"),
     Debug = FuncAccessors.Boolean("_debug")
 })
 
+---@param name string Internal message name.
+---@param _debug? boolean Only for debugging.
 function NetworkMessage:Initialize(name, _debug)
     self.name = name
     self.unreliable = false
@@ -31,7 +37,9 @@ function NetworkMessage:Initialize(name, _debug)
     self._debug = Either(_debug != nil, _debug, false)
 end
 
--- Start the netmessage (writing the header id) and the buffer.
+---Start the netmessage (writing the header id) and the buffer.
+---@param targets? table
+---@return boolean
 function NetworkMessage:_WriteToStream(targets)
     MODULE:log("Writing message '" .. self.name .. "' to stream.", "debug")
 
@@ -54,9 +62,9 @@ function NetworkMessage:_WriteToStream(targets)
 
                     -- k = error enum, v = self._errors callback key
                     local error_callbacks = {
-                        [GNIL_NET_ERRORS_TIMEOUT] = "timeout",
-                        [GNIL_NET_ERRORS_RATELIMITED] = "ratelimited",
-                        [GNIL_NET_ERRORS_DISABLED] = "disabled"
+                        [GNIL_NET_ERRORS.TIMEOUT] = "timeout",
+                        [GNIL_NET_ERRORS.RATELIMITED] = "ratelimited",
+                        [GNIL_NET_ERRORS.DISABLED] = "disabled"
                     }
 
                     -- Handle specific error callbacks such as "OnTimeout" etc.
@@ -71,6 +79,13 @@ function NetworkMessage:_WriteToStream(targets)
                 end
             end
         end
+
+        -- Make sure there's a reply callback.
+        if reply_callback == nil then
+            MODULE:log("No reply callback was provided to WriteHeader, despite one being required.", "warning")
+            return false
+        end
+
         GNIL.Net.Reply.WriteHeader(
             targets,
             reply_callback,
@@ -79,17 +94,21 @@ function NetworkMessage:_WriteToStream(targets)
     end
 
     self:_WriteBufferToStream()
+    return true
 end
 
 -- Literally just alias the actual send function, providing the self
 -- NetworkMessage instance (which could be queued, so nothing is written yet).
--- **Send can be used by both server and client (client realm aliasing SendToServer)
-function NetworkMessage:Send(ply) if SERVER then GNIL.Net.Send(ply, self) else self:SendToServer() end end
+
+---Can be used by both server and client (client realm aliasing SendToServer)
+---@param ply? Player|CRecipientFilter
+function NetworkMessage:Send(ply) if SERVER then assert(ply, "There must be a player provided!") GNIL.Net.Send(ply, self) else self:SendToServer() end end
 function NetworkMessage:Broadcast() assert(SERVER, "This function may only be used by the server.") GNIL.Net.Broadcast(self) end
 function NetworkMessage:SendToServer() assert(CLIENT, "This function may only be used by a client.") self:_WriteToStream() net.SendToServer() end
 
--- Again, no idea why someone would use this, but if they are we might
--- aswell try to make it as efficient as possible.
+-- Send a function to all players except omitted.
+---@param ply Player|Player[]
+---@return nil
 function NetworkMessage:SendOmit(ply)
     assert(SERVER, "This function may only be used by the server.")
     local targets, omitted_seq = {}, (istable(ply) and ply or {ply})
@@ -121,13 +140,20 @@ end
 -- These functions are literally just aliases to a recipient filter
 -- message send. I doubt anyone is going to use them, but they exist
 -- in the default network module, so they exist here too.
+
+---@param pos Vector
 function NetworkMessage:SendPAS(pos) assert(SERVER and isvector(pos), "Provided argument must be a vector, and from the server.") local rf = RecipientFilter() rf:AddPAS(pos) self:Send(rf) end
+
+---@param pos Vector
 function NetworkMessage:SendPVS(pos) assert(SERVER and isvector(pos), "Provided argument must be a vector, and from the server.") local rf = RecipientFilter() rf:AddPVS(pos) self:Send(rf) end
 
--- Send the current net message as a chunked message to the client.
--- **Please read the module README before you use this, it does
--- not use the standard recievers on the client.**
--- **Requires ALL WRITES to be DATA ONLY**
+---Send the current net message as a chunked message to the client.
+---**Please read the module README before you use this, it does
+---not use the standard recievers on the client.**
+---**Requires ALL WRITES to be DATA ONLY**
+---@param ply Player
+---@param verify_checksum boolean
+---@param callback fun(success: boolean, error_message: string?): nil
 function NetworkMessage:SendChunked(ply, verify_checksum, callback)
     assert(SERVER, "This function may only be used by the server.")
 
@@ -152,14 +178,34 @@ function NetworkMessage:SendChunked(ply, verify_checksum, callback)
 end
 
 -- Reply interface.
+
+---@param callback fun(success: boolean, len: integer, ply: Player, err: table?): boolean
+---@return self
 function NetworkMessage:OnReply(callback) assert(isfunction(callback), "Provided callback argument must be a function.") self._reply.callback = callback return self end
+
+---@param timeout integer
+---@return self
 function NetworkMessage:SetReplyTimeout(timeout) assert(isnumber(timeout) and timeout > 0, "Provided timeout argument must be a number greater than 0.") self._reply.timeout = timeout return self end
 
 -- Error interface.
+
+---@param callback fun(enum: GNIL_NET_ERRORS, int: integer)
+---@return NetworkMessage
 function NetworkMessage:OnError(callback) assert(isfunction(callback), "Provided callback argument must be a function.") self._errors.callback = callback self._errors._set = true return self end
+
+---@param callback fun(enum: GNIL_NET_ERRORS, int: integer)
+---@return NetworkMessage
 function NetworkMessage:OnTimeout(callback) assert(isfunction(callback), "Provided callback argument must be a function.") self._errors.timeout = callback self._errors._set = true return self end
+
+---@param callback fun(enum: GNIL_NET_ERRORS, int: integer)
+---@return NetworkMessage
 function NetworkMessage:OnRatelimited(callback) assert(isfunction(callback), "Provided callback argument must be a function.") self._errors.ratelimited = callback self._errors._set = true return self end
+
+---@param callback fun(enum: GNIL_NET_ERRORS, int: integer)
+---@return NetworkMessage
 function NetworkMessage:OnDisabled(callback) assert(isfunction(callback), "Provided callback argument must be a function.") self._errors.disabled = callback self._errors._set = true return self end
+
+-- Meta functions.
 
 function NetworkMessage:__tostring()
     return "<NetworkMessage '" .. self.name .. "'>"
