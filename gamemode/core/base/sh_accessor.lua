@@ -67,6 +67,9 @@ local function _acceptedTypes(...)
     end
 end
 
+---Add accessor functions to a class.
+---@param obj table
+---@param tbl table
 ClassAccessorFunc = function(obj, tbl)
 
     -- Find global settings within the table. These start with an
@@ -197,6 +200,11 @@ ClassAccessorFunc = function(obj, tbl)
 end
 
 FuncAccessors = {
+
+    ---Add only a getter without setter.
+    ---@param var string
+    ---@param additions? table
+    ---@return table
     ReadOnly = function(var, additions)
         return table.Inherit({
             var = var,
@@ -204,6 +212,12 @@ FuncAccessors = {
         }, additions or {})
     end,
 
+    ---Add a getter and setter that only accepts numbers between range.
+    ---@param var string
+    ---@param min? integer
+    ---@param max? integer
+    ---@param additions? table
+    ---@return table
     NumberMinMax = function(var, min, max, additions)
         local min, max = min, max
         return table.Inherit({
@@ -219,6 +233,11 @@ FuncAccessors = {
         }, additions or {})
     end,
 
+    ---Add a getter and setter that only accepts a class which is the instance of provided class name.
+    ---@param var string
+    ---@param class string|fun(): string
+    ---@param additions? table
+    ---@return table
     InstanceOf = function(var, class, additions)
         local class, is_fn = class, isfunction(class)
         return table.Inherit({
@@ -235,6 +254,10 @@ FuncAccessors = {
         }, additions or {})
     end,
 
+    ---Add a setter that only accepts boolean and IsVar method.
+    ---@param var string
+    ---@param additions? table
+    ---@return table
     Boolean = function(var, additions)
         return table.Inherit({
             var = var,
@@ -244,6 +267,11 @@ FuncAccessors = {
         }, additions or {})
     end,
 
+    ---Add a getter and setter that only allows numbers greater or equal to count.
+    ---@param var string
+    ---@param count integer
+    ---@param additions? table
+    ---@return table
     Enum = function(var, count, additions)
         return FuncAccessors.NumberMinMax(var, 1, count, additions)
     end

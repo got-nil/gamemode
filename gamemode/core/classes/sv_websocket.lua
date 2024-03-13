@@ -1,4 +1,5 @@
 
+---@class Websocket: EventsMixin
 local Websocket = GNIL.Thirdparty.middleclass("Websocket"):IncludeMixin(GNIL.ClassMixins.Events)
 ClassAccessorFunc(Websocket, {
     URL = {"url", FORCE_STRING},
@@ -106,6 +107,9 @@ local function WebsocketReconnect(self, ws_state)
     end
 end
 
+---@param url string
+---@param verify_cert boolean
+---@param retry_delay? integer
 function Websocket:Initialize(url, verify_cert, retry_delay)
     self.url = url
     self.verify_cert = verify_cert
@@ -113,7 +117,7 @@ function Websocket:Initialize(url, verify_cert, retry_delay)
 
     self.__opening = false
     self.__open_callbacks = {}
-    self.__identifier = util.SHA256(GNIL.Utils.Random(12) .. self.url or "")
+    self.__identifier = util.SHA256(GNIL.Utils.Random(12) .. (self.url or ""))
     self.__reconnecting = false
     self.__closed = false
     self.__connected = false
@@ -126,6 +130,9 @@ function Websocket:StopRetrying() WebsocketReconnect(self, false) return self en
 function Websocket:SetHeader(k, v) self.__headers[k] = v return self end
 function Websocket:SetCookie(k, v) self.__cookies[k] = v return self end
 
+---Open a websocket connection, running the callback with open result state.
+---@param callback? fun(success: boolean, error_message?: string)
+---@return self
 function Websocket:Open(callback)
 
     -- Prevent function being called when a connection
@@ -144,7 +151,9 @@ function Websocket:Open(callback)
     -- Initialize the GWSocket connection.
     assert(callback == nil or isfunction(callback), "Provided callback argument must either be nil or a function")
     if not GWSocketsExists(self) then
-        if calback then callback(false, "Failed to load GWSockets module") end
+        if calback != nil then ---@cast callback function
+            callback(false, "Failed to load GWSockets module")
+        end
         return self
     end
     local socket = GWSockets.createWebSocket(self.url, Either(isbool(self.verify_cert), self.verify_cert, false))
@@ -205,13 +214,16 @@ function Websocket:Open(callback)
     return self
 end
 
+---Write/Queue message to opened websocket connection.
+---@param data string|table
+---@return boolean
 function Websocket:Write(data)
 
     -- If a table is provided, convert it to a string.
     local message = data
-    if istable(message) then
+    if istable(message) then ---@cast message table
         message = util.TableToJSON(message)
-    end
+    end ---@cast message string
     assert(isstring(message), "Provided message must be a string.")
 
     -- Emit an event when we're writing something to allow the message
@@ -224,6 +236,7 @@ function Websocket:Write(data)
     return true
 end
 
+---@return self
 local function safeClose(self, name)
     self.__closed = true
     self.__reconnecting = false
@@ -235,9 +248,20 @@ local function safeClose(self, name)
     return self
 end
 
+---Close websocket connection, sending any queued messages first.
+---@return self
 function Websocket:Close() return safeClose(self, "close") end
+
+---Close websocket connnection immidiately, discarding any unsent queued messages.
+---@return self
 function Websocket:CloseNow() return safeClose(self, "closeNow") end
+
+---Clear unsent messages queue.
+---@return self
 function Websocket:ClearQueue() if self.__socket then self.__socket:clearQueue() end return self end
+
+---Check if the websocket is connected.
+---@return boolean
 function Websocket:IsConnected() return self.__connected and not self.__closed end
 
 return Websocket

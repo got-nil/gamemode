@@ -12,7 +12,8 @@ local function installEvents(self, isResolution)
     self:IncludeMixin(GNIL.ClassMixins.Events)
 end
 
-return {
+---@class PromiseMixin: middleclass
+local PromiseMixin = {
 
     Success = function(self, ...) installEvents(self, true) return self:EmitSignal("resolve", ...) end,
     Error = function(self, ...) installEvents(self, true) return self:EmitSignal("reject", ...) end,
@@ -32,3 +33,4 @@ return {
     end
 
 }
+return PromiseMixin
