@@ -1,3 +1,5 @@
+
+---@class Timeout: EventsMixin
 local Timeout = GNIL.Thirdparty.middleclass("Timeout"):IncludeMixin(GNIL.ClassMixins.Events)
 ClassAccessorFunc(Timeout, {
     Timeout = FuncAccessors.NumberMinMax("_timeout", 0)
@@ -38,6 +40,9 @@ end
 function Timeout:OnTimeout(callback) self:AddSignalListener("_timeout", callback) return self end
 function Timeout:OnResolve(callback) self:AddSignalListener("_resolve", callback) return self end
 
+---Run a timeout class, providing the callback with a resolve closure.
+---@param callback fun(resolve: fun(...: table))
+---@return unknown
 function Timeout:Run(callback)
 
     local timerName = "gnil_timeout_" .. self._id

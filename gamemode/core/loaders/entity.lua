@@ -32,8 +32,11 @@ return {
 
     Directory = "entities",
 
-    -- Load a directory of files as one entity.
-    -- Must respect default gmod entity file names.
+    ---Load a directory of files as one entity.
+    ---Must respect default gmod entity file names.
+    ---@param classname string
+    ---@param directory_path string
+    ---@return boolean
     LoadDirectory = function(classname, directory_path)
 
         -- Load realm init file and shared if it exists.
@@ -46,7 +49,10 @@ return {
         return registerEntity(classname, out)
     end,
 
-    -- Load a single file as an entity.
+    ---Load a single file as an entity.
+    ---@param classname string
+    ---@param filepath string
+    ---@return boolean
     LoadFile = function(classname, filepath)
 
         -- Wrap the file include in ENT const.

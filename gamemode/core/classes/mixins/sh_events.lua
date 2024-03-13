@@ -89,7 +89,8 @@ local function callSignalListeners(class, signalName, ...)
     return
 end
 
-return {
+---@class EventsMixin: middleclass
+local EventsMixin = {
 
     AddEventListener = function(self, eventName, callback) return addCallback(self, 1, eventName, callback) end,
     AddSignalListener = function(self, signalName, callback) return addCallback(self, 2, signalName, callback) end,
@@ -139,3 +140,4 @@ return {
         callSignalListeners(self, signalName, ...)
     end
 }
+return EventsMixin

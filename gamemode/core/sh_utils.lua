@@ -110,7 +110,7 @@ end
 -- relatively simple.
 function GNIL.Utils.GetCleanFilename(filename, extension, includeRealmPrefix)
     if not extension then extension = "lua" end
-    if not string.StartWith(extension, ".") then extension = "." .. extension end
+    if not string.StartWith(extension, ".") then extension = "." .. extension end ---@diagnostic disable-line
     local filename = string.Left(filename, #filename - #extension)
     if not includeRealmPrefix and GNIL.Utils.GetFilepathRealmPrefix(filename) != nil then
         filename = string.Right(filename, #filename - 3)
@@ -123,15 +123,18 @@ function GNIL.Utils.ResolveGamemodePath(path)
     return GNIL.GamemodeFolderName .. "/gamemode/" .. path
 end
 
--- Load all realm prefixed files within a directory, non-recursive
--- Absolute LUA paths are required, when working in gamemode ensure
--- the path is locally resolved (see above)
--- ** (last argument is deprecated, but is used in old code)
+---Load all realm prefixed files within a directory, non-recursive
+---Absolute LUA paths are required, when working in gamemode ensure
+---the path is locally resolved (see above)
+---** (last argument is deprecated, but is used in old code) **
+---@param path string
+---@param ignoredFiles? table|boolean
+---@param _? any deprecated
 function GNIL.Utils.IncludeDirectory(path, ignoredFiles, _)
     GNIL.log("Including directory '" .. path .. "'", "debug")
 
     -- If a table is provided, ensure its a lookup table.
-    if istable(ignoredFiles) then
+    if istable(ignoredFiles) then ---@cast ignoredFiles table
         if table.IsSequential(ignoredFiles) then
             ignoredFiles = table.Lookup(ignoredFiles)
         end

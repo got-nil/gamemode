@@ -1,8 +1,12 @@
+---@class stringlib
+local string = string
 
-string.Interpolate = function(str, lookuptable)
-	return string.gsub(str, "{([_%a][_%w]*)}", lookuptable)
-end
-
+---@param font string
+---@param str string
+---@param max integer
+---@return string
+---@return integer
+---@return integer
 string.TextWrap = function(font, str, max)
 	surface.SetFont(font)
 	local words = string.Explode(" ", str)
