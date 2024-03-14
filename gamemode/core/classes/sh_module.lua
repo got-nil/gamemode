@@ -299,7 +299,7 @@ end
 ---is true then the include is processed with the
 ---rest of the files.
 ---@param path string
----@param delayed boolean
+---@param delayed? boolean
 ---@return any
 function Module:Include(path, delayed)
 
