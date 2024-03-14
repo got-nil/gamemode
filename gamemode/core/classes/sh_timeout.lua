@@ -37,11 +37,18 @@ function Timeout:Initialize(timeout)
     self._timeout = Either(isnumber(timeout), timeout, 3)
 end
 
+---Add a signal listener for timeouts.
+---@param callback fun(): nil
+---@return Timeout
 function Timeout:OnTimeout(callback) self:AddSignalListener("_timeout", callback) return self end
+
+---Add a signal listener for resolutions.
+---@param callback fun(...: any): nil
+---@return Timeout
 function Timeout:OnResolve(callback) self:AddSignalListener("_resolve", callback) return self end
 
 ---Run a timeout class, providing the callback with a resolve closure.
----@param callback fun(resolve: fun(...: table))
+---@param callback fun(resolve: fun(...: table)): nil
 ---@return unknown
 function Timeout:Run(callback)
 

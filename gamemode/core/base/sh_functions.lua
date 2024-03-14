@@ -4,7 +4,7 @@
 ---SafeTableAccess(tbl, "a", "b") -> safe access without errors, or nil
 ---Safely access a nested table value.
 ---@param tbl any
----@param ... string
+---@param ... string|number
 ---@return any
 SafeTableAccess = function(tbl, ...)
     if not istable(tbl) then
