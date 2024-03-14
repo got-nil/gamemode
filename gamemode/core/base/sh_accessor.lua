@@ -30,6 +30,9 @@ class obj = MyClass:New()
 
 --]]
 
+---@alias FuncAccessorTable table<string, string|table<number, any>|FuncAccessor>
+---@alias FuncAccessor { var: string, force?: number, nillable?: boolean, validate?: (fun(obj: any, value: any, accessor: FuncAccessor): boolean?), get?: boolean|(fun(obj: any, fallback: any, accessor: FuncAccessor): any), set?: boolean|(fun(obj: any, value: any, accessor: FuncAccessor): boolean), is?: boolean|(fun(obj: any, accessor: FuncAccessor): boolean) }
+
 local force_setters = {
     [FORCE_STRING] = tostring,
     [FORCE_NUMBER] = tonumber,
@@ -69,7 +72,7 @@ end
 
 ---Add accessor functions to a class.
 ---@param obj table
----@param tbl table
+---@param tbl FuncAccessorTable
 ClassAccessorFunc = function(obj, tbl)
 
     -- Find global settings within the table. These start with an
@@ -96,32 +99,35 @@ ClassAccessorFunc = function(obj, tbl)
         assert(isstring(k), "Provided accessor name must be a string")
 
         -- Convert provided value to assoc table.
+        local value
         if isstring(v) then
-            v = {
+            value = {
                 var = v
             }
         end
-        if istable(v) and table.IsSequential(v) then
-            local o = table.Copy(v)
-            v = {
-                var = _safe_get_i(o, 1),
-                force = _safe_get_i(o, 2),
-                nillable = _safe_get_i(o, 3)
-            }
+        if istable(v) then ---@cast v table
+            if table.IsSequential(v) then
+                local o = table.Copy(v)
+                value = {
+                    var = _safe_get_i(o, 1),
+                    force = _safe_get_i(o, 2),
+                    nillable = _safe_get_i(o, 3)
+                }
+            end
         end
-        assert(istable(v), "Provided accessor value must be a table")
+        assert(istable(value), "Provided accessor value must be a table")
 
         -- Apply global settings if they don't yet exist.
         if has_global_settings then
             for name, default in pairs(global_settings) do
-                if v[name] != nil then continue end
-                v[name] = default
+                if value[name] != nil then continue end
+                value[name] = default
             end
         end
 
         -- Ensure the value is a table (either directly or from conversion).
         -- Then validate the table structure with defaults etc.
-        local success, out = GNIL.Validation.Structure(v, {
+        local success, out = GNIL.Validation.Structure(value, {
             var = {nil, TYPE_STRING, true},
             force = {
                 nil, {
@@ -192,7 +198,7 @@ ClassAccessorFunc = function(obj, tbl)
         -- Only for boolean types.
         if out.is != false then
             obj["Is" .. k] = function(self)
-                if out.is != true then return out.is(self) end
+                if out.is != true then return out.is(self, out) end
                 return tobool(self[out.var])
             end
         end
@@ -204,7 +210,7 @@ FuncAccessors = {
     ---Add only a getter without setter.
     ---@param var string
     ---@param additions? table
-    ---@return table
+    ---@return FuncAccessor
     ReadOnly = function(var, additions)
         return table.Inherit({
             var = var,
@@ -214,10 +220,10 @@ FuncAccessors = {
 
     ---Add a getter and setter that only accepts numbers between range.
     ---@param var string
-    ---@param min? integer
-    ---@param max? integer
+    ---@param min? number
+    ---@param max? number
     ---@param additions? table
-    ---@return table
+    ---@return FuncAccessor
     NumberMinMax = function(var, min, max, additions)
         local min, max = min, max
         return table.Inherit({
@@ -237,7 +243,7 @@ FuncAccessors = {
     ---@param var string
     ---@param class string|fun(): string
     ---@param additions? table
-    ---@return table
+    ---@return FuncAccessor
     InstanceOf = function(var, class, additions)
         local class, is_fn = class, isfunction(class)
         return table.Inherit({
@@ -257,7 +263,7 @@ FuncAccessors = {
     ---Add a setter that only accepts boolean and IsVar method.
     ---@param var string
     ---@param additions? table
-    ---@return table
+    ---@return FuncAccessor
     Boolean = function(var, additions)
         return table.Inherit({
             var = var,
@@ -269,9 +275,9 @@ FuncAccessors = {
 
     ---Add a getter and setter that only allows numbers greater or equal to count.
     ---@param var string
-    ---@param count integer
+    ---@param count number
     ---@param additions? table
-    ---@return table
+    ---@return FuncAccessor
     Enum = function(var, count, additions)
         return FuncAccessors.NumberMinMax(var, 1, count, additions)
     end

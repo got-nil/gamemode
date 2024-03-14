@@ -20,7 +20,7 @@ end
 ---@param const string
 ---@param const_default any
 ---@param fn function
----@return any
+---@return any ConstValue
 function GNIL.Loader.ConstWrap(const, const_default, fn)
     local previous = _G[const]
     _G[const] = const_default or {}
@@ -37,7 +37,7 @@ end
 ---@param const string
 ---@param directory_path string
 ---@param const_default? any
----@return any
+---@return any DirectoryConstValue
 function GNIL.Loader.DirectoryConst(const, directory_path, const_default)
     return GNIL.Loader.ConstWrap(const, const_default or {}, function()
 
@@ -48,7 +48,7 @@ function GNIL.Loader.DirectoryConst(const, directory_path, const_default)
         for _, v in ipairs(files) do
 
             GNIL.Utils.Include(v)
-            if not GNIL.Utils.IsFilenameForCurrentRealm(filepath) then
+            if not GNIL.Utils.IsFilenameForCurrentRealm(v) then
                 continue
             end
             any_loaded = true
@@ -62,14 +62,14 @@ function GNIL.Loader.DirectoryConst(const, directory_path, const_default)
 end
 
 ---Get the loader table from name.
----@return table
+---@return table Loaders
 function GNIL.Loader.GetLoaders()
     return GNIL.Loader["_loaders"]
 end
 
 ---Get a loader by name.
 ---@param name string
----@return table?
+---@return table? Loader
 function GNIL.Loader.GetLoader(name)
     return GNIL.Loader["_loaders"][name]
 end
@@ -92,7 +92,7 @@ end
 ---@param directory_path string
 ---@param key_uppercase_first? boolean
 ---@param force_realm? string
----@return table?
+---@return table? DirectoryValues
 function GNIL.Loader.DirectoryFilenameMap(directory_path, key_uppercase_first, force_realm)
 
     -- Map file return values to cleaned filename.
@@ -103,7 +103,7 @@ function GNIL.Loader.DirectoryFilenameMap(directory_path, key_uppercase_first, f
     if files == nil then return nil end
     for _, f in ipairs(files) do
 
-        local name = GNIL.Utils.GetCleanFilename(f, extension or "lua")
+        local name = GNIL.Utils.GetCleanFilename(f)
         local rtrn = GNIL.Utils.Include(directory_path .. "/" .. f, force_realm)
         if not force_realm and not GNIL.Utils.IsFilenameForCurrentRealm(f) then
             continue
@@ -135,13 +135,13 @@ end
 ---@param directory_path string
 ---@param callback? function
 ---@param force_realm? string
----@return table?
+---@return table? DirectoryMapValue
 function GNIL.Loader.DirectoryMap(directory_path, callback, force_realm)
     assert(callback == nil or isfunction(callback), "If a callback is provided, it must be a function.")
 
     local out = {}
 
-    local files, _ = file.Find(directory_path .. "/*." .. (extension or "lua"), "LUA")
+    local files, _ = file.Find(directory_path .. "/*.lua", "LUA")
     if files == nil then return nil end
     for _, f in ipairs(files) do
 

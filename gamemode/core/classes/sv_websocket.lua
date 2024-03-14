@@ -109,7 +109,7 @@ end
 
 ---@param url string
 ---@param verify_cert boolean
----@param retry_delay? integer
+---@param retry_delay? number
 function Websocket:Initialize(url, verify_cert, retry_delay)
     self.url = url
     self.verify_cert = verify_cert
@@ -151,11 +151,13 @@ function Websocket:Open(callback)
     -- Initialize the GWSocket connection.
     assert(callback == nil or isfunction(callback), "Provided callback argument must either be nil or a function")
     if not GWSocketsExists(self) then
-        if calback != nil then ---@cast callback function
+        if callback != nil then ---@cast callback function
             callback(false, "Failed to load GWSockets module")
         end
         return self
     end
+
+    ---@diagnostic disable-next-line Ignore GWSockets global warning.
     local socket = GWSockets.createWebSocket(self.url, Either(isbool(self.verify_cert), self.verify_cert, false))
 
     -- Add headers/cookies to the socket.

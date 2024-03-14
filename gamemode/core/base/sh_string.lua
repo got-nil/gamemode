@@ -3,10 +3,10 @@ local string = string
 
 ---@param font string
 ---@param str string
----@param max integer
+---@param max number
 ---@return string
----@return integer
----@return integer
+---@return number
+---@return number
 string.TextWrap = function(font, str, max)
 	surface.SetFont(font)
 	local words = string.Explode(" ", str)

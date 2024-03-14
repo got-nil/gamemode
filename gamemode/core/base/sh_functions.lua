@@ -37,17 +37,17 @@ IsClass = function(obj, name)
     return obj.class.name == name
 end
 
----Check if an object is an instance of class name.
+---Check if an object is an instance of a class.
 ---@param obj any
----@param class string
+---@param class middleclass
 ---@return boolean
 IsInstanceOf = function(obj, class)
     return istable(obj) and obj.IsInstanceOf and obj:IsInstanceOf(class)
 end
 
----Check if an object is subclass of class name.
+---Check if an object is subclass of a class.
 ---@param obj any
----@param class string
+---@param class middleclass
 ---@return boolean
 IsSubclassOf = function(obj, class)
     return istable(obj) and obj.IsSubclassOf and obj:IsSubclassOf(class)

@@ -2,15 +2,17 @@
 -- designed with reloading in mind, using OnLoad, OnUnload or OnReinitialize.
 
 ---@class Module: EventsMixin
----@field name string
----@field description string
----@field author string|string[]
----@field autoload boolean
----@field dependencies boolean|table
----@field config string|boolean
----@field protected _module_name string
----@field protected _initialized boolean
----@field protected _base_path? string
+---@field name string Module name.
+---@field description string Module description.
+---@field author string|string[] Module author, or authors.
+---@field autoload boolean Should the module be autoloaded?
+---@field dependencies boolean|table Set of all Module dependencies.
+---@field config string|boolean Module config filename.
+---@field config_required boolean Is config required for this Module to load?
+---@field config_structure? table The structure the related config file should follow.
+---@field _module_name string The internal module name/id.
+---@field _initialized boolean Has the Module been initialized.
+---@field _base_path? string The Module base filepath.
 ---@field private _extensions? table<string, BaseExtension>
 local Module = GNIL.Thirdparty.middleclass("Module"):IncludeMixin(GNIL.ClassMixins.Events)
 ClassAccessorFunc(Module, {
@@ -45,6 +47,7 @@ function Module:Initialize(name, base_path, _emit_signal)
     -- Should the rest of the root directory files within the module
     -- be loaded once the init file has been ran. SetAutoload(...)
     self.autoload = true
+    self.tests = false
     self.dependencies = false
     self._loaded_dependencies = {}
     self._delayed_extensions = {}
@@ -60,6 +63,7 @@ function Module:Initialize(name, base_path, _emit_signal)
     -- be automatically disabled if the config is not found.
     self.config = false
     self.config_required = true
+    self.config_structure = nil
 
     self._hooks = {
         {}, -- seq
