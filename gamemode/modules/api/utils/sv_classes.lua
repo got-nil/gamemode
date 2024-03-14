@@ -4,8 +4,11 @@ local MODULE = MODULE
 GNIL.API.Classes = GNIL.API.Classes or {}
 MODULE:IncludeDirectory("classes")
 
--- Cast value to type, calling the class _From method if it
--- exists, or just returning the value if its already the class.
+---Cast value to type, calling the class _From method if it
+---exists, or just returning the value if its already the class.
+---@param value table
+---@param class_name string
+---@return middleclass?
 function GNIL.API.Classes.To(value, class_name)
     local class = GNIL.API.Classes[class_name]
 
@@ -25,7 +28,10 @@ function GNIL.API.Classes.To(value, class_name)
     return class:New()
 end
 
--- Is a provided value type of class?
+---Is a provided value type of class?
+---@param value any
+---@param class_name string
+---@return boolean
 function GNIL.API.Classes.Is(value, class_name)
     local class = GNIL.API.Classes[class_name]
 

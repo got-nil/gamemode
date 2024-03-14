@@ -1,3 +1,8 @@
+
+---@class API.Response: API.Message
+---@field status number
+---@field body? API.Body
+---@field headers? API.Headers
 local Response = GNIL.Thirdparty.middleclass("Response", GNIL.API.Message)
 
 function Response:Initialize(status, body, headers)

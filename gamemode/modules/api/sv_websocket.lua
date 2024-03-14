@@ -1,15 +1,23 @@
+local MODULE = MODULE
 
-local MODULE, Websocket = MODULE, GNIL.Thirdparty.middleclass("APIWebsocket", GNIL.Classes.Websocket)
+---@class API.Websocket: Websocket
+---@field _server API.Server
+local Websocket = GNIL.Thirdparty.middleclass("APIWebsocket", GNIL.Classes.Websocket)
 
 -- Now uses base websocket class as super to inherit
 -- auto-reconnect system + better interface.
 
+---@param server API.Server
 function Websocket:Initialize(server)
     self._server = server
     self._request_partials = {}
 
     -- Initialize base websocket connection.
     local conf = MODULE:Config()
+    if not conf then
+        MODULE:log("Could not get API config reference to create Websocket!", "error")
+        return
+    end
     GNIL.Classes.Websocket.Initialize(
         self,
         conf:Get("ws_host"),
@@ -68,13 +76,17 @@ local operations = {
     end
 }
 
--- Write provided operation to socket.
+---Write provided operation to socket.
+---@param name string
+---@param data table
 function Websocket:WriteOperation(name, data)
     data["o"] = name
     self:Write("#" .. util.TableToJSON(data))
 end
 
--- Write response operation header + body to socket.
+---Write response operation header + body to socket.
+---@param request_id string
+---@param response API.Response
 function Websocket:WriteResponse(request_id, response)
     local data = response:ToTable()
 
