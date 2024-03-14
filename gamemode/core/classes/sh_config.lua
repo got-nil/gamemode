@@ -1,6 +1,6 @@
 -- Used to contain each gamemode config file.
 
----@class Config
+---@class Config: middleclass
 local Config = GNIL.Thirdparty.middleclass("Config")
 function Config:Initialize(name, struct, filepath)
     self.name = name

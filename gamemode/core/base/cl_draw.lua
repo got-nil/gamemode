@@ -3,13 +3,13 @@
 local draw = draw
 
 ---Draw an outlined textured rectangle with rotation.
----@param x integer
----@param y integer
----@param width integer
----@param height integer
+---@param x number
+---@param y number
+---@param width number
+---@param height number
 ---@param color table
----@param rotation integer
----@param outlinewidth integer
+---@param rotation number
+---@param outlinewidth number
 ---@param outlinecolour table
 draw.DrawTexturedRectRotatedOutlined = function(x, y, width, height, color, rotation, outlinewidth, outlinecolour)
     local steps = ( outlinewidth * 2 ) / 3

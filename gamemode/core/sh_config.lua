@@ -40,7 +40,7 @@ end
 
 ---Either return the config object or nil.
 ---@param name string
----@return any
+---@return any Value
 function GNIL.Config.Get(name)
     return GNIL.Config["_r"][name]
 end
@@ -48,8 +48,8 @@ end
 ---Load a config file and cache it.
 ---@param filename string
 ---@param _partialModule? Module
----@return boolean
----@return self?
+---@return boolean SuccessState
+---@return self? ConfigInstance
 function GNIL.Config.Load(filename, _partialModule)
 
     -- Determine the target filepath. Instead of allowing arbitary

@@ -364,7 +364,7 @@ end
 ---@param associative? boolean
 ---@param just_names? boolean
 ---@param ignore_disabled? boolean
----@return table<string|integer, string|Module>
+---@return table<string|number, string|Module>
 function GNIL.Modules.GetAll(associative, just_names, ignore_disabled)
     local modules = {}
 
@@ -380,7 +380,7 @@ end
 ---If associative is false, just_names can be true which makes a sequential array of string names.
 ---@param associative? boolean
 ---@param just_names? boolean
----@return table<string|integer, string|Module>
+---@return table<string|number, string|Module>
 function GNIL.Modules.FindAll(associative, just_names)
     local modules = {}
 

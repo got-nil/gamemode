@@ -3,9 +3,9 @@ local table = table
 
 ---Slice a table.
 ---@param tbl table
----@param first? integer
----@param last? integer
----@param step? integer
+---@param first? number
+---@param last? number
+---@param step? number
 ---@return table
 table.Slice = function(tbl, first, last, step)
     local sliced = {}
@@ -18,7 +18,7 @@ table.Slice = function(tbl, first, last, step)
 end
 
 ---Convert a sequential table to lookup.
----@param tbl table<integer, any>
+---@param tbl table<number, any>
 ---@param value? any
 ---@return table
 table.Lookup = function(tbl, value)

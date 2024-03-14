@@ -11,7 +11,10 @@ local filenameRealmAliases = {
     ["cl_init.lua"] = "cl_"
 }
 
--- IsDir doesn't work for client sometimes.
+---IsDir doesn't work for client sometimes.
+---@param filePath string
+---@param gamePath string
+---@return boolean Existence
 function GNIL.Utils.DirectoryExists(filePath, gamePath)
 
     -- https://github.com/Facepunch/garrysmod-issues/issues/1038
@@ -27,9 +30,13 @@ function GNIL.Utils.DirectoryExists(filePath, gamePath)
             return true
         end
     end
+    return false
 end
 
--- Split a provided path into: base(str), filename(str).
+---Split a provided path into base and filename.
+---@param filepath any
+---@return string BasePath
+---@return string Filename
 function GNIL.Utils.SplitPath(filepath)
     local parts = string.Explode("/", filepath)
     local base, last = "", parts[#parts]
@@ -39,7 +46,10 @@ function GNIL.Utils.SplitPath(filepath)
     return base, last
 end
 
--- Include relative to caller.
+---Include relative to caller.
+---@param filepath string
+---@param realm? string
+---@return any? IncludeValue
 function GNIL.Utils.Include(filepath, realm)
 
     -- Ensures that the filepath isn't blacklisted.
@@ -77,7 +87,11 @@ function GNIL.Utils.Include(filepath, realm)
 end
 
 local realms = {"sh_", "cl_", "sv_"}
-function GNIL.Utils.GetFilepathRealmPrefix(filepath) -- ?str
+
+---Get realm from file prefix.
+---@param filepath string
+---@return string? FilepathRealmPrefix
+function GNIL.Utils.GetFilepathRealmPrefix(filepath)
     if 3 > #filepath then return nil end
 
     -- If there is a slash in the filepath we can assume its not just
@@ -97,7 +111,9 @@ function GNIL.Utils.GetFilepathRealmPrefix(filepath) -- ?str
     return table.HasValue(realms, realm) and realm or nil
 end
 
--- Check if the current file should be loaded in the current realm.
+---Check if the current file should be loaded in the current realm.
+---@param filepath string
+---@return boolean IsCurrentRealm
 function GNIL.Utils.IsFilenameForCurrentRealm(filepath)
     local prefix = GNIL.Utils.GetFilepathRealmPrefix(filepath)
     if prefix == nil then return false end
@@ -105,9 +121,13 @@ function GNIL.Utils.IsFilenameForCurrentRealm(filepath)
     return (SERVER and "sv_" or "cl_") == prefix
 end
 
--- "Sanitize" a filename by removing any file extension and file
--- realm prefix (optional, default: true) Makes using filenames as ids
--- relatively simple.
+---"Sanitize" a filename by removing any file extension and file
+---realm prefix (optional, default: true) Makes using filenames as ids
+---relatively simple.
+---@param filename string
+---@param extension? string
+---@param includeRealmPrefix? boolean
+---@return string Filename
 function GNIL.Utils.GetCleanFilename(filename, extension, includeRealmPrefix)
     if not extension then extension = "lua" end
     if not string.StartWith(extension, ".") then extension = "." .. extension end ---@diagnostic disable-line
@@ -118,7 +138,9 @@ function GNIL.Utils.GetCleanFilename(filename, extension, includeRealmPrefix)
     return filename
 end
 
--- Convert a gamemode path to an absolute LUA path.
+---Convert a gamemode path to an absolute LUA path.
+---@param path string
+---@return string AbsolutePath
 function GNIL.Utils.ResolveGamemodePath(path)
     return GNIL.GamemodeFolderName .. "/gamemode/" .. path
 end
@@ -161,12 +183,14 @@ function GNIL.Utils.IncludeDirectory(path, ignoredFiles, _)
     end
 end
 
--- Execute given LUA code, returning any execution return values, or error
--- message if compilation/execution failed. Returns:
---  bool: success
---  output: string error when unsuccessful, or Any output when successful
+---Execute given LUA code, returning any execution return values, or error
+---message if compilation/execution failed.
+---@param code string
+---@param name? string
+---@return boolean SuccessState
+---@return string|any Output String error message when unsuccessful, or Any output when successful.
 function GNIL.Utils.Execute(code, name)
-    local compiled = CompileString(code, name == nil and "gnil_exec" or name, false)
+    local compiled = CompileString(code, Either(name != nil, name, "gnil_exec"), false)
 
     -- If the compiled result is a string then the compilation failed.
     if isstring(compiled) then
@@ -187,8 +211,11 @@ local charset = {}  do
     for c = 65, 90  do table.insert(charset, string.char(c)) end
     for c = 97, 122 do table.insert(charset, string.char(c)) end
 end
-
 math.randomseed(os.clock()^5)
+
+---Generate a random string with length provided.
+---@param len? number
+---@return string RandomString
 function GNIL.Utils.Random(len)
     if not len or len <= 0 then len = 28 end -- default to 28 length
 
@@ -199,7 +226,11 @@ function GNIL.Utils.Random(len)
     return table.concat(s)
 end
 
--- Replace multiple instances of a needle with different values.
+---Replace multiple instances of a needle with different values.
+---@param haystack string
+---@param needle string
+---@param callback fun(index: number): string
+---@return any ReplacedString
 function GNIL.Utils.RecursiveReplace(haystack, needle, callback)
 
     -- Find all occurances and store its positions.
@@ -225,9 +256,12 @@ function GNIL.Utils.RecursiveReplace(haystack, needle, callback)
     return haystack
 end
 
--- Check if a lua bin module is installed.
 local suffix = ({"osx64", "osx", "linux64", "linux", "win64", "win32"})[(system.IsWindows() and 4 or 0) + (system.IsLinux() and 2 or 0) + (jit.arch == "x86" and 1 or 0) + 1]
 local fmt = "lua/bin/gm" .. (CLIENT and "cl" or "sv") .. "_%s_%s.dll"
+
+---Check if a lua bin module is installed.
+---@param name string
+---@return string DLLFilepath
 function GNIL.Utils.GetDLLFilepath(name)
     name = string.lower(name)
     if jit.versionnum != 20004 and jit.arch == "x86" and system.IsLinux() and file.Exists(string.format(fmt, name, "linux32"), "GAME") then
@@ -236,13 +270,27 @@ function GNIL.Utils.GetDLLFilepath(name)
     return string.format(fmt, name, suffix)
 end
 
--- Check if a DLL is installed or already included.
-function GNIL.Utils.IsDLLInstalled(name) return file.Exists(GNIL.Utils.GetDLLFilepath(name), "GAME") end
-function GNIL.Utils.IsDLLIncluded(name) return GNIL.Utils["_loaded_dlls"][string.lower(name)] == true end
+---Check if a DLL is installed.
+---@param name string
+---@return boolean DLLExistence
+function GNIL.Utils.IsDLLInstalled(name)
+    return file.Exists(GNIL.Utils.GetDLLFilepath(name), "GAME")
+end
 
--- Require a DLL. This ensures that the module actually exists,
--- and will not allow modules that have already been included to
--- be loaded twice. Can also verify that global const exists.
+---Check if a DLL is included.
+---@param name string
+---@return boolean DLLIncluded
+function GNIL.Utils.IsDLLIncluded(name)
+    return GNIL.Utils["_loaded_dlls"][string.lower(name)] == true
+end
+
+---Require a DLL. This ensures that the module actually exists,
+---and will not allow modules that have already been included to
+---be loaded twice. Can also verify that global const exists.
+---@param name string
+---@param const? string
+---@return boolean SuccessState
+---@return string? ErrorMessage
 function GNIL.Utils.RequireDLL(name, const)
 
     -- If the DLL is already included, return early.
