@@ -32,9 +32,9 @@ end
 
 ---Add network string alias, works the exact same.
 ---@param str string
----@param ratelimits? {capacity?: integer, delay?: integer, amount?: integer}
+---@param ratelimits? Net.AntiAbuse.Ratelimits
 ---@param _d? boolean Should we delay before sending out the resync?
----@return boolean|integer
+---@return boolean|number
 function GNIL.Net.AddNetworkString(str, ratelimits, _d)
     assert(isstring(str), "The provided network string... must be a string.")
     assert(ratelimits == nil or istable(ratelimits), "The provided ratelimits must be nil or a ratelimits config table.")
@@ -84,27 +84,30 @@ end
 ---ids, as it only resyncs once the last message has been added,
 ---Although you shouldn't ever need to add late messages anyway).
 ---@param ... table|string
----@return table<string, integer>
+---@return table<string, number>
 function GNIL.Net.AddNetworkStrings(...)
     local args, out = {...}, {}
 
     -- Use the correct iterator if we're getting ratelimits.
     local iter, using_tbl = ipairs, #args == 1 and istable(args[1])
-    if using_tbl then
+    if using_tbl then ---@cast args table
         iter, args = pairs, args[1]
     end
 
+    local i = 1
     for k, v in iter(args) do
 
         -- We can only get ratelimits when supplied a table.
         local str, ratelimits = v, nil
         if using_tbl then
-            str, ratelimits = k, v
+            str, ratelimits = k, v ---@cast ratelimits Net.AntiAbuse.Ratelimits?
         end
         local value = GNIL.Net.AddNetworkString(str, ratelimits, i == #args)
         if value != false then
             out[v] = value
         end
+
+        i = i + 1
     end
     return out
 end
@@ -112,7 +115,7 @@ end
 ---Send the network message to all players.
 ---If a netmessage is provided, write it to stream and use the default
 ---broadcast instead of sending each message individually.
----@param _nm? NetworkMessage
+---@param _nm? Net.Message
 function GNIL.Net.Broadcast(_nm)
     if _nm then
 
@@ -133,7 +136,7 @@ end
 ---NetMessage instance can be provided as second argument to allow
 ---for message queuing (and just being OOP which is automatically cool)
 ---@param ply CRecipientFilter|table|Player
----@param _nm? NetworkMessage
+---@param _nm? Net.Message
 ---@param _allowqueue? boolean
 function GNIL.Net.Send(ply, _nm, _allowqueue)
 
@@ -144,6 +147,8 @@ function GNIL.Net.Send(ply, _nm, _allowqueue)
         -- the players that apply to the filter, and iteratively send the message
         -- to each of them.
         for _, v in ipairs(ply:GetPlayers()) do
+
+            ---@diagnostic disable-next-line
             MODULE:log("Player in recipient filter for '" .. (Either(_nm != nil, _nm.name, "UNKNOWN")) .. "': " .. v:ToString(), "debug")
             GNIL.Net.Send(v, _nm)
         end
@@ -174,7 +179,8 @@ function GNIL.Net.Send(ply, _nm, _allowqueue)
             end
             table.insert(GNIL.Net["_q"][sid], {ply, _nm})
 
-            MODULE:log("Message '" .. _nm.name .. "' to player '" .. ply:Nick() .. "' has been queued ", "debug")
+            ---@diagnostic disable-next-line
+            MODULE:log("Message '" .. Either(_nm != nil, _nm.name, "UNKNOWN") .. "' to player '" .. ply:Nick() .. "' has been queued ", "debug")
             return
         end
 

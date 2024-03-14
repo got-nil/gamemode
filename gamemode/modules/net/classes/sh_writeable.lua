@@ -8,7 +8,7 @@
 
 -- TODO: BytesWritten
 
----@class NetworkWriteableMixin
+---@class Net.Writeable
 local WriteableMixin = {
 
     -- Each function should expect the write buffer to possibly

@@ -64,9 +64,11 @@ function GNIL.Net.AntiAbuse.Abusing(messageName, ply, is_default_message)
     end
 end
 
+---@alias Net.AntiAbuse.Ratelimits {capacity?: number, delay?: number, amount?: number}
+
 ---Set the rate limits for a message name.
 ---@param messageName string
----@param limits {capacity?: integer, delay?: integer, amount?: integer}
+---@param limits Net.AntiAbuse.Ratelimits
 ---@param is_default_message? boolean
 ---@return boolean
 function GNIL.Net.AntiAbuse.SetLimits(messageName, limits, is_default_message)
@@ -106,7 +108,7 @@ end
 ---Check if the player is abusing this message name (called in reciever.)
 ---@param messageName string
 ---@param ply Player
----@param reply? NetworkReply
+---@param reply? Net.Reply
 ---@param is_default_message? boolean
 ---@return boolean
 function GNIL.Net.AntiAbuse.Check(messageName, ply, reply, is_default_message)

@@ -3,7 +3,7 @@ GNIL.Net.Helpers = GNIL.Net.Helpers or {}
 
 local bitcount_map = {1, 3, 7, 15, 31, 63, 127, 255, 511, 1023, 2047, 4095, 8191, 16383, 32767, 65535, 131071, 262143, 524287, 1048575, 2097151, 4194303, 8388607, 16777215, 33554431, 67108863, 134217727, 268435455, 536870911, 1073741823, 2147483647, 4294967295}
 
----@param bitcount integer
+---@param bitcount number
 ---@param is_uint boolean
 ---@return boolean
 function GNIL.Net.Helpers.GetBitcountMaxValue(bitcount, is_uint)
@@ -13,7 +13,7 @@ end
 
 ---Since its a small set we can just test each
 ---value until a valid bitcount is found, or false.
----@param value integer
+---@param value number
 ---@param is_uint boolean
 ---@return boolean
 function GNIL.Net.Helpers.GetBitcount(value, is_uint)
@@ -35,7 +35,7 @@ end
 ---Wrapper for a reciever that auto replies with the
 ---DISABLED error. Also a little bit of logging.
 ---@param messageName string
----@return fun(len: integer, ply: Player, reply: NetworkReply)
+---@return fun(len: number, ply: Player, reply: Net.Reply)
 function GNIL.Net.Helpers.DisabledMessageReciever(messageName)
 
     return function(_, ply, reply)
@@ -47,7 +47,8 @@ function GNIL.Net.Helpers.DisabledMessageReciever(messageName)
         -- with the DISABLED error (to possibly prevent
         -- repeat calls or just for serverside logging).
         if reply then
-            return reply:SetError(GNIL_NET_ERRORS.DISABLED)
+            reply:SetError(GNIL_NET_ERRORS.DISABLED)
+            return
         end
     end
 end

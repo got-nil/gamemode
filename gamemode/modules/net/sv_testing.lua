@@ -53,8 +53,8 @@ local Types = {
 }
 
 ---@param is_read boolean
----@param write_buffer NetworkWriteableMixin?
----@return NetworkWriteableMixin
+---@param write_buffer Net.Writeable?
+---@return Net.Writeable
 local function createBuffer(is_read, write_buffer)
     if is_read then
         return GNIL.Net.Classes.Readable:New(write_buffer)
@@ -114,7 +114,7 @@ end
 
 ---Restore network functions to originals.
 ---@param is_read boolean
----@return NetworkWriteableMixin?
+---@return Net.Writeable?
 function GNIL.Net.Testing.Restore(is_read)
 
     -- Ensure its already been detoured.
@@ -147,7 +147,7 @@ function GNIL.Net.Testing.IsDetoured(is_read)
 end
 
 ---Call the network reciever with a write buffer, wrapped in a detour.
----@param write_buffer NetworkWriteableMixin
+---@param write_buffer Net.Writeable
 ---@param receiver any
 ---@return boolean
 ---@return string?
@@ -176,7 +176,7 @@ end
 
 ---Wrap a writeable callback in a detour state.
 ---@param callback function
----@return boolean|NetworkWriteableMixin
+---@return boolean|Net.Writeable
 ---@return string|{messageName: string|boolean, target: any}?
 function GNIL.Net.Testing.WrapWriteable(callback)
     if GNIL.Net.Testing.IsDetoured(false) then return false, nil end

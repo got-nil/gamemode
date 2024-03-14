@@ -4,7 +4,7 @@ local MODULE = MODULE
 -- in terms of input arguments and return values.
 
 ---Convert an internal network ID to string.
----@param id integer
+---@param id number
 ---@return string?
 function GNIL.Net.NetworkIDToString(id)
     if id == 0 or id > #GNIL.Net["_r"] then return nil end
@@ -13,7 +13,7 @@ end
 
 ---Convert an internal network string to ID.
 ---@param str string
----@return integer
+---@return number
 function GNIL.Net.NetworkStringToID(str)
 
     -- For maximum optimisation, the ids are pre-cached as a reverse
@@ -32,7 +32,7 @@ local function _addReceiverAtPos(name, pos, callback)
 end
 
 ---@param messageName string
----@param callback fun(len: integer, ply: Player, reply: NetworkReply): NetworkReply?
+---@param callback fun(len: number, ply: Player, reply: Net.Reply): Net.Reply?
 function GNIL.Net.Receive(messageName, callback) _addReceiverAtPos(messageName, 1, callback) end
 
 ---@param messageName string
@@ -44,7 +44,7 @@ function GNIL.Net.ReceiveChunked(messageName, callback) assert(CLIENT, "Only the
 ---Create a network message instance with the given
 ---message name (class constructor alias basically).
 ---@param messageName string
----@return NetworkMessage
+---@return Net.Message
 function GNIL.Net.Create(messageName)
     return GNIL.Net.Classes.Message:New(messageName)
 end
