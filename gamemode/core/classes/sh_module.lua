@@ -1,6 +1,8 @@
 -- Handle the loading and management of modules. All modules should be
 -- designed with reloading in mind, using OnLoad, OnUnload or OnReinitialize.
 
+---@alias MODULE Module Current loaded Module.
+
 ---@class Module: EventsMixin
 ---@field name string Module name.
 ---@field description string Module description.

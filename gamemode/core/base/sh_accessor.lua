@@ -99,7 +99,7 @@ ClassAccessorFunc = function(obj, tbl)
         assert(isstring(k), "Provided accessor name must be a string")
 
         -- Convert provided value to assoc table.
-        local value
+        local value = v
         if isstring(v) then
             value = {
                 var = v
