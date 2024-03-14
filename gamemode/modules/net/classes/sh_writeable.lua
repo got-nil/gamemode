@@ -25,6 +25,9 @@ local WriteableMixin = {
         table.insert(self.__write_buffer, {args, typeName})
         return self
     end,
+
+    ---Call all network writers on buffer, must be called with an open message.
+    ---@param self self
     _WriteBufferToStream = function(self)
         if self.__write_buffer == nil then return end
         for _, v in ipairs(self.__write_buffer) do
@@ -33,22 +36,128 @@ local WriteableMixin = {
         end
     end,
 
-    WriteAngle =    function(self, ...) return self:_WriteToBuffer({...}, "Angle")  end,
-    WriteBit =      function(self, ...) return self:_WriteToBuffer({...}, "Bit")    end,
-    WriteBool =     function(self, ...) return self:_WriteToBuffer({...}, "Bool")   end,
-    WriteColor =    function(self, ...) return self:_WriteToBuffer({...}, "Color")  end,
-    WriteData =     function(self, ...) return self:_WriteToBuffer({...}, "Data")   end,
-    WriteDouble =   function(self, ...) return self:_WriteToBuffer({...}, "Double") end,
-    WriteEntity =   function(self, ...) return self:_WriteToBuffer({...}, "Entity") end,
-    WriteFloat =    function(self, ...) return self:_WriteToBuffer({...}, "Float")  end,
-    WriteInt =      function(self, ...) return self:_WriteToBuffer({...}, "Int")    end,
-    WriteMatrix =   function(self, ...) return self:_WriteToBuffer({...}, "Matrix") end,
-    WriteString =   function(self, ...) return self:_WriteToBuffer({...}, "String") end,
-    WriteType =     function(self, ...) return self:_WriteToBuffer({...}, "Type")   end,
-    WriteUInt =     function(self, ...) return self:_WriteToBuffer({...}, "UInt")   end,
-    WriteVector =   function(self, ...) return self:_WriteToBuffer({...}, "Vector") end,
-    WriteUInt64 =   function(self, ...) return self:_WriteToBuffer({...}, "UInt64") end,
-    WritePlayer =   function(self, ...) return self:_WriteToBuffer({...}, "Player") end
+    ---@generic T
+    ---@param self T
+    ---@param angle Angle
+    ---@see net.WriteAngle
+    ---@return T
+    WriteAngle = function(self, angle) return self:_WriteToBuffer({angle}, "Angle") end, ---@diagnostic disable-line
+
+    ---@generic T
+    ---@param self T
+    ---@param boolean boolean
+    ---@see net.WriteBit
+    ---@return T
+    WriteBit = function(self, boolean) return self:_WriteToBuffer({boolean}, "Bit") end, ---@diagnostic disable-line
+
+    ---@generic T
+    ---@param self T
+    ---@param boolean boolean
+    ---@see net.WriteBool
+    ---@return T
+    WriteBool = function(self, boolean) return self:_WriteToBuffer({boolean}, "Bool") end, ---@diagnostic disable-line
+
+    ---@generic T
+    ---@param self T
+    ---@param color table|Color
+    ---@param writeAlpha? boolean
+    ---@see net.WriteColor
+    ---@return T
+    WriteColor = function(self, color, writeAlpha) return self:_WriteToBuffer({color, writeAlpha}, "Color") end, ---@diagnostic disable-line
+
+    ---@generic T
+    ---@param self T
+    ---@param binaryData string
+    ---@param length? integer
+    ---@see net.WriteData
+    ---@return T
+    WriteData = function(self, binaryData, length) return self:_WriteToBuffer({binaryData, length}, "Data") end, ---@diagnostic disable-line
+
+    ---@generic T
+    ---@param self T
+    ---@param double number
+    ---@see net.WriteDouble
+    ---@return T
+    WriteDouble = function(self, double) return self:_WriteToBuffer({double}, "Double") end, ---@diagnostic disable-line
+
+    ---@generic T
+    ---@param self T
+    ---@param entity Entity
+    ---@see net.WriteEntity
+    ---@return T
+    WriteEntity = function(self, entity) return self:_WriteToBuffer({entity}, "Entity") end, ---@diagnostic disable-line
+
+    ---@generic T
+    ---@param self T
+    ---@param float number
+    ---@see net.WriteFloat
+    ---@return T
+    WriteFloat = function(self, float) return self:_WriteToBuffer({float}, "Float") end, ---@diagnostic disable-line
+
+    ---@generic T
+    ---@param self T
+    ---@param integer number
+    ---@param bitCount number
+    ---@see net.WriteInt
+    ---@return T
+    WriteInt = function(self, integer, bitCount) return self:_WriteToBuffer({integer, bitCount}, "Int") end, ---@diagnostic disable-line
+
+    ---@generic T
+    ---@param self T
+    ---@param matrix VMatrix
+    ---@see net.WriteMatrix
+    ---@return T
+    WriteMatrix = function(self, matrix) return self:_WriteToBuffer({matrix}, "Matrix") end, ---@diagnostic disable-line
+
+    ---@generic T
+    ---@param self T
+    ---@param normal Vector
+    ---@see net.WriteNormal
+    ---@return T
+    WriteNormal = function(self, normal) return self:_WriteToBuffer({normal}, "Normal") end, ---@diagnostic disable-line
+
+    ---@generic T
+    ---@param self T
+    ---@param ply Player
+    ---@see net.WritePlayer
+    ---@return T
+    WritePlayer = function(self, ply) return self:_WriteToBuffer({ply}, "Player") end, ---@diagnostic disable-line
+
+    ---@generic T
+    ---@param self T
+    ---@param string string
+    ---@see net.WriteString
+    ---@return T
+    WriteString = function(self, string) return self:_WriteToBuffer({string}, "String") end, ---@diagnostic disable-line
+
+    ---@generic T
+    ---@param self T
+    ---@param data any
+    ---@see net.WriteType
+    ---@return T
+    WriteType = function(self, data) return self:_WriteToBuffer({data}, "Type") end, ---@diagnostic disable-line
+
+    ---@generic T
+    ---@param self T
+    ---@param unsignedInteger number
+    ---@param bitCount number
+    ---@see net.WriteUInt
+    ---@return T
+    WriteUInt = function(self, unsignedInteger, bitCount) return self:_WriteToBuffer({unsignedInteger, bitCount}, "UInt") end, ---@diagnostic disable-line
+
+    ---@generic T
+    ---@param self T
+    ---@param uint64 string
+    ---@see net.WriteUInt64
+    ---@return T
+    WriteUInt64 = function(self, uint64) return self:_WriteToBuffer({uint64}, "UInt64") end, ---@diagnostic disable-line
+
+    ---@generic T
+    ---@param self T
+    ---@param vector Vector
+    ---@see net.WriteVector
+    ---@return T
+    WriteVector = function(self, vector) return self:_WriteToBuffer({vector}, "Vector") end ---@diagnostic disable-line
 
 }
 return WriteableMixin
