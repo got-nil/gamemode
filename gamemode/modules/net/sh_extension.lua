@@ -32,7 +32,7 @@ end
 
 ---Add a network reciever by name.
 ---@param messageName any
----@param callback fun(len: integer, ply: Player, reply: NetworkReply): NetworkReply?
+---@param callback fun(len: number, ply: Player, reply: Net.Reply): Net.Reply?
 function NetExtension:Receive(messageName, callback)
     self._recievers[1][messageName] = true
     GNIL.Net.Receive(messageName, callback)
@@ -40,7 +40,7 @@ end
 
 ---Add a network chunked reciever by name.
 ---@param messageName any
----@param callback fun(len: integer, ply: Player, reply: NetworkReply): NetworkReply?
+---@param callback fun(len: number, ply: Player, reply: Net.Reply): Net.Reply?
 function NetExtension:ReceiveChunked(messageName, callback)
     self._recievers[2][messageName] = true
     GNIL.Net.ReceiveChunked(messageName, callback)

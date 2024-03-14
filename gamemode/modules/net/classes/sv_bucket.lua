@@ -3,19 +3,19 @@ local MODULE = MODULE
 -- https://en.wikipedia.org/wiki/Token_bucket
 
 ---An implementation of Token Bucket ratelimiting.
----@class NetworkBucket
----@field capacity integer How many tokens to allow max.
----@field refill_delay integer The delay between refills.
----@field refill_amount integer How much tokens to re-add per refill.
+---@class Net.Bucket: middleclass
+---@field capacity number How many tokens to allow max.
+---@field refill_delay number The delay between refills.
+---@field refill_amount number How much tokens to re-add per refill.
 local Bucket = GNIL.Thirdparty.middleclass("Bucket")
 ClassAccessorFunc(Bucket, {
     RefillAmount = {"refill_amount", FORCE_NUMBER},
     RefillPeriod = {"refill_delay", FORCE_NUMBER}
 })
 
----@param capacity integer
----@param refill_delay integer
----@param refill_amount integer
+---@param capacity number
+---@param refill_delay number
+---@param refill_amount number
 function Bucket:Initialize(capacity, refill_delay, refill_amount)
     self.capacity = capacity
     self.refill_delay = refill_delay
@@ -27,9 +27,9 @@ end
 
 ---Used to verify that a bucket matches provided bucket settings.
 ---Prevents a bucket from being needlessly reset with the same conf.
----@param capacity integer
----@param refill_delay integer
----@param refill_amount integer
+---@param capacity number
+---@param refill_delay number
+---@param refill_amount number
 ---@return boolean
 function Bucket:IsSame(capacity, refill_delay, refill_amount)
     return self.capacity == capacity and self.refill_delay == refill_delay and self.refill_amount == refill_amount
@@ -37,7 +37,7 @@ end
 
 ---Check if a SteamID64 has been limited by the bucket.
 ---@param steamid string|Player
----@param requested_tokens? integer
+---@param requested_tokens? number
 ---@return boolean
 function Bucket:Check(steamid, requested_tokens)
     requested_tokens = requested_tokens or 1

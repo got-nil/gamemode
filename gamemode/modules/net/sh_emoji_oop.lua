@@ -1,4 +1,4 @@
-
+---@diagnostic disable
 -- Originally wanted to test if this was possible.
 -- Now, I can't bring myself to remove it.
 

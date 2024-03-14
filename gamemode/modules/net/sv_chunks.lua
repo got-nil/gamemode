@@ -11,7 +11,7 @@ GNIL.Net.Chunks = GNIL.Net.Chunks or {
 ---@param verify_checksum? boolean
 ---@param callback? fun(success: boolean, error_message: string?): nil
 function GNIL.Net.Chunks.Send(ply, message, data, verify_checksum, callback)
-    assert(IsEntity(ply) and ply:IsPlayer(), "The provided player argument must be a player entity")
+    assert(isentity(ply) and ply:IsPlayer(), "The provided player argument must be a player entity")
     assert(isstring(message), "The message name argument provided must be a string")
     assert(isstring(data) or (istable(data) and table.IsSequential(data)), "The data argument to be chunked may either be a string, or a sequential table of strings")
     assert(verify_checksum == nil or isbool(verify_checksum), "The verify_checksum argument must be nil or a bool value")

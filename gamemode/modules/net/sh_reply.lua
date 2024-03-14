@@ -5,10 +5,10 @@ GNIL.Net.Reply = GNIL.Net.Reply or {
 }
 
 ---@pacakge
----@param reply_id string|integer
+---@param reply_id string|number
 ---@param reply_success boolean
 ---@param error_enum GNIL_NET_ERRORS?
----@param error_int integer?
+---@param error_int number?
 function GNIL.Net.Reply._StartReplyMessage(reply_id, reply_success, error_enum, error_int)
     MODULE:log("Writing reply message '" .. reply_id .. "', state: " .. (reply_success && "success" || "unsuccessful"), "debug")
 
@@ -18,7 +18,7 @@ function GNIL.Net.Reply._StartReplyMessage(reply_id, reply_success, error_enum, 
 
     -- If the reply was unsuccessful, also write the error enum. If
     -- there is an error_int provided, also write that (with signal).
-    if not reply_success then ---@cast error_enum integer
+    if not reply_success then ---@cast error_enum number
         net.WriteUInt(error_enum, 3)
         net.WriteBool(error_int != nil)
         if error_int != nil then net.WriteUInt(error_int, 16) end
@@ -26,7 +26,7 @@ function GNIL.Net.Reply._StartReplyMessage(reply_id, reply_success, error_enum, 
 end
 
 ---Check if a provided ReplyID is valid.
----@param reply_id integer
+---@param reply_id number
 ---@return boolean
 function GNIL.Net.Reply.IsValidReplyID(reply_id)
     if not isnumber(reply_id) then return false end
@@ -34,18 +34,17 @@ function GNIL.Net.Reply.IsValidReplyID(reply_id)
 end
 
 ---Handle wraped reciever return values (could be a reply).
----@param reply_id integer
----@param reciever_out NetworkReply|any
+---@param reply_id number
+---@param reciever_out? Net.Reply
 ---@param ply Player
 function GNIL.Net.Reply.ReceiverWrap(reply_id, reciever_out, ply)
 
     -- Only allow the reciever to return a valid NetworkReply
     -- or 'false' (meaning error) to allow for async operations.
     local reply_success = IsClass(reciever_out, "NetworkReply")
-    if not (reply_success or reciever_out == false) then
+    if not reply_success or not reciever_out then
         return
     end
-    ---@cast reciever_out NetworkReply
 
     -- If theres a reply provided, check it for errors.
     local error_enum, error_int = nil, nil
@@ -56,7 +55,7 @@ function GNIL.Net.Reply.ReceiverWrap(reply_id, reciever_out, ply)
         -- to write in the reply header.
         if not reply_success then
             error_enum = reciever_out._error.enum ---@cast error_enum GNIL_NET_ERRORS
-            error_int = reciever_out._error.int ---@cast error_int integer
+            error_int = reciever_out._error.int ---@cast error_int number
         end
     end
 
@@ -71,8 +70,8 @@ end
 
 ---Write reply header in started network message.
 ---@param targets Player[]?
----@param callback fun(reply_success: boolean, len: integer, ply: Player?, error: {enum: GNIL_NET_ERRORS, int: integer}?)
----@param timeout integer
+---@param callback fun(reply_success: boolean, len: number, ply: Player?, error: {enum: GNIL_NET_ERRORS, int: number}?)
+---@param timeout number
 ---@return string
 function GNIL.Net.Reply.WriteHeader(targets, callback, timeout)
     assert(isfunction(callback), "Provided reply callback must be a function.")

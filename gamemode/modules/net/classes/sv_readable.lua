@@ -1,7 +1,7 @@
 
----@class NetworkReadable
+---@class Net.Readable: middleclass
 ---@field private _buffer table Read buffer.
----@field _i integer Current index position.
+---@field _i number Current index position.
 local NetworkReadable = GNIL.Thirdparty.middleclass("NetworkReadable")
 ClassAccessorFunc(NetworkReadable, {
     Buffer = FuncAccessors.ReadOnly("_buffer")

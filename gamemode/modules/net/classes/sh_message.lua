@@ -5,7 +5,7 @@ local MODULE = MODULE
 ---The NetworkMessage is an OOP interface for writing network data
 ---to a write buffer instead of directly to the write stream. This
 ---allows for messages to be queued etc.
----@class NetworkMessage: NetworkWriteableMixin
+---@class Net.Message: Net.Writeable
 ---@field name string The internal messaage name.
 ---@field unreliable boolean Is the message being sent unreliably?
 ---@field protected _debug boolean[default=false] Only for debugging.
@@ -179,34 +179,33 @@ end
 
 -- Reply interface.
 
----@param callback fun(success: boolean, len: integer, ply: Player, err: table?): boolean
+---@param callback fun(success: boolean, len: number, ply: Player, err: table?): boolean
 ---@return self
 function NetworkMessage:OnReply(callback) assert(isfunction(callback), "Provided callback argument must be a function.") self._reply.callback = callback return self end
 
----@param timeout integer
+---@param timeout number
 ---@return self
 function NetworkMessage:SetReplyTimeout(timeout) assert(isnumber(timeout) and timeout > 0, "Provided timeout argument must be a number greater than 0.") self._reply.timeout = timeout return self end
 
 -- Error interface.
 
----@param callback fun(enum: GNIL_NET_ERRORS, int: integer)
----@return NetworkMessage
+---@param callback fun(enum: GNIL_NET_ERRORS, int: number)
+---@return self
 function NetworkMessage:OnError(callback) assert(isfunction(callback), "Provided callback argument must be a function.") self._errors.callback = callback self._errors._set = true return self end
 
----@param callback fun(enum: GNIL_NET_ERRORS, int: integer)
----@return NetworkMessage
+---@param callback fun(enum: GNIL_NET_ERRORS, int: number)
+---@return self
 function NetworkMessage:OnTimeout(callback) assert(isfunction(callback), "Provided callback argument must be a function.") self._errors.timeout = callback self._errors._set = true return self end
 
----@param callback fun(enum: GNIL_NET_ERRORS, int: integer)
----@return NetworkMessage
+---@param callback fun(enum: GNIL_NET_ERRORS, int: number)
+---@return self
 function NetworkMessage:OnRatelimited(callback) assert(isfunction(callback), "Provided callback argument must be a function.") self._errors.ratelimited = callback self._errors._set = true return self end
 
----@param callback fun(enum: GNIL_NET_ERRORS, int: integer)
----@return NetworkMessage
+---@param callback fun(enum: GNIL_NET_ERRORS, int: number)
+---@return self
 function NetworkMessage:OnDisabled(callback) assert(isfunction(callback), "Provided callback argument must be a function.") self._errors.disabled = callback self._errors._set = true return self end
 
 -- Meta functions.
-
 function NetworkMessage:__tostring()
     return "<NetworkMessage '" .. self.name .. "'>"
 end
