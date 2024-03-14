@@ -1,36 +1,17 @@
 -- Used to parse various elements of the raw HTTP message.
 local MODULE = MODULE
-
 GNIL.API.Parser = GNIL.API.Parser or {}
-GNIL.API.Parser.QueryOptions = {
-	["legal_in_path"]  = ")-;.~_,'@=*&$(!:",
-	["legal_in_query"] = ")-.~_'$@*,;(!:"
-}
-
--- Convert the legal strings into a table with each character as a key.
--- This should make searching through it alot quicker as we don't have
--- to iterate over the string each time.
-for _, opt_k in ipairs({"legal_in_path", "legal_in_query"}) do
-    if not istable(GNIL.API.Parser.QueryOptions[opt_k]) then
-        continue
-    end
-
-    -- Split the string into an array of characters, add each char as a key
-    -- and write back to the query options.
-    local tbl = {}
-    for _, v in ipairs(string.Explode("", GNIL.API.Parser.QueryOptions[opt_k])) do
-        tbl[v] = true
-    end
-    GNIL.API.Parser.QueryOptions[opt_k] = tbl
-end
 
 -- Decode query value, replacing spaces with a '+' seperator.
 local function decodeValue(str)
 	return GNIL.API.URL.Decode(str:gsub("+", " "))
 end
 
--- Parse provided query string into a key value table. If there is
--- no seperator provided, the default '&' is used.
+---Parse provided query string into a key value table. If there is
+---no seperator provided, the default '&' is used.
+---@param str string
+---@param sep? string
+---@return table QueryValues
 function GNIL.API.Parser.Query(str, sep)
 	if not sep then sep = "&" end
 	local values = {}
@@ -83,20 +64,25 @@ function GNIL.API.Parser.Query(str, sep)
 	return values
 end
 
--- Parse raw path, returning the path and query table.
+---Parse raw path, returning the path and query table.
+---@param raw_url string
+---@return string URLPath
+---@return table URLQueryArguments
 function GNIL.API.Parser.ParseRawPath(raw_url)
 	local data = {}
 	raw_url = raw_url:gsub("%?(.*)", function(v)
 		data.query = GNIL.API.Parser.Query(v)
 		return ""
 	end)
-	data.path = raw_url:gsub("([^/]+)", function (s) return GNIL.API.URL.Encode(GNIL.API.URL.Decode(s), GNIL.API.Parser.QueryOptions.legal_in_path) end)
+	data.path = raw_url:gsub("([^/]+)", function (s) return GNIL.API.URL.Encode(GNIL.API.URL.Decode(s)) end)
 	return data.path, data.query
 end
 
--- Parse a raw route, returning a sequential table of
--- subtables tables each representing a fragment of
--- the route. Should only really be used by the Router.
+---Parse a raw route, returning a sequential table of
+---subtables tables each representing a fragment of
+---the route. Should only really be used by the Router.
+---@param raw_route string
+---@return table? RouteFragments
 function GNIL.API.Parser.Route(raw_route)
 
 	-- If the first character in the route is a slash, we

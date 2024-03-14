@@ -114,7 +114,10 @@ text/x-vcard vcf
 application/x-lua lua
 ]]
 
--- Parse mimetypes
+---Parse mimetypes
+---@param in_mimetypes string
+---@return table OutputMimetypes Output mimetypes.
+---@return table OutputExtensions Output file-extensions.
 function GNIL.API.Mimetypes.Parse(in_mimetypes)
     local out_mimetypes, out_extensions = {}, {}
 
@@ -140,10 +143,26 @@ function GNIL.API.Mimetypes.Parse(in_mimetypes)
     return out_mimetypes, out_extensions
 end
 
--- Getters for cached mimetypes.
-function GNIL.API.Mimetypes.GetExtensions(mimetype) return GNIL.API.Mimetypes["_mime"][mimetype] end
-function GNIL.API.Mimetypes.GetExtension(mimetype) return GNIL.API.Mimetypes["_mime"][mimetype] != nil && GNIL.API.Mimetypes["_mime"][mimetype][1] || nil end
-function GNIL.API.Mimetypes.GetMimetype(extension) return GNIL.API.Mimetypes["_exts"][extension] end
+---Get file extensions from mimetype.
+---@param mimetype string
+---@return string?
+function GNIL.API.Mimetypes.GetExtensions(mimetype)
+    return GNIL.API.Mimetypes["_mime"][mimetype]
+end
+
+---Get extension by mimetype.
+---@param mimetype string
+---@return string?
+function GNIL.API.Mimetypes.GetExtension(mimetype)
+    return GNIL.API.Mimetypes["_mime"][mimetype] != nil && GNIL.API.Mimetypes["_mime"][mimetype][1] || nil
+end
+
+---Get mimetype from extension.
+---@param extension string
+---@return string?
+function GNIL.API.Mimetypes.GetMimetype(extension)
+    return GNIL.API.Mimetypes["_exts"][extension]
+end
 
 -- If the mimetypes text has not yet been parsed, do so now.
 if not GNIL.API.Mimetypes["_parsed"] then

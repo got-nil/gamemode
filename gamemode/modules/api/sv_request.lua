@@ -1,3 +1,12 @@
+
+---@class API.Request: API.Message
+---@field method string Request HTTP method.
+---@field path string Request URL path.
+---@field args table<string, any> Request arguments.
+---@field query? API.QueryString Request URL query string.
+---@field body? API.Body Request body.
+---@field headers? API.Headers Request headers.
+---@field remote_addr string Request remote address.
 local Request = GNIL.Thirdparty.middleclass("Request", GNIL.API.Message)
 
 function Request:Initialize(method, path, query, body, headers, remote_addr)
@@ -17,7 +26,7 @@ function Request:Initialize(method, path, query, body, headers, remote_addr)
     end
 end
 
--- Get request remote address (only for real requests).
+---Get request remote address (only for real requests).
 function Request:GetRemoteAddr() return self:Get("remote_addr") end
 Request.GetIP = Request.GetRemoteAddr -- Alias
 
@@ -35,7 +44,9 @@ function Request:ArgExists(arg) return self.query:Exists(arg) end
 function Request:IsArgTrue(arg) return self.query:IsTrue(arg) end
 function Request:IsArgFalse(arg) return self.query:IsFalse(arg) end
 
--- From parsed table structure.
+---From parsed table structure.
+---@param data table<string, any>
+---@return self? Request
 function Request.FromTable(data)
 
     -- Ensure all required arguments are present.
@@ -55,7 +66,8 @@ function Request.FromTable(data)
     )
 end
 
--- Convert the request to a table for class exporting?
+---Convert the request to a table for class exporting?
+---@return table<string, any> RequestTable
 function Request:ToTable()
     return {
         method = self:Get("method", false),
