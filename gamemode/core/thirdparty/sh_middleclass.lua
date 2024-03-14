@@ -173,6 +173,10 @@ local DefaultMixin = {
             }, self.__instanceDict)
         end,
 
+        ---@generic T
+        ---@param self T
+        ---@param ... any
+        ---@return T
         New = function(self, ...)
             assert(istable(self), "Make sure that you are using 'Class:New' instead of 'Class.New'")
             local instance = self:Allocate()
