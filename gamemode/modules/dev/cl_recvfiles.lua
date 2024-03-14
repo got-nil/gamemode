@@ -5,7 +5,7 @@ GNIL.Dev["_scripts"] = GNIL.Dev["_scripts"] or {
 }
 
 -- Toggle developer script states.
-function command_callback(_, __, args)
+local function command_callback(_, __, args)
     if #args == 0 then
         GNIL.log("Missing arguments, use: <scriptname> [?state (enable/disable)]", "warning")
         return
