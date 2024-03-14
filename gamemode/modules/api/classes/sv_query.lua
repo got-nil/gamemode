@@ -17,10 +17,9 @@ function Query:Initialize(query)
 
 	-- If a string is provided in the constructor, parse
 	-- it and convert it to a query table.
-	if isstring(query) then
+	if isstring(query) then ---@cast query string
 		query = GNIL.API.Parser.Query(query) ---@cast query table
 	end
-	
 	self._args = query
 end
 
