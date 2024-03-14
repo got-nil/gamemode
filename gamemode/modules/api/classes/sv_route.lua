@@ -11,6 +11,7 @@ local MODULE = MODULE
 ---to allow for additional route settings.
 ---@class API.Route: middleclass
 ---@field _id string
+---@field _path string
 ---@field _path_parsed string[]
 ---@field _parents table<string, API.Router>
 ---@field _callback API.Route.Callback
@@ -39,7 +40,7 @@ function Route:Initialize(path, callback)
     self._methods = nil -- Default to allowing all methods
 end
 
--- Remove the route from all of its router parents.
+---Remove the route from all of its router parents.
 function Route:Remove()
     for _, v in pairs(self._parents) do
         v:RemoveRoute(self)
@@ -47,21 +48,28 @@ function Route:Remove()
     self._parents = {}
 end
 
+---Convert the Route to a table.
+---@return {path: string}
 function Route:ToTable() return {["path"] = self._path} end
-function Route:GetPath() return self.path end
 
--- Set the callback that should be used when the route is called.
+---Get the full route path.
+---@return string
+function Route:GetPath() return self._path end
+
+---Set the callback that should be used when the route is called.
+---@param callback API.Route.Callback
 function Route:SetCallback(callback)
     if isfunction(callback) then
         self._callback = callback
     end
 end
 
--- Set the accepted route methods. Each method is validated before
--- its stored (and is stored in UPPERCASE).
+---Set the accepted route methods. Each method is validated before
+---its stored (and is stored in UPPERCASE).
+---@param methods string|string[]
 function Route:SetMethods(methods)
     local _methods = {}
-    if isstring(methods) then _methods = {methods} end
+    if isstring(methods) then _methods = {methods} end ---@cast methods string[]
     for _, v in ipairs(methods) do
         local method = string.upper(v)
         if GNIL.API.Message._validMethods[method] then
@@ -71,8 +79,11 @@ function Route:SetMethods(methods)
     self._methods = _methods
 end
 
--- Used to match a set of route "fragments" (exploded route) against
--- the stored parsed route. Returns success: bool, arguments: table
+---Used to match a set of route "fragments" (exploded route) against
+---the stored parsed route. Returns success: bool, arguments: table
+---@param fragments table
+---@return boolean SuccessState
+---@return table? Arguments
 function Route:_Match(fragments)
 
     -- Ensure there are the correct amount of required arguments.
