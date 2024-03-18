@@ -179,7 +179,7 @@ end
 
 -- Reply interface.
 
----@param callback fun(success: boolean, len: number, ply: Player, err: table?): boolean
+---@param callback fun(success: boolean, len: number, ply: Player, err: table?): boolean?
 ---@return self
 function NetworkMessage:OnReply(callback) assert(isfunction(callback), "Provided callback argument must be a function.") self._reply.callback = callback return self end
 

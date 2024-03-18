@@ -3,7 +3,7 @@
 ---@field method string Request HTTP method.
 ---@field path string Request URL path.
 ---@field args table<string, any> Request arguments.
----@field query? API.QueryString Request URL query string.
+---@field query? API.Query Request URL query string.
 ---@field body? API.Body Request body.
 ---@field headers? API.Headers Request headers.
 ---@field remote_addr string Request remote address.

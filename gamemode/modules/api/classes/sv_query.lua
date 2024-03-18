@@ -2,7 +2,7 @@
 ---Query is used as a provider for the parsed query string data.
 ---Allows for query arguments to be modified and rebuilt for URL safe
 ---outputs.
----@class API.QueryString: middleclass
+---@class API.Query: middleclass
 ---@field _args table
 local Query = GNIL.Thirdparty.middleclass("Query")
 function Query._From(query)

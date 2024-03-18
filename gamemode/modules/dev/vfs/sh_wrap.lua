@@ -57,6 +57,10 @@ local function createEnvironment(vfs)
 
     -- Copy global environment and add our detours ontop.
     local env = GNIL.Dev.CreateEnvironment(nil, true, true)
+    if not env then
+        error("Could not create dev environment!")
+    end ---@cast env table
+
     for k, v in pairs(detours) do
         env[k] = v
     end
@@ -64,7 +68,12 @@ local function createEnvironment(vfs)
     return env
 end
 
--- Create a wrapper environment for the file system detours.
+---Create a wrapper environment for the file system detours.
+---@param vfs Dev.VFS
+---@param fn function
+---@param ... any fn arguments.
+---@return boolean SuccessState
+---@return any Output
 function GNIL.Dev.VFS.Wrap(vfs, fn, ...)
     setfenv(fn, createEnvironment(vfs))
     local success, out = pcall(fn, ...)

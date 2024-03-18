@@ -14,7 +14,6 @@ end
 
 ---This is used to sync the player netmessage pool between
 ---the server and specified clients.
----@package
 ---@param ply? Player
 function GNIL.Net._SyncNetworkIDs(ply)
     GNIL.Net["_sent_netids"] = true

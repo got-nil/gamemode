@@ -107,7 +107,7 @@ local function _getArgumentsAsTable(...)
     return arguments
 end
 
-/*
+--[[
 
     Request functions accept two different parameter layouts:
         1: Key value arguments. Arguments can be provided as single table
@@ -120,7 +120,7 @@ end
             - headers
             - callback
 
-*/
+--]]
 
 -- Create a new request instance with whatever arguments are provided.
 function GNIL.Http.CreateRequest(...) return GNIL.Http.Classes.Request:New(...) end

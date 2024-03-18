@@ -32,6 +32,10 @@ end
 
 ---------------------------------------------------------------
 
+---@class Dev.VFS: middleclass
+---@field private __vfs table
+---@field private __init_time number
+---@field private __times table
 local VFS = GNIL.Thirdparty.middleclass("VirtualFileSystem")
 function VFS:Initialize(fileSystem)
     self.__vfs = fileSystem or {}
@@ -39,7 +43,9 @@ function VFS:Initialize(fileSystem)
     self.__times = {}
 end
 
--- Navigate to a target and ensure we actually reached it.
+---Navigate to a target and ensure we actually reached it.
+---@param filePath string
+---@return any? Target
 function VFS:_NavigateToTarget(filePath)
     local fileParts, validLen, fsOut = splitFilePath(filePath), 0, nil
 
@@ -49,18 +55,21 @@ function VFS:_NavigateToTarget(filePath)
     end
 
     if #fileParts != validLen then
-        return
+        return nil
     end
     return fsOut
 end
 
--- Get the parent of provided filePath, this can be
--- offset to traverse the filePath tree.
+---Get the parent of provided filePath, this can be
+---offset to traverse the filePath tree.
+---@param filePath string|table
+---@param offset? number
+---@return any? ParentDirectory
 function VFS:_GetParentDirectory(filePath, offset)
     local offset, pathParts = offset or 1, filePath
     if not istable(filePath) then
         pathParts = splitFilePath(filePath)
-    end
+    end ---@cast pathParts table
 
     local outFs, i = false, 0
     for fs, v in self:Iterator(table.Slice(pathParts, 1, #pathParts - offset)) do
@@ -70,17 +79,19 @@ function VFS:_GetParentDirectory(filePath, offset)
 
     -- Make sure we actually navigated all the way to the parent path.
     if i != #pathParts - offset then
-        return
+        return nil
     end
     return outFs
 end
 
--- Alias to self wrap.
+---Alias to self wrap.
 function VFS:Wrap(callback, ...)
     return GNIL.Dev.VFS.Wrap(self, callback, ...)
 end
 
--- Get the last write/create time of a file or directory.
+---Get the last write/create time of a file or directory.
+---@param filePath string
+---@return number? FileTime
 function VFS:Time(filePath)
     filePath = cleanFilePath(filePath)
 
@@ -90,10 +101,12 @@ function VFS:Time(filePath)
     if self:Exists(filePath) then
         return self.__init_time
     end
-    return
+    return nil
 end
 
--- Iterate through the filesystem tree.
+---Iterate through the filesystem tree.
+---@param path string|table
+---@return function Iterator
 function VFS:Iterator(path)
 
     local splitPath = path
@@ -116,7 +129,9 @@ function VFS:Iterator(path)
     end
 end
 
--- Create an empty directory (can be nested)
+---Create an empty directory (can be nested).
+---@param filePath string
+---@return self
 function VFS:CreateDir(filePath)
     filePath = cleanFilePath(filePath)
     local fs, pathParts = self.__vfs, splitFilePath(filePath, true)
@@ -124,7 +139,7 @@ function VFS:CreateDir(filePath)
         if not fs[v] then
 
             -- TODO: TEST THIS.
-            self.__time[table.concat(table.Slice(pathParts, 1, i), "/")] = os.time()
+            self.__times[table.concat(table.Slice(pathParts, 1, i), "/")] = os.time()
 
             fs[v] = {}
         end
@@ -133,7 +148,9 @@ function VFS:CreateDir(filePath)
     return self
 end
 
--- Delete a file / empty directory.
+---Delete a file / empty directory.
+---@param filePath string
+---@return boolean SuccessState
 function VFS:Delete(filePath)
     filePath = cleanFilePath(filePath)
     if not self:Exists(filePath) then
@@ -147,13 +164,18 @@ function VFS:Delete(filePath)
     return true
 end
 
--- Check if file or directory exists.
+---Check if file or directory exists.
+---@param filePath string
+---@return boolean Exists
 function VFS:Exists(filePath)
     return self:_NavigateToTarget(filePath) != nil
 end
 
--- Find files and directories within the filePath directory.
--- This supports wildcard filenames like normal file.Find.
+---Find files and directories within the filePath directory.
+---This supports wildcard filenames like normal file.Find.
+---@param filePath string
+---@return table? Files
+---@return table? Directories
 function VFS:Find(filePath)
 
     -- Traverse up to the parent directory of the filepath.
@@ -221,24 +243,36 @@ function VFS:Find(filePath)
     return out[1], out[2]
 end
 
+---Check if a directory exists and is empty.
+---@param filePath string
+---@return boolean IsDirEmpty
 function VFS:IsDirEmpty(filePath)
     local target = self:_NavigateToTarget(filePath)
     if not istable(target) then return false end
     return table.IsEmpty(target)
 end
 
+---Check if a directory exists.
+---@param filePath string
+---@return boolean IsDir
 function VFS:IsDir(filePath)
     local target = self:_NavigateToTarget(filePath)
     if target == nil then return false end
     return istable(target)
 end
 
+---Check if a file exists.
+---@param filePath any
+---@return boolean IsFile
 function VFS:IsFile(filePath)
-    local target = self:_NavigateToTarget(filepath)
+    local target = self:_NavigateToTarget(filePath)
     if target == nil then return false end
     return isstring(target)
 end
 
+---Read a file and return its contents.
+---@param filePath string
+---@return string? Content
 function VFS:Read(filePath)
     local fs = self.__vfs
     for _, v in ipairs(splitFilePath(filePath)) do
@@ -253,18 +287,25 @@ function VFS:Read(filePath)
     return fs
 end
 
--- Get the size of filePath content.
+---Get the size of filePath content.
+---@param filePath string
+---@return integer ContentSize
 function VFS:Size(filePath)
     local content = self:Read(filePath)
     if not content then return -1 end
     return string.len(content)
 end
 
+---Write a file with content.
+---@param filePath string
+---@param content? string
+---@return boolean SuccessState
 function VFS:Write(filePath, content)
     filePath = cleanFilePath(filePath)
     local fs, pathParts = self.__vfs, splitFilePath(filePath, true)
 
     -- If there is a filepath, navigate to its parent in the filesystem.
+    local filename
     if #pathParts > 1 then
         for _, v in ipairs(table.Slice(pathParts, 1, #pathParts - 1)) do
             fs = fs[v]
@@ -280,7 +321,7 @@ function VFS:Write(filePath, content)
     -- Write the file to the VFS.
     self.__times[filePath] = os.time()
     fs[filename] = content
-    return self
+    return true
 end
 
 GNIL.Dev.VFS.Class = VFS
