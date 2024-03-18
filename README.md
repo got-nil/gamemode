@@ -42,3 +42,12 @@ Then add these settings (making sure to edit the `Lua.workspace.libary` path).
 ```
 
 With these settings loaded, you should now have full type support for the gamemode. You will also get access to gamemode classes and annotations outside of the gamemode workspace, so addon modules will still work.
+
+### Using latest version
+
+This gamemode uses new features from the language server that at the time of writing are not available in the default installed version.
+In order to use these, you must:
+
+1. Clone [lua-language-server](https://github.com/LuaLS/lua-language-server) master.
+2. Build by running `make.bat` and allow it to run.
+3. Open user settings and set `Lua.misc.executablePath` to the `bin/lua-language-server.exe` **absolute path**.

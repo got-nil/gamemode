@@ -5,10 +5,11 @@ GNIL.Dev = GNIL.Dev or {
 }
 
 MODULE:RequireModule("net")
-MODULE:RequireExtension("net")
+MODULE:RequireExtension("Net")
 
 MODULE.OnLoad = function()
-    MODULE:GetExtension("net"):Receive("dev_module_reload", function(_, _, reply)
+
+    MODULE:GetExtension("Net"):Receive("dev_module_reload", function(_, _, reply)
         local moduleName = net.ReadString()
         if not GNIL.Modules.IsLoaded(moduleName) then
             return reply:WriteBool(false)

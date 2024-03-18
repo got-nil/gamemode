@@ -511,13 +511,14 @@ function Module:HasExtension(name)
 end
 
 ---Get an extension by name.
----@param name string Get an extension by name.
----@return BaseExtension
+---@generic T
+---@param name ModuleExtensions.`T` Extension name.
+---@return T?
 function Module:GetExtension(name)
-    local name, ext = tostring(name), self._extensions[name]
+    local strName, ext = tostring(name), self._extensions[name]
     if ext == nil then
-        self:log("Attempted to get unloaded/uninitialized extension '" .. name .. "'", "error")
-    end ---@cast ext BaseExtension
+        self:log("Attempted to get unloaded/uninitialized extension '" .. strName .. "'", "error")
+    end
     return ext
 end
 
