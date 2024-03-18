@@ -9,8 +9,8 @@ local MODULE = MODULE
 ---@field refill_amount number How much tokens to re-add per refill.
 local Bucket = GNIL.Thirdparty.middleclass("Bucket")
 ClassAccessorFunc(Bucket, {
-    RefillAmount = {"refill_amount", FORCE_NUMBER},
-    RefillPeriod = {"refill_delay", FORCE_NUMBER}
+    RefillAmount = {"refill_amount", FORCE_NUMBER}, ---@accessor number
+    RefillPeriod = {"refill_delay", FORCE_NUMBER} ---@accessor number
 })
 
 ---@param capacity number

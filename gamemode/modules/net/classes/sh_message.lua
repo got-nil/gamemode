@@ -11,8 +11,8 @@ local MODULE = MODULE
 ---@field protected _debug boolean[default=false] Only for debugging.
 local NetworkMessage = GNIL.Thirdparty.middleclass("NetworkMessage"):IncludeMixin(GNIL.Net.Classes.WriteableMixin)
 ClassAccessorFunc(NetworkMessage, {
-    Name = FuncAccessors.ReadOnly("name"),
-    Debug = FuncAccessors.Boolean("_debug")
+    Name = FuncAccessors.ReadOnly("name"), ---@accessor string readonly
+    Debug = FuncAccessors.Boolean("_debug") ---@accessor boolean is
 })
 
 ---@param name string Internal message name.

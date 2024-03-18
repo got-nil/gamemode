@@ -2,9 +2,9 @@
 ---@class Websocket: EventsMixin
 local Websocket = GNIL.Thirdparty.middleclass("Websocket"):IncludeMixin(GNIL.ClassMixins.Events)
 ClassAccessorFunc(Websocket, {
-    URL = {"url", FORCE_STRING},
-    VerifyCert = {"verify_cert", FORCE_BOOL},
-    RetryDelay = {
+    URL = {"url", FORCE_STRING}, ---@accessor string
+    VerifyCert = {"verify_cert", FORCE_BOOL}, ---@accessor boolean
+    RetryDelay = { ---@accessor number?
         var = "retry_delay",
         force = FORCE_NUMBER,
         nillable = true,

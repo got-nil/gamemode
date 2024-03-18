@@ -2,7 +2,7 @@
 ---@class Timeout: EventsMixin
 local Timeout = GNIL.Thirdparty.middleclass("Timeout"):IncludeMixin(GNIL.ClassMixins.Events)
 ClassAccessorFunc(Timeout, {
-    Timeout = FuncAccessors.NumberMinMax("_timeout", 0)
+    Timeout = FuncAccessors.NumberMinMax("_timeout", 0) ---@accessor number
 })
 
 --[[

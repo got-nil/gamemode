@@ -18,11 +18,12 @@
 ---@field private _extensions? table<string, BaseExtension>
 local Module = GNIL.Thirdparty.middleclass("Module"):IncludeMixin(GNIL.ClassMixins.Events)
 ClassAccessorFunc(Module, {
-    Name = FuncAccessors.ReadOnly("name"),
-    BasePath = FuncAccessors.ReadOnly("_base_path"),
-    ModuleName = FuncAccessors.ReadOnly("_module_name"),
-    Disabled = FuncAccessors.Boolean("_disabled"),
-    Quiet = FuncAccessors.Boolean("_quiet")
+    Name = FuncAccessors.ReadOnly("name"), ---@accessor string readonly
+    BasePath = FuncAccessors.ReadOnly("_base_path"), ---@accessor string? readonly
+    ModuleName = FuncAccessors.ReadOnly("_module_name"), ---@accessor string readonly
+    Disabled = FuncAccessors.Boolean("_disabled"), ---@accessor boolean is
+    Autoload = FuncAccessors.Boolean("autoload"), ---@accessor boolean is
+    Quiet = FuncAccessors.Boolean("_quiet") ---@accessor boolean is
 })
 
 ---@param name string
@@ -117,15 +118,6 @@ function Module:Unload() return GNIL.Modules.Unload(self) end
 ---module config name or a public/global one. (A little confusing I know).
 ---@return Config?
 function Module:Config() return GNIL.Config.Get(Either(self.config == true, "M_" .. self._module_name, self.config)) end
-
--- A functional way to set the autoload if you want to be fancy.
--- (Although you could just change the class var directly)
-
----@param boolean boolean
-function Module:SetAutoload(boolean) assert(isbool(boolean), "The argument must be boolean") self.autoload = boolean end
-
----@param boolean boolean
-function Module:SetDisabled(boolean) assert(isbool(boolean), "The argument must be boolean") self._disabled = boolean end
 
 ---"Resolve"'s a required module. Basically load it and prevent loops.
 ---@param requirement string

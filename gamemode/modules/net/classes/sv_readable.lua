@@ -4,7 +4,7 @@
 ---@field _i number Current index position.
 local NetworkReadable = GNIL.Thirdparty.middleclass("NetworkReadable")
 ClassAccessorFunc(NetworkReadable, {
-    Buffer = FuncAccessors.ReadOnly("_buffer")
+    Buffer = FuncAccessors.ReadOnly("_buffer") ---@accessor string readonly
 })
 
 -- Read from a class that uses NetworkWriteable.
