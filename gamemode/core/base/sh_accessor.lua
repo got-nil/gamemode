@@ -4,7 +4,7 @@
 
 Supports global settings with _ prefix on root level.
 
-ClassAccessorFunc(MyClass, {
+ClassAccessorFunc(MyClass, { ---@accessors-disabled
     Name = "name",
     Age = FuncAccessors.ReadOnly("age"),
     Gender = {"gender", FORCE_STRING},

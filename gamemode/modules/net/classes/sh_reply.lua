@@ -6,7 +6,7 @@
 ---@field id string
 local NetworkReply = GNIL.Thirdparty.middleclass("NetworkReply"):IncludeMixin(GNIL.Net.Classes.WriteableMixin)
 ClassAccessorFunc(NetworkReply, {
-    ID = FuncAccessors.ReadOnly("id")
+    ID = FuncAccessors.ReadOnly("id") ---@accessor string readonly
 })
 
 ---Initialize the message without a name since it will not
