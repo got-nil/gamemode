@@ -6,9 +6,10 @@ MODULE:IncludeDirectory("classes")
 
 ---Cast value to type, calling the class _From method if it
 ---exists, or just returning the value if its already the class.
+---@generic T
 ---@param value table
----@param class_name string
----@return middleclass?
+---@param class_name API.`T`
+---@return T
 function GNIL.API.Classes.To(value, class_name)
     local class = GNIL.API.Classes[class_name]
 

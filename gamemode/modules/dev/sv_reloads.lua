@@ -1,4 +1,7 @@
 local MODULE, Config = MODULE, MODULE:Config()
+if Config == nil then
+    error("Could not get required dev module config!")
+end
 
 MODULE:AddHook("GNIL.Modules.Reload", "module_vfs_reload", function(name, moduleInstance)
 

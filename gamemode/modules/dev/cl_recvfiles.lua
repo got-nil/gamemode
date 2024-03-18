@@ -44,7 +44,7 @@ local function command_callback(_, __, args)
 end
 
 -- Show script names and possible script states.
-function command_autocomplete(cmd, strarg)
+local function command_autocomplete(cmd, strarg)
     local parts, autocomplete = string.Explode(" ", strarg), {}
     if #parts >= 3 then
         for i, v in ipairs({"enable", "disable"}) do
