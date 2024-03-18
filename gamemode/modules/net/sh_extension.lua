@@ -1,5 +1,5 @@
 
----@class NetworkExtension: BaseExtension
+---@class ModuleExtensions.Net: BaseExtension
 local NetExtension = GNIL.Thirdparty.middleclass("NetExtension", GNIL.Classes.Extension)
 
 function NetExtension:Initialize(moduleInstance)
@@ -46,4 +46,4 @@ function NetExtension:ReceiveChunked(messageName, callback)
     GNIL.Net.ReceiveChunked(messageName, callback)
 end
 
-GNIL.Modules.Extensions.Add("net", NetExtension)
+GNIL.Modules.Extensions.Add("Net", NetExtension)

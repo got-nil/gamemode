@@ -1,3 +1,5 @@
+
+---@class ModuleExtensions.API: BaseExtension
 local APIExtension = GNIL.Thirdparty.middleclass("APIExtension", GNIL.Classes.Extension)
 
 --[[
@@ -30,6 +32,8 @@ function APIExtension:OnUnload() self:RemoveAllRoutes() end
 ------------------------------------------------------------------------------
 -- Route prefixes setter/getter.
 
+---Set the route prefix for the module. By default this is `modules/<module_name>`.
+---@param prefix any
 function APIExtension:SetRoutePrefix(prefix)
     assert(isstring(prefix), "Provided route prefix must be a string.")
 
@@ -46,6 +50,9 @@ end
 
 ------------------------------------------------------------------------------
 
+---Add a created API route to the Module and the router.
+---@param route API.Route
+---@return API.Route
 function APIExtension:AddRoute(route)
     table.insert(self._routes, route)
     return route
@@ -64,15 +71,58 @@ function APIExtension:GetRoutes()
     return self._routes
 end
 
--- Basically just alias a bunch of functions from the global
--- router. Whenever a route is created, also add it locally.
-for _, v in ipairs({"Post", "Get", "Put", "Patch", "Delete", "Create", "Add"}) do
-    APIExtension[v] = function(self, route, callback)
-        return self:AddRoute(
-            GNIL.API.Routes[v](self._prefix .. "/" .. GNIL.API.URL.RemoveStartingSlash(route), callback)
-        )
-    end
+-------------------------------------------------
+-- Method aliases.
+
+local function createRouteAlias(self, method, route, callback)
+    return self:AddRoute(
+        GNIL.API.Routes[method](self._prefix .. "/" .. GNIL.API.URL.RemoveStartingSlash(route), callback)
+    )
 end
 
+---Create a route that accepts POST requests. Adds created route to the global router.
+---@param route string
+---@param callback API.Route.Callback
+---@return API.Route
+function APIExtension:Post(route, callback) return createRouteAlias(self, "Post", route, callback) end
+
+---Create a route that accepts GET requests. Adds created route to the global router.
+---@param route string
+---@param callback API.Route.Callback
+---@return API.Route
+function APIExtension:Get(route, callback) return createRouteAlias(self, "Get", route, callback) end
+
+---Create a route that accepts PUT requests. Adds created route to the global router.
+---@param route string
+---@param callback API.Route.Callback
+---@return API.Route
+function APIExtension:Put(route, callback) return createRouteAlias(self, "Put", route, callback) end
+
+---Create a route that accepts PATCH requests. Adds created route to the global router.
+---@param route string
+---@param callback API.Route.Callback
+---@return API.Route
+function APIExtension:Patch(route, callback) return createRouteAlias(self, "Patch", route, callback) end
+
+---Create a route that accepts DELETE requests. Adds created route to the global router.
+---@param route string
+---@param callback API.Route.Callback
+---@return API.Route
+function APIExtension:Delete(route, callback) return createRouteAlias(self, "Delete", route, callback) end
+
+---Create a route that accepts any methods. Adds created route to the global router.
+---@param route string
+---@param callback API.Route.Callback
+---@return API.Route
+function APIExtension:Create(route, callback) return createRouteAlias(self, "Create", route, callback) end
+
+---Add a route that accepts any methods. Adds created route to the global router.
+---@param route string
+---@param callback API.Route.Callback
+---@return API.Route
+function APIExtension:Add(route, callback) return createRouteAlias(self, "Add", route, callback) end
+
+-------------------------------------------------
+
 -- Add the extension class to Modules handler.
-GNIL.Modules.Extensions.Add("api", APIExtension)
+GNIL.Modules.Extensions.Add("API", APIExtension)
