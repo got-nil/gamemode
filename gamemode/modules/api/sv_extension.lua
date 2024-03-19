@@ -1,5 +1,5 @@
 
----@class ModuleExtensions.API: BaseExtension
+---@class ModuleExtensions.api: BaseExtension
 local APIExtension = GNIL.Thirdparty.middleclass("APIExtension", GNIL.Classes.Extension)
 
 --[[
@@ -125,4 +125,4 @@ function APIExtension:Add(route, callback) return createRouteAlias(self, "Add", 
 -------------------------------------------------
 
 -- Add the extension class to Modules handler.
-GNIL.Modules.Extensions.Add("API", APIExtension)
+GNIL.Modules.Extensions.Add("api", APIExtension)

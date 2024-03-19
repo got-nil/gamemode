@@ -1,5 +1,5 @@
 
----@class ModuleExtensions.Net: BaseExtension
+---@class ModuleExtensions.net: BaseExtension
 local NetExtension = GNIL.Thirdparty.middleclass("NetExtension", GNIL.Classes.Extension)
 
 function NetExtension:Initialize(moduleInstance)
@@ -31,7 +31,7 @@ function NetExtension:RemoveReceivers()
 end
 
 ---Add a network reciever by name.
----@param messageName any
+---@param messageName string
 ---@param callback fun(len: number, ply: Player, reply: Net.Reply): Net.Reply?
 function NetExtension:Receive(messageName, callback)
     self._recievers[1][messageName] = true
@@ -39,11 +39,11 @@ function NetExtension:Receive(messageName, callback)
 end
 
 ---Add a network chunked reciever by name.
----@param messageName any
+---@param messageName string
 ---@param callback fun(len: number, ply: Player, reply: Net.Reply): Net.Reply?
 function NetExtension:ReceiveChunked(messageName, callback)
     self._recievers[2][messageName] = true
     GNIL.Net.ReceiveChunked(messageName, callback)
 end
 
-GNIL.Modules.Extensions.Add("Net", NetExtension)
+GNIL.Modules.Extensions.Add("net", NetExtension)

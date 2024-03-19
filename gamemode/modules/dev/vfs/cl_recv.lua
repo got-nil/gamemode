@@ -1,5 +1,5 @@
 local MODULE = MODULE
-MODULE:GetExtension("Net"):ReceiveChunked("dev_module_reload", function(data)
+MODULE:GetExtension("net"):ReceiveChunked("dev_module_reload", function(data)
     local moduleName, filecount = data[1], tonumber(data[2])
 
     -- If the module isn't loaded or the filecount couldn't be read, return.
