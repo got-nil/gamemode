@@ -377,7 +377,7 @@ end
 
 ---Alias of file.Find with the resolved gamemode module path.
 ---@param path string
----@param sorting string
+---@param sorting? string
 ---@return table?
 ---@return table?
 function Module:Find(path, sorting)
@@ -391,7 +391,7 @@ end
 ---Directory MUST be a directory supported by a load handler.
 ---Eg: 'entities'. If the directory has a weird name, use LoadDirectory.
 ---@param directory string
----@param handler string
+---@param handler? string
 ---@return boolean
 function Module:LoadDirectories(directory, handler)
     if not handler then
@@ -525,7 +525,7 @@ end
 ---------------------------------------------------------------------------
 
 ---Logging passthrough with module name as prefix.
----@param log string Log message.
+---@param log any Log message.
 ---@param logtype? string Log type.
 function Module:log(log, logtype)
     if self._quiet then return end
