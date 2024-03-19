@@ -19,7 +19,7 @@
 GNIL.API.Routes.Get("/players", function(request)
 
     local players = {}
-    for i, v in player.Iterator() do
+    for i, v in ipairs(player.GetAll())() do
         players[i] = {
             userid = v:UserID(),
             steamid64 = v:SteamID64(),

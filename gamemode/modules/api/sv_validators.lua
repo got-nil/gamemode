@@ -47,7 +47,7 @@ GNIL.API.Validators._argumentValidators = {
         return nil
     end,
     ["ply"] = function(v)
-        for _, p in player.Iterator() do
+        for _, p in ipairs(player.GetAll())() do
             if p:SteamID64() == v or p:SteamID() == v then
                 return p
             end
