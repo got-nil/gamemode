@@ -410,7 +410,7 @@ end
 classes.Background = function(pnl, col, rad, rtl, rtr, rbl, rbr)
     pnl:On("Paint", function(s, w, h)
         if (rad and rad > 0) then
-            if (rtl ~= nil) then
+            if (rtl != nil) then
                 draw.RoundedBoxEx(rad, 0, 0, w, h, col, rtl, rtr, rbl, rbr)
             else
                 draw.RoundedBox(rad, 0, 0, w, h, col)
