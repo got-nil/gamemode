@@ -5,7 +5,7 @@ GNIL.Dev["_scripts"] = GNIL.Dev["_scripts"] or {
 }
 
 -- Toggle developer script states.
-function command_callback(_, __, args)
+local function command_callback(_, __, args)
     if #args == 0 then
         GNIL.log("Missing arguments, use: <scriptname> [?state (enable/disable)]", "warning")
         return
@@ -44,7 +44,7 @@ function command_callback(_, __, args)
 end
 
 -- Show script names and possible script states.
-function command_autocomplete(cmd, strarg)
+local function command_autocomplete(cmd, strarg)
     local parts, autocomplete = string.Explode(" ", strarg), {}
     if #parts >= 3 then
         for i, v in ipairs({"enable", "disable"}) do

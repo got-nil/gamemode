@@ -1,6 +1,9 @@
 local MODULE = MODULE
 GNIL.API.Validators = GNIL.API.Validators or {}
 
+---Check if a provided string is numeric.
+---@param str string
+---@return boolean
 function GNIL.API.Validators.IsNumeric(str)
     if string.match(str, "%D") then return false end
     return true
@@ -13,6 +16,10 @@ local ResponseTypeConverters = {
     [TYPE_BOOL] = function(v) return GNIL.API.Responses.Empty(v && 200 || 500) end
 }
 
+---Convert some output type to a Response.
+---@param route any
+---@param out any
+---@return API.Response|API.Route.PromiseCallback
 function GNIL.API.Validators.ToResponse(route, out)
     local type_converter = ResponseTypeConverters[TypeID(out)]
     if type_converter then
@@ -40,7 +47,7 @@ GNIL.API.Validators._argumentValidators = {
         return nil
     end,
     ["ply"] = function(v)
-        for _, p in player.Iterator() do
+        for _, p in ipairs(player.GetAll())() do
             if p:SteamID64() == v or p:SteamID() == v then
                 return p
             end
@@ -64,14 +71,19 @@ GNIL.API.Validators._argumentValidators = {
     end
 }
 
--- Run the validator/converter on a value.
+---Run the validator/converter on a value.
+---@param arg_type string
+---@param value any
+---@return any?
 function GNIL.API.Validators.Argument(arg_type, value)
     local validator = GNIL.API.Validators._argumentValidators[arg_type]
     if validator == nil then return nil end
     return validator(value)
 end
 
--- Check that an argument validator actually exists.
+---Check that an argument validator actually exists.
+---@param arg_type string
+---@return boolean
 function GNIL.API.Validators.Exists(arg_type)
     return GNIL.API.Validators._argumentValidators[arg_type] != nil
 end

@@ -38,12 +38,18 @@ local function validateConfigStructure(structure) -- valid(bool), out(table|stri
     return a, b
 end
 
--- Either return the config object or nil.
+---Either return the config object or nil.
+---@param name string
+---@return any Value
 function GNIL.Config.Get(name)
     return GNIL.Config["_r"][name]
 end
 
--- Load a config file and cache it.
+---Load a config file and cache it.
+---@param filename string
+---@param _partialModule? Module
+---@return boolean SuccessState
+---@return self? ConfigInstance
 function GNIL.Config.Load(filename, _partialModule)
 
     -- Determine the target filepath. Instead of allowing arbitary
@@ -97,9 +103,9 @@ function GNIL.Config.Load(filename, _partialModule)
     return true, obj
 end
 
--- Load any full config files. On the server this is all files,
--- whereas on the client this is shared/client config files.
--- Server config files with shared attributes are sent seperately.
+---Load any full config files. On the server this is all files,
+---whereas on the client this is shared/client config files.
+---Server config files with shared attributes are sent seperately.
 function GNIL.Config.LoadAll()
     if GNIL.Config["_loaded"] then return end
     local files, _ = file.Find(GNIL.Utils.ResolveGamemodePath("config") .. "/*.lua", "LUA")

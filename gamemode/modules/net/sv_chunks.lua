@@ -5,8 +5,13 @@ GNIL.Net.Chunks = GNIL.Net.Chunks or {
     ["chunk_rate"] = 1 / 2
 }
 
+---@param ply Player
+---@param message string
+---@param data string|string[]
+---@param verify_checksum? boolean
+---@param callback? fun(success: boolean, error_message: string?): nil
 function GNIL.Net.Chunks.Send(ply, message, data, verify_checksum, callback)
-    assert(IsEntity(ply) and ply:IsPlayer(), "The provided player argument must be a player entity")
+    assert(isentity(ply) and ply:IsPlayer(), "The provided player argument must be a player entity")
     assert(isstring(message), "The message name argument provided must be a string")
     assert(isstring(data) or (istable(data) and table.IsSequential(data)), "The data argument to be chunked may either be a string, or a sequential table of strings")
     assert(verify_checksum == nil or isbool(verify_checksum), "The verify_checksum argument must be nil or a bool value")
@@ -21,7 +26,7 @@ function GNIL.Net.Chunks.Send(ply, message, data, verify_checksum, callback)
     end
 
     local has_header, header, header_size = istable(data), "", 0
-    if has_header then
+    if has_header then ---@cast data string[]
 
         -- A header and a buffer is created. The header is a comma seperated
         -- string of integers each representing the string length of an individual
@@ -29,21 +34,22 @@ function GNIL.Net.Chunks.Send(ply, message, data, verify_checksum, callback)
         -- concatenated. Once both have been written, the data becomes the header
         -- followed by the buffer, with the terminating chunk sending the header
         -- size to be decoded by the client.
-        local header, buffer = {}, ""
+        local headers, buffer = {}, ""
         for i, v in ipairs(data) do
             assert(isstring(v), "All data values must be strings")
 
-            table.insert(header, #v)
+            table.insert(headers, #v)
             buffer = buffer .. v
         end
 
         -- Convert the header to a string seperated by commas.
-        header = table.concat(header, ",")
+        header = table.concat(headers, ",")
         header_size = string.len(header)
 
         -- Format the data as described above.
         data = header .. buffer
     end
+    ---@cast data string
 
     -- Create a return code that is used by the client to identify
     -- the chunks being sent (allows for multiple to be sent to the

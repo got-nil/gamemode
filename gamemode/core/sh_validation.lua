@@ -20,6 +20,10 @@ required? - Optional, is the key required in the provided table? (Default: false
 
 --]]
 
+---@param provided table
+---@param structure table
+---@return boolean SuccessState Validity state.
+---@return string|table StructuredOutput Error message if unsuccesful, or structured table if valid.
 function GNIL.Validation.Structure(provided, structure)
     if not istable(provided) or not istable(structure) then
         return false, "Provided and Structure must both be tables."
@@ -51,6 +55,10 @@ function GNIL.Validation.Structure(provided, structure)
     return true, provided
 end
 
+---Check if a provided object is type of TYPE_ENUM.
+---@param provided any
+---@param type_enum number
+---@return boolean IsType
 function GNIL.Validation.IsType(provided, type_enum)
     if isnumber(type_enum) then return TypeID(provided) == type_enum
     else return type(provided) == type_enum end

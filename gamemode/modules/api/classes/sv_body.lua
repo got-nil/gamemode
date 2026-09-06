@@ -1,13 +1,19 @@
--- Used to parse and provide an interface to a raw body
--- plaintext (as it comes in a HTTP request).
 
-local MODULE, Body = MODULE, GNIL.Thirdparty.middleclass("Body")
+---Used to parse and provide an interface to a raw body
+---plaintext (as it comes in a HTTP request).
+---@class API.Body: middleclass
+---@field _body string
+---@field _plaintext boolean
+---@field _post table
+---@field _files table
+local Body = GNIL.Thirdparty.middleclass("Body")
 function Body._From(body)
     if isstring(body) then
         return Body:New(body)
     end
 end
 
+---@param body_raw string
 function Body:Initialize(body_raw)
     self._body = body_raw
     self._plaintext = true
@@ -18,11 +24,12 @@ function Body:Initialize(body_raw)
 end
 
 function Body:Raw() return self._body end
-function Body:ToTable() return self.plaintext && self._body || self:GetAll() end
+function Body:ToTable() return self._plaintext && self._body || self:GetAll() end
 function Body:GetAll() return self._post end
 function Body:__tostring() return self._body end
 
--- Parse the raw body into post arguments and files.
+---Parse the raw body into post arguments and files.
+---@param content_type string
 function Body:Parse(content_type)
 
     -- Parse/convert for specific content types.
@@ -73,15 +80,20 @@ function Body:Parse(content_type)
     end
 end
 
--- Get a post key by string, fallback to default if
--- it doesn't exist. (The same getter as all other classes).
+---Get a post key by string, fallback to default if
+---it doesn't exist. (The same getter as all other classes).
+---@param key string
+---@param default? any
+---@return any
 function Body:Get(key, default)
     local v = self._post[key]
     if v == nil then return default end
     return v
 end
 
--- Get a provided file interface from key.
+---Get a provided file interface from key.
+---@param key string
+---@return any?
 function Body:File(key)
     return nil
 end

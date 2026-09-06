@@ -38,9 +38,11 @@ local setupFiles = {
     ["cl_recvfiles.lua"] = true
 }
 
--- AddDeveloperOnlyFile directory iterator.
+---AddDeveloperOnlyFile directory iterator.
+---@param filepath string Absolute LUA path.
+---@return boolean SuccessState
 function GNIL.Dev.AddDeveloperDirectory(filepath)
-    if GNIL.Dev["_dirs"][filepath] then return end
+    if GNIL.Dev["_dirs"][filepath] then return true end
     if not file.IsDir(filepath, "LUA") then
         MODULE:log("Supplied developer directory does not exist '" .. filepath .. "'", "warning")
         return false
@@ -60,8 +62,9 @@ function GNIL.Dev.AddDeveloperDirectory(filepath)
     return success
 end
 
--- Add a filepath to be sent to developers only.
--- filepath: Absolute LUA path.
+---Add a filepath to be sent to developers only.
+---@param filepath string Absolute LUA path.
+---@return boolean SuccessState
 function GNIL.Dev.AddDeveloperOnlyFile(filepath)
     if not file.Exists(filepath, "LUA") then
         MODULE:log("Supplied developer only file does not exist '" .. filepath .. "'", "warning")

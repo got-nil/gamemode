@@ -8,6 +8,7 @@ MODULE:RequireModule("net")
 MODULE:RequireExtension("net")
 
 MODULE.OnLoad = function()
+
     MODULE:GetExtension("net"):Receive("dev_module_reload", function(_, _, reply)
         local moduleName = net.ReadString()
         if not GNIL.Modules.IsLoaded(moduleName) then

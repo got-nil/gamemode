@@ -3,10 +3,17 @@ local MODULE = MODULE
 -- These functions are the exact same as the default net functions
 -- in terms of input arguments and return values.
 
+---Convert an internal network ID to string.
+---@param id number
+---@return string?
 function GNIL.Net.NetworkIDToString(id)
     if id == 0 or id > #GNIL.Net["_r"] then return nil end
     return GNIL.Net["_r"][id]
 end
+
+---Convert an internal network string to ID.
+---@param str string
+---@return number
 function GNIL.Net.NetworkStringToID(str)
 
     -- For maximum optimisation, the ids are pre-cached as a reverse
@@ -24,22 +31,30 @@ local function _addReceiverAtPos(name, pos, callback)
     GNIL.Net["_c"][name][pos] = callback
 end
 
--- Seperate adding receivers for standard messages and chunked
--- data. This is because each uses different callback arguments.
--- (ReceiveChunked can only be used by clients).
+---@param messageName string
+---@param callback fun(len: number, ply: Player, reply: Net.Reply): Net.Reply?
 function GNIL.Net.Receive(messageName, callback) _addReceiverAtPos(messageName, 1, callback) end
+
+---@param messageName string
+---@param callback fun(data: table): boolean?
 function GNIL.Net.ReceiveChunked(messageName, callback) assert(CLIENT, "Only the client can receive chunked data.") _addReceiverAtPos(messageName, 2, callback) end
 
 ------------------------------------------------
 
--- Create a network message instance with the given
--- message name (class constructor alias basically).
+---Create a network message instance with the given
+---message name (class constructor alias basically).
+---@param messageName string
+---@return Net.Message
 function GNIL.Net.Create(messageName)
     return GNIL.Net.Classes.Message:New(messageName)
 end
 
--- Start a net message, inserting the message id
--- header and using the blanket gnil message name.
+---Start a net message, inserting the message id
+---header and using the blanket gnil message name.
+---@param messageName string
+---@param unreliable boolean
+---@param _has_reply? boolean
+---@param _ignore_nonexistant? boolean
 function GNIL.Net.Start(messageName, unreliable, _has_reply, _ignore_nonexistant)
     local mid = GNIL.Net.NetworkStringToID(messageName)
     if not _ignore_nonexistant and mid == 0 then error("The provided message name '" .. messageName .. "' is unpooled. Ensure you're using GNIL.Net.AddNetworkString beforehand.") end
@@ -59,7 +74,9 @@ local function recieveMessage(len, ply, _receiver)
     -- Get the message name string from the sent
     -- message id in the header. (Double headers)
     local mstr = GNIL.Net.NetworkIDToString(net.ReadUInt(GNIL.Net["_idsize"]))
-    if not _debug and (mstr == nil or GNIL.Net["_c"][mstr] == nil or GNIL.Net["_c"][mstr][1] == nil) then return end
+    if not _debug and (mstr == nil or GNIL.Net["_c"][mstr] == nil or GNIL.Net["_c"][mstr][1] == nil) then
+        return
+    end ---@cast mstr string
     local offset = GNIL.Net["_idsize"] -- Base id size.
 
     -- If the message has a reply signal, read the

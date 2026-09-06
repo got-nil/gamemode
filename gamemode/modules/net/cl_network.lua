@@ -64,7 +64,7 @@ net.Receive("gnilc", function()
                 -- attempting to continue sending data for a message that cant
                 -- even be recieved.
                 net.Start("gnilc")
-                    net.WriteUInt(tonumber(data.id), 15)
+                    net.WriteUInt(ToNumberThrow(data.id), 15)
                     net.WriteBool(false)
                     net.WriteString("The client does not have any chunked recievers for the message")
                 net.SendToServer()
@@ -111,6 +111,9 @@ net.Receive("gnilc", function()
 
             else
 
+                ---@type table|string
+                local callbackOutput = output
+
                 -- Finally, if the data recieved is valid we should parse the data to
                 -- seperate the header and body (if a header has been sent). The body
                 -- is then split based on the header length values.
@@ -129,12 +132,12 @@ net.Receive("gnilc", function()
                         buffer[i] = string.sub(body, previous + 1, current)
                         previous = current
                     end
-                    output = buffer
+                    callbackOutput = buffer
                 end
 
                 -- Call the callback reciever. If there is multiple strings recieved
                 -- we should call them each as individual arguments.
-                local out = GNIL.Net["_c"][mstr][2](output)
+                local out = GNIL.Net["_c"][mstr][2](callbackOutput)
                 if not isbool(out) then out = true end
                 success = out
             end
@@ -142,7 +145,7 @@ net.Receive("gnilc", function()
 
         -- Send the success status and any error messages if unsuccessful.
         net.Start("gnilc")
-            net.WriteUInt(tonumber(data.id), 15)
+            net.WriteUInt(ToNumberThrow(data.id), 15)
             net.WriteBool(success)
             if not success then net.WriteString(errmessage) end
         net.SendToServer()

@@ -52,6 +52,9 @@ local Types = {
     "Player"
 }
 
+---@param is_read boolean
+---@param write_buffer Net.Writeable?
+---@return Net.Writeable
 local function createBuffer(is_read, write_buffer)
     if is_read then
         return GNIL.Net.Classes.Readable:New(write_buffer)
@@ -60,6 +63,9 @@ local function createBuffer(is_read, write_buffer)
     end
 end
 
+---@param is_read boolean
+---@param typeName string
+---@return fun(...: table): nil
 local function detourCallback(is_read, typeName)
     local prefix = is_read && "Read" || "Write"
     return function(...)
@@ -72,6 +78,9 @@ local function detourCallback(is_read, typeName)
     end
 end
 
+--Detour all network writing functions.
+---@param is_read boolean
+---@param write_buffer? table
 function GNIL.Net.Testing.Detour(is_read, write_buffer)
 
     -- Prevent double detouring.
@@ -103,6 +112,9 @@ function GNIL.Net.Testing.Detour(is_read, write_buffer)
     if is_read then GNIL.Net["_receive"] = false end
 end
 
+---Restore network functions to originals.
+---@param is_read boolean
+---@return Net.Writeable?
 function GNIL.Net.Testing.Restore(is_read)
 
     -- Ensure its already been detoured.
@@ -127,12 +139,20 @@ function GNIL.Net.Testing.Restore(is_read)
     return out
 end
 
+---Are we currently detoured?
+---@param is_read boolean
+---@return boolean
 function GNIL.Net.Testing.IsDetoured(is_read)
     return GNIL.Net.Testing["_detoured"][is_read && "Read" || "Write"] == true
 end
 
+---Call the network reciever with a write buffer, wrapped in a detour.
+---@param write_buffer Net.Writeable
+---@param receiver any
+---@return boolean
+---@return string?
 function GNIL.Net.Testing.CallReciever(write_buffer, receiver)
-    if GNIL.Net.Testing.IsDetoured(true) then return false, false end
+    if GNIL.Net.Testing.IsDetoured(true) then return false, nil end
 
     GNIL.Net.Testing.Detour(true, write_buffer)     -- 1. Detour
     local succ, err = pcall(function()              -- 2. Call reciever
@@ -154,14 +174,24 @@ function GNIL.Net.Testing.CallReciever(write_buffer, receiver)
     return true, nil
 end
 
+---Wrap a writeable callback in a detour state.
+---@param callback function
+---@return boolean|Net.Writeable
+---@return string|{messageName: string|boolean, target: any}?
 function GNIL.Net.Testing.WrapWriteable(callback)
-    if GNIL.Net.Testing.IsDetoured(false) then return false, false end
+    if GNIL.Net.Testing.IsDetoured(false) then return false, nil end
 
     -- Since this is a write operation, there could be a
     -- message name or target set (Start/Send) callbacks.
     GNIL.Net.Testing.Detour(false)                  -- 1. Detour
     local succ, err = pcall(callback)               -- 2. Run callback
     local out = GNIL.Net.Testing.Restore(false)     -- 3. Restore
+
+    -- Make sure that we got a valid write buffer from restore.
+    if out == nil then
+        MODULE:log("Could not restore a valid WriteableMixin from detoured network state.", "error")
+        return false, "Couldn't restore a valid WriteableMixin class from detour"
+    end
 
     -- If the callback errors, reutrn the error itself.
     if not succ then

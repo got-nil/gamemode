@@ -14,9 +14,13 @@ local function ucfirst(str)
     return str:sub(1,1):upper()..str:sub(2)
 end
 
--- Wrap a function to be called in between a const
--- being set. After completion, the previous value
--- is restored.
+---Wrap a function to be called in between a const
+---being set. After completion, the previous value
+---is restored.
+---@param const string
+---@param const_default any
+---@param fn function
+---@return any ConstValue
 function GNIL.Loader.ConstWrap(const, const_default, fn)
     local previous = _G[const]
     _G[const] = const_default or {}
@@ -28,8 +32,12 @@ function GNIL.Loader.ConstWrap(const, const_default, fn)
     return out
 end
 
--- Loads directory files wrapped as a const. The
--- return value is the modified const_default or nil.
+---Loads directory files wrapped as a const. The
+---return value is the modified const_default or nil.
+---@param const string
+---@param directory_path string
+---@param const_default? any
+---@return any DirectoryConstValue
 function GNIL.Loader.DirectoryConst(const, directory_path, const_default)
     return GNIL.Loader.ConstWrap(const, const_default or {}, function()
 
@@ -40,7 +48,7 @@ function GNIL.Loader.DirectoryConst(const, directory_path, const_default)
         for _, v in ipairs(files) do
 
             GNIL.Utils.Include(v)
-            if not GNIL.Utils.IsFilenameForCurrentRealm(filepath) then
+            if not GNIL.Utils.IsFilenameForCurrentRealm(v) then
                 continue
             end
             any_loaded = true
@@ -53,8 +61,15 @@ function GNIL.Loader.DirectoryConst(const, directory_path, const_default)
     end)
 end
 
--- Get the loader table from name.
-function GNIL.Loader.GetLoaders() return GNIL.Loader["_loaders"] end
+---Get the loader table from name.
+---@return table Loaders
+function GNIL.Loader.GetLoaders()
+    return GNIL.Loader["_loaders"]
+end
+
+---Get a loader by name.
+---@param name string
+---@return table? Loader
 function GNIL.Loader.GetLoader(name)
     return GNIL.Loader["_loaders"][name]
 end
@@ -74,6 +89,10 @@ end
     }
 
 --]]
+---@param directory_path string
+---@param key_uppercase_first? boolean
+---@param force_realm? string
+---@return table? DirectoryValues
 function GNIL.Loader.DirectoryFilenameMap(directory_path, key_uppercase_first, force_realm)
 
     -- Map file return values to cleaned filename.
@@ -84,7 +103,7 @@ function GNIL.Loader.DirectoryFilenameMap(directory_path, key_uppercase_first, f
     if files == nil then return nil end
     for _, f in ipairs(files) do
 
-        local name = GNIL.Utils.GetCleanFilename(f, extension or "lua")
+        local name = GNIL.Utils.GetCleanFilename(f)
         local rtrn = GNIL.Utils.Include(directory_path .. "/" .. f, force_realm)
         if not force_realm and not GNIL.Utils.IsFilenameForCurrentRealm(f) then
             continue
@@ -113,12 +132,16 @@ end
     }
 
 --]]
+---@param directory_path string
+---@param callback? function
+---@param force_realm? string
+---@return table? DirectoryMapValue
 function GNIL.Loader.DirectoryMap(directory_path, callback, force_realm)
     assert(callback == nil or isfunction(callback), "If a callback is provided, it must be a function.")
 
     local out = {}
 
-    local files, _ = file.Find(directory_path .. "/*." .. (extension or "lua"), "LUA")
+    local files, _ = file.Find(directory_path .. "/*.lua", "LUA")
     if files == nil then return nil end
     for _, f in ipairs(files) do
 
@@ -151,8 +174,8 @@ local function loadLoaders()
     return out
 end
 
--- Prevent reloading on luarefresh (although for dev
--- environment everything is always reloaded).
+---Prevent reloading on luarefresh (although for dev
+---environment everything is always reloaded).
 function GNIL.Loader.LoadBase()
     if GNIL.Loader["_init"] then return end
     GNIL.log("Starting to load Thirdparty, Classes and other loaders.", "debug")

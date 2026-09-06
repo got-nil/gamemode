@@ -1,8 +1,13 @@
--- All HTTP messages (request, response) inherit from Message.
--- It defines the standard set for setting/getting message attributes
--- and provides a direct shared functional interface for abstracted classes.
+local MODULE = MODULE
 
-local MODULE, Message = MODULE, GNIL.Thirdparty.middleclass("Message")
+---All HTTP messages (request, response) inherit from Message.
+---It defines the standard set for setting/getting message attributes
+---and provides a direct shared functional interface for abstracted classes.
+---@class API.Message: middleclass
+---@field body? string|API.Body
+---@field method? string
+---@field headers? API.Headers
+local Message = GNIL.Thirdparty.middleclass("Message")
 Message._validMethods = {
     ["GET"] = true,
     ["POST"] = true,
@@ -29,13 +34,20 @@ Message._attributes = {
     ["headers"]     = function(v) return GNIL.API.Classes.Is(v, "Headers") end
 }
 
+---Get message key attribute value.
+---@param attribute string
+---@param default? any
+---@return any AttributeValue
 function Message:Get(attribute, default)
     local v = self[attribute]
     if v == nil then return default end
     return v
 end
 
--- Attribute setter that respects attribute data types.
+---Attribute setter that respects attribute data types.
+---@param attribute string
+---@param value any
+---@return boolean SuccessState
 function Message:Set(attribute, value)
     local expected = Message._attributes[attribute]
     if isfunction(expected) then
@@ -53,8 +65,9 @@ function Message:Set(attribute, value)
     return true
 end
 
--- Convert the request to a table, calling class totable converters
--- if they exist. Ignore any attributes that are undefined (nil).
+---Convert the request to a table, calling class totable converters
+---if they exist. Ignore any attributes that are undefined (nil).
+---@return table MessageTable
 function Message:ToTable()
     local tbl = {}
     for k, _ in pairs(Message._attributes) do
@@ -66,9 +79,11 @@ function Message:ToTable()
     return tbl
 end
 
--- Set multiple attributes on a message. All attributes will
--- continue being set even if the previous fails. The return
--- status is true if all succeeded, or false if any failed.
+---Set multiple attributes on a message. All attributes will
+---continue being set even if the previous fails. The return
+---status is true if all succeeded, or false if any failed.
+---@param attributes table
+---@return boolean
 function Message:Sets(attributes)
     if table.IsSequential(attributes) then
         return false

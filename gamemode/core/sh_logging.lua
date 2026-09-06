@@ -9,10 +9,13 @@ local logcolours = {
     ["debug"] = Color(0, 255, 247)
 }
 
+---@param log string
+---@param logtype? string
+---@param prefix? string
 function GNIL.Logging.Log(log, logtype, prefix)
     MsgC(
         (logcolours[logtype == nil and "default" or logtype] != nil and logcolours[logtype] or logcolours["default"]),
-        "[GNIL][" .. (SERVER and "SV" or "CL") ..  "]" .. (prefix == nil and "" or ("[" .. prefix .. "]")) .."[" .. (logtype == nil and "INFO" or string.upper(logtype)) .. "] "
+        "[GNIL][" .. (SERVER and "SV" or "CL") ..  "]" .. (prefix == nil and "" or ("[" .. prefix .. "]")) .."[" .. (logtype == nil and "INFO" or string.upper(logtype or "")) .. "] "
     )
 
     -- If the provided input is a table, and the pretty_table thirdparty
@@ -23,11 +26,14 @@ function GNIL.Logging.Log(log, logtype, prefix)
         return
     end
 
-    Msg("-> " .. (istable(log) and util.TableToJSON(log) or tostring(log)) .. "\n")
+    Msg("-> " .. (istable(log) and util.TableToJSON(log) or tostring(log)) .. "\n") ---@diagnostic disable-line
 end
 
--- Send a log directly to a player. When using with the player metatable
--- you can send logs to a player as simply as ply:log(...)
+---Send a log directly to a player. When using with the player metatable
+---you can send logs to a player as simply as ply:log(...)
+---@param ply Player
+---@param log string
+---@param logtype? string
 function GNIL.Logging.LogToPlayer(ply, log, logtype)
     if not GNIL.Net then return end
 

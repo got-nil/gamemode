@@ -85,10 +85,12 @@ local function _call(self, ...)
     return self:New(...)
 end
 
+---@return middleclass
 local function _createClass(name, super)
     local dict = {}
     dict.__index = dict
 
+    ---@class middleclass
     local aClass = {
         name = name,
         super = super,
@@ -147,6 +149,7 @@ local function _includeMixin(aClass, mixin)
     return aClass
 end
 
+---@class middleclass
 local DefaultMixin = {
     __tostring = function(self)
         return "instance of " .. tostring(self.class)
@@ -161,6 +164,7 @@ local DefaultMixin = {
                        self.class:IsSubclassOf(aClass))
     end,
 
+    ---@class middleclass
     static = {
         Allocate = function(self)
             assert(istable(self), "Make sure that you are using 'Class:Allocate' instead of 'Class.Allocate'")
@@ -169,6 +173,10 @@ local DefaultMixin = {
             }, self.__instanceDict)
         end,
 
+        ---@generic T
+        ---@param self T
+        ---@param ... any
+        ---@return T
         New = function(self, ...)
             assert(istable(self), "Make sure that you are using 'Class:New' instead of 'Class.New'")
             local instance = self:Allocate()
@@ -180,6 +188,7 @@ local DefaultMixin = {
             assert(istable(self), "Make sure that you are using 'Class:Subclass' instead of 'Class.Subclass'")
             assert(isstring(name), "You must provide a name(string) for your class")
 
+            ---@class middleclass
             local subclass = _createClass(name, self)
 
             for methodName, f in pairs(self.__instanceDict) do
@@ -213,6 +222,9 @@ local DefaultMixin = {
     }
 }
 
+---@param name any
+---@param super any
+---@return middleclass
 function middleclass.class(name, super)
     assert(isstring(name), "A name (string) is needed for the new class")
     return super and super:Subclass(name) or _includeMixin(_createClass(name), DefaultMixin)

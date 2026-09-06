@@ -1,7 +1,9 @@
--- Query is used as a provider for the parsed query string data.
--- Allows for query arguments to be modified and rebuilt for URL safe
--- outputs.
 
+---Query is used as a provider for the parsed query string data.
+---Allows for query arguments to be modified and rebuilt for URL safe
+---outputs.
+---@class API.Query: middleclass
+---@field _args table
 local Query = GNIL.Thirdparty.middleclass("Query")
 function Query._From(query)
     if (isstring(query) or (istable(query) and not table.IsSequential(query))) then
@@ -9,15 +11,15 @@ function Query._From(query)
 	end
 end
 
+---@param query table|string
 function Query:Initialize(query)
 	if query == nil then query = {} end
 
 	-- If a string is provided in the constructor, parse
 	-- it and convert it to a query table.
-	if isstring(query) then
-		query = GNIL.API.Parser.Query(query)
+	if isstring(query) then ---@cast query string
+		query = GNIL.API.Parser.Query(query) ---@cast query table
 	end
-
 	self._args = query
 end
 
@@ -25,14 +27,19 @@ function Query:ToTable() return self:GetAll() end
 function Query:GetAll() return self._args end
 function Query:Exists(name) return self:Get(name) != nil end
 
--- Get a query value by key.
+---Get a query value by key.
+---@param name string
+---@param default? any
+---@return any
 function Query:Get(name, default)
 	local v = self._args[name]
 	if v == nil then return default end
 	return v
 end
 
--- Set a query key value.
+---Set a query key value.
+---@param name string
+---@param value any
 function Query:Set(name, value)
 	self._args[name] = value
 end
@@ -50,7 +57,11 @@ end
 function Query:IsTrue(name) return isQueryBool(1, self:Get(name)) end
 function Query:IsFalse(name) return isQueryBool(2, self:Get(name)) end
 
--- Build query string from current arguments.
+---Build query string from current arguments.
+---@param tab table
+---@param sep? string
+---@param key? any
+---@return string
 function Query.BuildQuery(tab, sep, key)
 	local query = {}
 	if not sep then sep = "&" end
@@ -64,7 +75,7 @@ function Query.BuildQuery(tab, sep, key)
 	end)
 	for _,name in ipairs(keys) do
 		local value = tab[name]
-		name = GNIL.API.URL.Encode(tostring(name), {["-"] = true, ["_"] = true, ["."] = true})
+		name = GNIL.API.URL.Encode(tostring(name))
 		if key then
 			if string.find(name, "^%d+$") then
 				name = tostring(key)
@@ -75,7 +86,7 @@ function Query.BuildQuery(tab, sep, key)
 		if type(value) == "table" then
 			query[#query+1] = GNIL.API.Classes.Query.BuildQuery(value, sep, name)
 		else
-			local value = GNIL.API.URL.Encode(tostring(value), GNIL.API.Parser.QueryOptions.legal_in_query)
+			local value = GNIL.API.URL.Encode(tostring(value))
 			if value != "" then
 				query[#query+1] = string.format("%s=%s", name, value)
 			else
@@ -86,13 +97,14 @@ function Query.BuildQuery(tab, sep, key)
 	return table.concat(query, sep)
 end
 
--- Build current query arguments into URL safe query string.
+---Build current query arguments into URL safe query string.
+---@return string
 function Query:Build()
 	return GNIL.API.Classes.Query.BuildQuery(self._args)
 end
 
--- If the query class is cast to a string, then we should build the
--- current query arguments into a URL safe string.
+---If the query class is cast to a string, then we should build the
+---current query arguments into a URL safe string.
 function Query:__tostring()
 	return self:Build()
 end

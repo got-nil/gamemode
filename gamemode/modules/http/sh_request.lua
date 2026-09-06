@@ -1,4 +1,9 @@
-local MODULE, Request = MODULE, GNIL.Thirdparty.middleclass("Request")
+local MODULE = MODULE
+
+---@alias Http.Request.Arguments table<string, any>|any[]
+
+---@class Http.Request: middleclass
+local Request = GNIL.Thirdparty.middleclass("Request")
 
 -- method, url, body, headers, callback
 function Request:Initialize(...)
@@ -53,9 +58,9 @@ function Request:IsValid()
 end
 
 -- Calling the request directly should alias sending it.
-function Request:_call() return self:Send() end
+function Request:__call() return self:Send() end
 
--- Validate and then send the request.
+---Validate and then send the request.
 function Request:Send()
     if not self:IsValid() then return end
 

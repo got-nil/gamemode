@@ -1,12 +1,24 @@
--- Route is used by the server router to define a
--- specific route entity. It contains the route callback
--- and provides an interface for route matching.
--- Usually, routes should not be constructed manually, instead
--- they should be constructed by the router and provided back
--- to allow for additional route settings.
+local MODULE = MODULE
 
-local MODULE, Route = MODULE, GNIL.Thirdparty.middleclass("Route")
+---@alias API.Route.PromiseCallback fun(respond: fun(API.Response))
+---@alias API.Route.Callback fun(request: API.Request, arguments: table<string, any>): API.Response|number|string|boolean|API.Route.PromiseCallback
 
+---Route is used by the server router to define a
+---specific route entity. It contains the route callback
+---and provides an interface for route matching.
+---Usually, routes should not be constructed manually, instead
+---they should be constructed by the router and provided back
+---to allow for additional route settings.
+---@class API.Route: middleclass
+---@field _id string
+---@field _path string
+---@field _path_parsed string[]
+---@field _parents table<string, API.Router>
+---@field _callback API.Route.Callback
+local Route = GNIL.Thirdparty.middleclass("Route")
+
+---@param path string
+---@param callback API.Route.Callback
 function Route:Initialize(path, callback)
     self._id = GNIL.Utils.Random(8)
 
@@ -16,10 +28,11 @@ function Route:Initialize(path, callback)
     if not isfunction(callback) then error("A Route must be constructed with a valid callback function") end
 
     -- Parse the provided route and store since the path shouldnt change.
-    self._path_parsed = GNIL.API.Parser.Route(path)
-    if self._path_parsed == nil then
+    local parsed_path = GNIL.API.Parser.Route(path)
+    if not parsed_path then
         error("Failed to parse Route path.")
     end
+    self._path_parsed = parsed_path
 
     self._parents = {}
     self._path = path
@@ -27,7 +40,7 @@ function Route:Initialize(path, callback)
     self._methods = nil -- Default to allowing all methods
 end
 
--- Remove the route from all of its router parents.
+---Remove the route from all of its router parents.
 function Route:Remove()
     for _, v in pairs(self._parents) do
         v:RemoveRoute(self)
@@ -35,21 +48,28 @@ function Route:Remove()
     self._parents = {}
 end
 
+---Convert the Route to a table.
+---@return {path: string}
 function Route:ToTable() return {["path"] = self._path} end
-function Route:GetPath() return self.path end
 
--- Set the callback that should be used when the route is called.
+---Get the full route path.
+---@return string
+function Route:GetPath() return self._path end
+
+---Set the callback that should be used when the route is called.
+---@param callback API.Route.Callback
 function Route:SetCallback(callback)
     if isfunction(callback) then
         self._callback = callback
     end
 end
 
--- Set the accepted route methods. Each method is validated before
--- its stored (and is stored in UPPERCASE).
+---Set the accepted route methods. Each method is validated before
+---its stored (and is stored in UPPERCASE).
+---@param methods string|string[]
 function Route:SetMethods(methods)
     local _methods = {}
-    if isstring(methods) then _methods = {methods} end
+    if isstring(methods) then _methods = {methods} end ---@cast methods string[]
     for _, v in ipairs(methods) do
         local method = string.upper(v)
         if GNIL.API.Message._validMethods[method] then
@@ -59,8 +79,11 @@ function Route:SetMethods(methods)
     self._methods = _methods
 end
 
--- Used to match a set of route "fragments" (exploded route) against
--- the stored parsed route. Returns success: bool, arguments: table
+---Used to match a set of route "fragments" (exploded route) against
+---the stored parsed route. Returns success: bool, arguments: table
+---@param fragments table
+---@return boolean SuccessState
+---@return table? Arguments
 function Route:_Match(fragments)
 
     -- Ensure there are the correct amount of required arguments.
@@ -82,8 +105,11 @@ function Route:_Match(fragments)
     return true, arguments
 end
 
--- Call the route callback with given arguments.
--- Returns either a Response instance or promise function.
+---Call the route callback with given arguments.
+---Returns either a Response instance or promise function.
+---@param request API.Request
+---@param arguments table
+---@return API.Response|API.Route.PromiseCallback
 function Route:_Call(request, arguments)
 
     -- Convert the provided arguments to their types.

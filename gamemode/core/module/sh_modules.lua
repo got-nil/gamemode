@@ -5,6 +5,8 @@ local _defaults = {
     ["_first_loaded"] = {},
     ["_cached_modules"] = {}
 }
+GNIL.Modules["_cached_existances"] = {}
+
 for k, v in pairs(_defaults) do
     if GNIL.Modules[k] == nil then
         GNIL.Modules[k] = v
@@ -41,6 +43,12 @@ end
 
 ------------------------------------------------------------------------------------------------------------
 
+---@param moduleInstance Module
+---@param reload? boolean
+---@param _returnLastModuleFn? function
+---@return boolean
+---@return Module?
+---@return function?
 local function InitializeModule(moduleInstance, reload, _returnLastModuleFn)
 
     local initFiles, basePath = {}, moduleInstance:GetBasePath()
@@ -156,13 +164,16 @@ local function InitializeModule(moduleInstance, reload, _returnLastModuleFn)
     end
 end
 
--- value: Module | string
--- base_path: nil | string
+---@param value Module|string
+---@param base_path? string
+---@param _reload? boolean
+---@param _dependency_chain? table
+---@return boolean
 local function LoadModule(value, base_path, _reload, _dependency_chain)
 
     -- Just incase.
     assert(base_path == nil or isstring(base_path), "The module base_path argument must be nil or a string")
-    local moduleInstance = false
+    local moduleInstance
 
     if not IsModule(value) then
         assert(isstring(value), "Provided name must be a string if not a Module")
@@ -190,6 +201,9 @@ local function LoadModule(value, base_path, _reload, _dependency_chain)
     -- The MODULE const is kept as the loading module until the end.
     local initialized, moduleInstance, restoreModuleFn = InitializeModule(moduleInstance, _reload, true)
     if not initialized then return false end
+
+    ---@cast moduleInstance Module
+    ---@cast restoreModuleFn function
 
     -- Include the rest of the module directory without any of the init files.
     -- Also call OnLoad hook, allowing a final chance to reject a load.
@@ -309,8 +323,11 @@ function GNIL.Modules._InitializeModule(...)
     return InitializeModule(...)
 end
 
--- moduleinstance_or_string: string | Module
--- base_path: nil | string
+---Load a provided module.
+---@param moduleinstance_or_string string|Module
+---@param base_path? string
+---@param _dependency_chain? table
+---@return boolean
 function GNIL.Modules.Load(moduleinstance_or_string, base_path, _dependency_chain)
     local moduleInstance = moduleinstance_or_string
     if isstring(moduleinstance_or_string) then
@@ -327,9 +344,10 @@ function GNIL.Modules.Load(moduleinstance_or_string, base_path, _dependency_chai
     return LoadModule(moduleInstance, base_path, false, _dependency_chain)
 end
 
--- A helper function for the shared gamemode file to use when loading
--- all modules at once. It constantly checks to ensure that the module
--- isnt loaded incase of dependency loading.
+---A helper function for the shared gamemode file to use when loading
+---all modules at once. It constantly checks to ensure that the module
+---isnt loaded incase of dependency loading.
+---@param _reload? boolean Are we reloading all the modules?
 function GNIL.Modules.LoadAll(_reload)
     GNIL.log("Loading all modules", "debug")
     for _, v in ipairs(GNIL.Modules.FindAll()) do
@@ -342,7 +360,11 @@ function GNIL.Modules.LoadAll(_reload)
     hook.Run("GNIL.Modules.LoadedAll")
 end
 
--- Return all cached modules.
+---Return all cached modules.
+---@param associative? boolean
+---@param just_names? boolean
+---@param ignore_disabled? boolean
+---@return table<string|number, string|Module>
 function GNIL.Modules.GetAll(associative, just_names, ignore_disabled)
     local modules = {}
 
@@ -353,9 +375,12 @@ function GNIL.Modules.GetAll(associative, just_names, ignore_disabled)
     return modules
 end
 
--- Find all modules. If associative is true the return table is a key value
--- mapping {name = module}, if false the table is a sequential list of module instances.
--- If associative is false, just_names can be true which makes a sequential array of string names.
+---Find all modules. If associative is true the return table is a key value
+---mapping {name = module}, if false the table is a sequential list of module instances.
+---If associative is false, just_names can be true which makes a sequential array of string names.
+---@param associative? boolean
+---@param just_names? boolean
+---@return table<string|number, string|Module>
 function GNIL.Modules.FindAll(associative, just_names)
     local modules = {}
 
@@ -386,10 +411,16 @@ function GNIL.Modules.FindAll(associative, just_names)
     return modules
 end
 
--- Checks if a module name has been loaded. Does not preform any additional validation
--- such as exist checks since this function is called quite a lot.
--- Also makes sure that the module is actually cached.
+---Checks if a module name has been loaded. Does not preform any additional validation
+---such as exist checks since this function is called quite a lot.
+---Also makes sure that the module is actually cached.
+---@param name string Module name.
+---@return boolean
 function GNIL.Modules.IsLoaded(name) return GNIL.Modules._loaded[name] == true and GNIL.Modules._cached_modules[name] != nil end
+
+--- Reload an already loaded module by name.
+---@param name string
+---@return boolean
 function GNIL.Modules.Reload(name)
     if not GNIL.Modules.IsLoaded(name) then
         return false
@@ -399,7 +430,10 @@ function GNIL.Modules.Reload(name)
     return LoadModule(moduleInstance, nil, true)
 end
 
--- Get a module instance from cache. Module must be loaded beforehand.
+---Get a module instance from cache. Module must be loaded beforehand.
+---@param name string
+---@param additional? table
+---@return Module?
 function GNIL.Modules.Get(name, additional) -- ?Module
     if not GNIL.Modules["_cached_modules"][name] then
         return nil
@@ -415,15 +449,19 @@ function GNIL.Modules.Get(name, additional) -- ?Module
     return GNIL.Modules["_cached_modules"][name]
 end
 
--- Unload a module, recursively unloading all its dependencies.
--- If _reload is specified, some unload steps are ignored (BOOL).
+---Unload a module, recursively unloading all its dependencies.
+---If _reload is specified, some unload steps are ignored.
+---@param name_or_module string|Module
+---@param _caller? string The name of calling module.
+---@param _reload? boolean Are we unloading to then load again?
+---@return boolean
 function GNIL.Modules.Unload(name_or_module, _caller, _reload)
 
     -- Allow a module to be provided directly instead of name.
-    local moduleInstance, name = false, false
-    if IsModule(name_or_module) then
+    local moduleInstance, name
+    if IsModule(name_or_module) then ---@cast name_or_module Module
         moduleInstance, name = name_or_module, name_or_module._module_name
-    else
+    else ---@cast name_or_module string
         if not GNIL.Modules.IsLoaded(name_or_module) then return false end
         moduleInstance, name = GNIL.Modules["_cached_modules"][name_or_module], name_or_module
     end
@@ -446,9 +484,11 @@ function GNIL.Modules.Unload(name_or_module, _caller, _reload)
     return true
 end
 
--- Check if a module exists. Will attempt to used cached existance check unless
--- the ignore_cache argument is true. Efficiency is a bitch.
-GNIL.Modules["_cached_existances"] = {}
+---Check if a module exists. Will attempt to used cached existance check unless
+---the ignore_cache argument is true. Efficiency is a bitch.
+---@param name string
+---@param ignore_cache? boolean
+---@return boolean
 function GNIL.Modules.Exists(name, ignore_cache)
 
     -- If we're not ignoring the cache, and there is a cached existance value for

@@ -1,5 +1,12 @@
--- Table modifications/extensions
+---@class tablelib
+local table = table
 
+---Slice a table.
+---@param tbl table
+---@param first? number
+---@param last? number
+---@param step? number
+---@return table
 table.Slice = function(tbl, first, last, step)
     local sliced = {}
 
@@ -10,6 +17,10 @@ table.Slice = function(tbl, first, last, step)
     return sliced
 end
 
+---Convert a sequential table to lookup.
+---@param tbl table<number, any>
+---@param value? any
+---@return table
 table.Lookup = function(tbl, value)
     local out, value = {}, Either(value != nil, value, true)
     for _, v in pairs(tbl) do

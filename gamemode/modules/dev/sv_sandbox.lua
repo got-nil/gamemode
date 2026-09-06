@@ -4,7 +4,7 @@
 -- Returns the code output and stdout buffer.
 
 
--- Parse a raw error string into
+---Parse a raw error string into
 function GNIL.Dev.ParseError(err)
 
     -- If the error is not a string, still return a valid structure.
@@ -43,7 +43,7 @@ end
 
 local function executeFunction(code_or_fn, use_global_env, arguments)
     local fn, err = toFunction(code_or_fn)
-    if not fn then return err end
+    if not fn then return false, err end
 
     local stdout = {}
     local env = GNIL.Dev.CreateEnvironment(function(str)
@@ -63,10 +63,21 @@ local function executeFunction(code_or_fn, use_global_env, arguments)
     end
 end
 
+---Run a function and capture any stdout (print calls etc).
+---@param code_or_fn string|function
+---@param ... any Function arguments.
+---@return boolean SuccessState
+---@return table? Output
 function GNIL.Dev.CaptureStdout(code_or_fn, ...)
     return executeFunction(code_or_fn, true, {...})
 end
 
+---Run code in a "sandbox" with detoured global functions.
+---**This should __NOT__ be used to run user supplied code.**
+---@param code_or_fn any
+---@param ... any Function arguments.
+---@return boolean SuccessState
+---@return table? Output
 function GNIL.Dev.SandboxExecute(code_or_fn, ...)
     return executeFunction(code_or_fn, false, {...})
 end

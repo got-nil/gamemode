@@ -104,7 +104,7 @@ local genericArguments = {
             -- (Provided there is a player argument for the caller)
             if ply != nil and arg == "^" then return ply end
 
-            for _, v in player.Iterator() do
+            for _, v in ipairs(player.GetAll())() do
                 if v:SteamID64() == arg then return v end
                 if v:SteamID() == arg then return v end
                 if v:Nick() == arg then return v end
@@ -117,7 +117,7 @@ local genericArguments = {
             end
 
             local plys = {}
-            for _, v in player.Iterator() do
+            for _, v in ipairs(player.GetAll())() do
                 local n = v:Nick()
                 if 3 > #arg or string.find(string.lower(n), arg) then
                     table.insert(plys, "\"" .. n .. "\"")

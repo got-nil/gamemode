@@ -89,19 +89,58 @@ local function callSignalListeners(class, signalName, ...)
     return
 end
 
-return {
+---@alias EventsMixin.Callback fun(...: any): nil
+---@class EventsMixin: middleclass
+local EventsMixin = {
 
+    ---Add a blocking event listener.
+    ---@param self self
+    ---@param eventName string
+    ---@param callback EventsMixin.Callback
     AddEventListener = function(self, eventName, callback) return addCallback(self, 1, eventName, callback) end,
+
+    ---Add a signal (passive) listener.
+    ---@param self self
+    ---@param signalName string
+    ---@param callback EventsMixin.Callback
     AddSignalListener = function(self, signalName, callback) return addCallback(self, 2, signalName, callback) end,
 
+    ---Clear all existing event listeners.
+    ---@param self self
+    ---@param eventName string
     ClearEventListeners = function(self, eventName) return clearCallbacks(self, 1, eventName) end,
+
+    ---Clear all existing signal listeners.
+    ---@param self self
+    ---@param signalName string
     ClearSignalListeners = function(self, signalName) return clearCallbacks(self, 2, signalName) end,
+
+    ---Clear all existing listeners.
+    ---@param self self
     ClearAllListeners = function(self) return clearCallbacks(self) end,
 
+    ---Get all existing event listeners.
+    ---@param self self
+    ---@param eventName? string
+    ---@return table EventListeners
     GetEventListeners = function(self, eventName) return getCallbacks(self, 1, eventName) end,
+
+    ---Get all existing signal listeners.
+    ---@param self self
+    ---@param signalName? string
+    ---@return table SignalListeners
     GetSignalListeners = function(self, signalName) return getCallbacks(self, 2, signalName) end,
+
+    ---Get all existing listeners (event + signal).
+    ---@param self self
+    ---@return table AllListeners
     GetAllListeners = function(self) return getCallbacks(self) end,
 
+    ---Emit an event (recieved for every event listener until one returns a value, and all signal listeners).
+    ---@param self self
+    ---@param eventName string
+    ---@param ... any
+    ---@return any? EventResult
     EmitEvent = function(self, eventName, ...)
         assert(isstring(eventName), "Provided eventName must be a string")
         eventName = eventName:lower()
@@ -128,9 +167,13 @@ return {
                 if out != nil then return out end
             end
         end
-        return
+        return nil
     end,
 
+    ---Emit a signal (recieved by all signal listeners).
+    ---@param self self
+    ---@param signalName string
+    ---@param ... any
     EmitSignal = function(self, signalName, ...)
         assert(isstring(signalName), "Provided signalName must be a string")
 
@@ -139,3 +182,4 @@ return {
         callSignalListeners(self, signalName, ...)
     end
 }
+return EventsMixin

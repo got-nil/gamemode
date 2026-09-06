@@ -1,13 +1,18 @@
--- Router
+local MODULE = MODULE
 
-local MODULE, Router = MODULE, GNIL.Thirdparty.middleclass("Router")
+---@class API.Router: middleclass
+---@field _id string
+---@field _routes API.Route[]
+local Router = GNIL.Thirdparty.middleclass("Router")
 
 function Router:Initialize()
     self._id = GNIL.Utils.Random(8)
     self._routes = {}
 end
 
--- Add a route to the router, must be type of Route.
+---Add a route to the router, must be type of Route.
+---@param route API.Route
+---@return boolean
 function Router:AddRoute(route)
     if not GNIL.API.Classes.Is(route, "Route") then
         return false
@@ -24,7 +29,9 @@ function Router:AddRoute(route)
     return true
 end
 
--- Remove the provided route instance from the router.
+---Remove the provided route instance from the router.
+---@param route API.Route
+---@return boolean
 function Router:RemoveRoute(route)
     local out, removed = {}, false
     for _, v in ipairs(self._routes) do
@@ -39,7 +46,11 @@ function Router:RemoveRoute(route)
     return removed
 end
 
--- Create a route and add it to the router (by default).
+---Create a route and add it to the router (by default).
+---@param route string
+---@param callback fun()
+---@param auto_add any
+---@return API.Route
 function Router:Create(route, callback, auto_add)
     if auto_add == nil then auto_add = true end
 
@@ -50,21 +61,9 @@ function Router:Create(route, callback, auto_add)
     return route
 end
 
--- Create a method with given specific methods.
-function Router:_CreateWithMethods(route, callback, methods)
-    local route = self:Create(route, callback)
-    route:SetMethods(methods)
-    return route
-end
-
--- Alias methods to create a route with specific methods set.
-function Router:Post(route, callback) return self:_CreateWithMethods(route, callback, {"POST"}) end
-function Router:Get(route, callback) return self:_CreateWithMethods(route, callback, {"GET"}) end
-function Router:Put(route, callback) return self:_CreateWithMethods(route, callback, {"PUT"}) end
-function Router:Patch(route, callback) return self:_CreateWithMethods(route, callback, {"PATCH"}) end
-function Router:Delete(route, callback) return self:_CreateWithMethods(route, callback, {"DELETE"}) end
-
--- Get matching routes that should be used for the given raw route string.
+---Get matching routes that should be used for the given raw route string.
+---@param raw_route string
+---@return table?
 function Router:GetRoutes(raw_route)
     raw_route = GNIL.API.URL.RemoveStartingSlash(raw_route)
     local routes, fragments = {}, {}
@@ -92,12 +91,17 @@ function Router:GetRoutes(raw_route)
     return routes
 end
 
--- Call the router with a given request. This will find the most suitable
--- route and then call it with the request and argument data to return a response.
+---Call the router with a given request. This will find the most suitable
+---route and then call it with the request and argument data to return a response.
+---@param request API.Request
+---@param callback fun(response: API.Response)
+---@return API.Response?
 function Router:Call(request, callback)
 
-    -- Return the respond wrapper to ensure that responses
-    -- are sent if there is a callback set or not.
+    ---Return the respond wrapper to ensure that responses
+    ---are sent if there is a callback set or not.
+    ---@param response API.Response
+    ---@return API.Response?
     local respond = function(response)
         if callback then callback(response) else return response end
     end
@@ -127,7 +131,7 @@ function Router:Call(request, callback)
     local out = route:_Call(request, validMethodRoutes[1][2])
 
     -- Is route callback/promise?
-    if isfunction(out) then
+    if isfunction(out) then ---@cast out API.Route.PromiseCallback
 
         -- If the route returns a function (delayed response) there must be
         -- a callback provided otherwise there's no way to get the response.
@@ -144,8 +148,16 @@ function Router:Call(request, callback)
             if already_responded then return end
             already_responded = true
 
+            -- Finally, just make sure the output isn't another function just incase.
+            local responseOutput = GNIL.API.Validators.ToResponse(route, response)
+            if isfunction(responseOutput) then
+                responseOutput = GNIL.API.Responses.Empty(500)
+                MODULE:log("Cannot do nested promises in a route!", "error")
+            end
+
+            ---@cast responseOutput API.Response
             return callback(
-                GNIL.API.Validators.ToResponse(route, response)
+                responseOutput
             )
         end)
         return
@@ -156,18 +168,93 @@ function Router:Call(request, callback)
     return respond(out)
 end
 
+---Create a method with given specific methods.
+---@param route string
+---@param callback API.Route.Callback
+---@param methods string[]
+---@return API.Route
+function Router:_CreateWithMethods(route, callback, methods)
+    local routeInstance = self:Create(route, callback)
+    routeInstance:SetMethods(methods)
+    return routeInstance
+end
+
+-----------------------------------------------------------------------------------
+-- Welcome to annotation hell.
+
+-- Create a route that only accepts POST requests.
+---@param route string
+---@param callback API.Route.Callback
+---@return API.Route
+function Router:Post(route, callback) return self:_CreateWithMethods(route, callback, {"POST"}) end
+
+-- Create a route that only accepts GET requests.
+---@param route string
+---@param callback API.Route.Callback
+---@return API.Route
+function Router:Get(route, callback) return self:_CreateWithMethods(route, callback, {"GET"}) end
+
+-- Create a route that only accepts PUT requests.
+---@param route string
+---@param callback API.Route.Callback
+---@return API.Route
+function Router:Put(route, callback) return self:_CreateWithMethods(route, callback, {"PUT"}) end
+
+-- Create a route that only accepts PATCH requests.
+---@param route string
+---@param callback API.Route.Callback
+---@return API.Route
+function Router:Patch(route, callback) return self:_CreateWithMethods(route, callback, {"PATCH"}) end
+
+-- Create a route that only accepts DELETE requests.
+---@param route string
+---@param callback API.Route.Callback
+---@return API.Route
+function Router:Delete(route, callback) return self:_CreateWithMethods(route, callback, {"DELETE"}) end
+
 -- Routes is a reference to the global server router.
 GNIL.API.Routes = {
 
-    -- HTTP Method Verbs
-    Post    = function(...) return GNIL.API._GLOBAL_SERVER._router:Post(...) end,
-    Get     = function(...) return GNIL.API._GLOBAL_SERVER._router:Get(...) end,
-    Put     = function(...) return GNIL.API._GLOBAL_SERVER._router:Put(...) end,
-    Patch   = function(...) return GNIL.API._GLOBAL_SERVER._router:Patch(...) end,
-    Delete  = function(...) return GNIL.API._GLOBAL_SERVER._router:Delete(...) end,
+    ---Create a route that only accepts POST requests.
+    ---@param route string
+    ---@param callback API.Route.Callback
+    ---@return API.Route
+    Post = function(route, callback) return GNIL.API._GLOBAL_SERVER._router:Post(route, callback) end,
 
-    -- Non method specific route alias
-    Add     = function(...) return GNIL.API._GLOBAL_SERVER._router:Create(...) end,
-    Create  = function(...) return GNIL.API._GLOBAL_SERVER._router:Create(...) end,
+    ---Create a route that only accepts GET requests.
+    ---@param route string
+    ---@param callback API.Route.Callback
+    ---@return API.Route
+    Get = function(route, callback) return GNIL.API._GLOBAL_SERVER._router:Get(route, callback) end,
+
+    ---Create a route that only accepts PUT requests.
+    ---@param route string
+    ---@param callback API.Route.Callback
+    ---@return API.Route
+    Put = function(route, callback) return GNIL.API._GLOBAL_SERVER._router:Put(route, callback) end,
+
+    ---Create a route that only accepts PATCH requests.
+    ---@param route string
+    ---@param callback API.Route.Callback
+    ---@return API.Route
+    Patch = function(route, callback) return GNIL.API._GLOBAL_SERVER._router:Patch(route, callback) end,
+
+    ---Create a route that only accepts DELETE requests.
+    ---@param route string
+    ---@param callback API.Route.Callback
+    ---@return API.Route
+    Delete = function(route, callback) return GNIL.API._GLOBAL_SERVER._router:Delete(route, callback) end,
+
+    ---Create a route that accepts all matching requests.
+    ---@param route string
+    ---@param callback API.Route.Callback
+    ---@return API.Route
+    Add = function(route, callback) return GNIL.API._GLOBAL_SERVER._router:Create(route, callback) end,
+
+    ---Create a route that accepts all matching requests.
+    ---@param route string
+    ---@param callback API.Route.Callback
+    ---@return API.Route
+    Create = function(route, callback) return GNIL.API._GLOBAL_SERVER._router:Create(route, callback) end,
 }
 GNIL.API.Router = Router

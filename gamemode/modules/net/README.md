@@ -15,13 +15,13 @@ This documentation was created by morgverd, and therefore I've used the PHP form
 ![Shared](https://cdn.morgverd.com/static/github/gmod/realms/shared.png) `GNIL.Net.Receive(string messageName, callable fn)` - Same usage as [net.Receive](https://wiki.facepunch.com/gmod/net.Receive). <br/>
 ![Client](https://cdn.morgverd.com/static/github/gmod/realms/client.png) `GNIL.Net.ReceiveChunked(string messageName, callable fn)` - See [chunking](#chunking) for more info. <br/>
 
-![Shared](https://cdn.morgverd.com/static/github/gmod/realms/shared.png) `GNIL.Net.Create(string messageName)` [NetworkMessage](#networkmessage). <br/>
+![Shared](https://cdn.morgverd.com/static/github/gmod/realms/shared.png) `GNIL.Net.Create(string messageName)` [NetworkMessage](#NetworkMessage). <br/>
 ![Shared](https://cdn.morgverd.com/static/github/gmod/realms/shared.png) `GNIL.Net.CreateReply()` [NetworkReply](#networkreply). <br/>
 ![Shared](https://cdn.morgverd.com/static/github/gmod/realms/shared.png) `GNIL.Net.Start(string messageName, ?boolean unreliable)` - Start/Open a stream with pooled name.  <br/>
 
 ![Server](https://cdn.morgverd.com/static/github/gmod/realms/server.png) ![Internal](https://cdn.morgverd.com/static/github/gmod/realms/internal.png) `GNIL.Net._SyncNetworkIDs(?Entity ply)` - Sync the network ids between server and client. <br/>
 
-The following functions accept a [NetworkMessage](#networkmessage) instance that will be used to start and write the message data. If the NetworkMessage is not provided, then an open stream should already be open (using `GNIL.Net.Start(messageName, unreliable)`.  <br/>
+The following functions accept a [NetworkMessage](#NetworkMessage) instance that will be used to start and write the message data. If the NetworkMessage is not provided, then an open stream should already be open (using `GNIL.Net.Start(messageName, unreliable)`.  <br/>
 
 ![Server](https://cdn.morgverd.com/static/github/gmod/realms/server.png) `GNIL.Net.Send(Entity ply, ?NetworkMessage _nm, ?boolean _allowqueue)` - Send a netmessage. <br/>
 ![Server](https://cdn.morgverd.com/static/github/gmod/realms/server.png) `GNIL.Net.Broadcast(?NetworkMessage _nm)` - Broadcast a netmessage to all connected players. <br/>
@@ -45,7 +45,7 @@ local files, _ = file.Find(GNIL.Utils.ResolveGamemodePath("dev"), "LUA")
 me:Include(files)
 ```
 
-## <a name="networkmessage"></a>Network Message
+## <a name="NetworkMessage"></a>Network Message
 
 A `NetworkMessage` instance is created using the `GNIL.Net.Create(messageName, fn)` constructor function (above). It allows for written data to be buffered, meaning that the network stream is not actually opened until the message is being sent.  This allows the `NetworkMessage` to be reusable across mutliple users which could be used for cache/optimisation.
 
@@ -161,9 +161,9 @@ end
 
 
 ### OOP NetworkMessage
-As outlined above, you can use the [NetworkMessage](#networkmessage) object to write data to a buffer and then send it as a standard message. Using the network message approach allows for the most flexability such as its reusability between clients and ability to send chunked data. 
+As outlined above, you can use the [NetworkMessage](#NetworkMessage) object to write data to a buffer and then send it as a standard message. Using the network message approach allows for the most flexability such as its reusability between clients and ability to send chunked data. 
 
-The message instance is created using `GNIL.Net.Create(networkMessage)` where `networkMessage` is the pooled network string being targetted. From there, you can write data onto the instance using the writers (also documented above).
+The message instance is created using `GNIL.Net.Create(NetworkMessage)` where `NetworkMessage` is the pooled network string being targetted. From there, you can write data onto the instance using the writers (also documented above).
 
 ```lua
 -- Since each writer returns the message instance

@@ -32,7 +32,7 @@ local globals = {
     "isbool",
     "IsColor",
     "IsConCommandBlocked",
-    "IsEntity",
+    "isentity",
     "IsFirstTimePredicted",
     "isfunction",
     "ismatrix",

@@ -75,6 +75,10 @@ local function sendVFSMessage(moduleInstance, players, files)
     return true
 end
 
+---Send a module reload with VFS data.
+---@param moduleInstance Module
+---@param players Player[]
+---@return boolean
 function GNIL.Dev.VFS.SendReload(moduleInstance, players)
 
     -- Find all client files within the reloading module.
