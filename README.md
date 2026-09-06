@@ -1,5 +1,11 @@
 # Got-Nil Gamemode
 
+> [!WARNING]
+> This gamemode was never finished and is only being made public as an archive.
+> We mostly worked on it while learning GLua, so there's plenty of old/bad code in here. Globals are used a lot where they should've been local, the networking/serialization isn't great, and a lot of it predates things like SFS.
+> I wouldn't recommend actually using this gamemode, but I still think it's a decent example of how OOP and a modular structure can work in GMod/Lua.
+
+
 This is the core gamemode for our servers. The structure is relatively simple:
 
 -  `gamemode/config` - Core configuration files.
